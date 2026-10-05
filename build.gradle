@@ -21,9 +21,8 @@ def compatModules = ['jade', 'jei', 'ftbquests', 'kubejs'].findAll {
 
 sourceSets {
     // The public API. Other mods compile against this jar only.
-    api {
-        java.srcDir 'src/api/java'
-    }
+    // Sources live in the default folder for a source set named api: src/api/java.
+    api {}
     main {
         compatModules.each {
             java.srcDir "src/compat/${it}/java"
@@ -151,6 +150,7 @@ tasks.named('jar', Jar) {
 def apiJar = tasks.register('apiJar', Jar) {
     archiveClassifier = 'api'
     archiveVersion = "${mod_version}+api.${api_version}"
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     from sourceSets.api.output
     from sourceSets.api.allJava
 }
@@ -159,6 +159,8 @@ tasks.named('assemble') { dependsOn apiJar }
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
     options.release = 21
+    // Report every compile error in one pass instead of stopping at 100.
+    options.compilerArgs.addAll(['-Xmaxerrs', '10000'])
 }
 
 publishing {
@@ -170,6 +172,6 @@ publishing {
         }
     }
     repositories {
-        maven { url "file://${project.projectDir}/repo" }
+        maven { url = file('repo').toURI() }
     }
 }
