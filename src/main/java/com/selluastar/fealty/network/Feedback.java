@@ -8,7 +8,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.network.PacketDistributor;
 
 /** Server-side helpers for the player feedback layer: the rep feed, banners, toasts and private sounds. */
 public final class Feedback {
@@ -48,6 +47,6 @@ public final class Feedback {
     }
 
     private static void send(ServerPlayer player, FeedbackPayload payload) {
-        PacketDistributor.sendToPlayer(player, payload);
+        FealtyNetwork.send(player, payload);
     }
 }

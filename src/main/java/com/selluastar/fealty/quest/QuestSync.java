@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import com.selluastar.fealty.Fealty;
+import com.selluastar.fealty.network.FealtyNetwork;
 import com.selluastar.fealty.network.OpenQuestScreenPayload;
 import com.selluastar.fealty.network.QuestView;
 import com.selluastar.fealty.network.SyncQuestsPayload;
@@ -25,7 +26,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
-import net.neoforged.neoforge.network.PacketDistributor;
+
 
 /** Keeps the client's journal and tracker in step with the player's accepted quests. */
 @EventBusSubscriber(modid = Fealty.MOD_ID)
@@ -39,7 +40,7 @@ public final class QuestSync {
     public static void sync(ServerPlayer player) {
         List<QuestView> views = build(player);
         LAST_SENT.put(player.getUUID(), views.hashCode());
-        PacketDistributor.sendToPlayer(player, new SyncQuestsPayload(views));
+        FealtyNetwork.send(player, new SyncQuestsPayload(views));
     }
 
     /** Send the quest list only if it changed since the last send (counts, readiness, waypoints). */
@@ -49,7 +50,7 @@ public final class QuestSync {
         Integer last = LAST_SENT.get(player.getUUID());
         if (last == null || last != hash) {
             LAST_SENT.put(player.getUUID(), hash);
-            PacketDistributor.sendToPlayer(player, new SyncQuestsPayload(views));
+            FealtyNetwork.send(player, new SyncQuestsPayload(views));
         }
     }
 

@@ -13,7 +13,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.npc.Villager;
-import net.neoforged.neoforge.network.PacketDistributor;
 
 /** Finds the quest giver behind an entity and helps build their screens. */
 public final class QuestGivers {
@@ -31,7 +30,7 @@ public final class QuestGivers {
     }
 
     public static void open(ServerPlayer player, Entity entity) {
-        forEntity(entity).ifPresent(giver -> PacketDistributor.sendToPlayer(player, giver.screen(player, entity)));
+        forEntity(entity).ifPresent(giver -> com.selluastar.fealty.network.FealtyNetwork.send(player, giver.screen(player, entity)));
     }
 
     /** The accepted quest for a giver, or the given offers. */

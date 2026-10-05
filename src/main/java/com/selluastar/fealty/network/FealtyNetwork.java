@@ -18,6 +18,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.OnDatapackSyncEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
@@ -69,24 +70,34 @@ public final class FealtyNetwork {
         }
     }
 
+    /**
+     * Send a payload to a player if their connection can take it. Fake players (game tests, other mods' machines)
+     * and clients without Fealty have no channel for it and are skipped instead of throwing.
+     */
+    public static void send(ServerPlayer player, CustomPacketPayload payload) {
+        if (player.connection != null && player.connection.hasChannel(payload.type())) {
+            PacketDistributor.sendToPlayer(player, payload);
+        }
+    }
+
     /** Send the tier table and every standing the player has. */
     public static void syncAll(ServerPlayer player) {
-        PacketDistributor.sendToPlayer(player, new SyncTiersPayload(TierManager.tiers()));
-        PacketDistributor.sendToPlayer(player, SyncVillageTradesPayload.create());
+        send(player, new SyncTiersPayload(TierManager.tiers()));
+        send(player, SyncVillageTradesPayload.create());
         PlayerRepData data = RepManager.data(player);
         List<Standing> standings = new ArrayList<>();
         for (ResourceLocation faction : data.rep().keySet()) {
             standings.add(standing(player, faction));
         }
-        PacketDistributor.sendToPlayer(player, new SyncStandingsPayload(standings, RepManager.renown(data), true));
+        send(player, new SyncStandingsPayload(standings, RepManager.renown(data), true));
     }
 
     public static void syncStanding(ServerPlayer player, ResourceLocation faction) {
-        PacketDistributor.sendToPlayer(player, new SyncStandingsPayload(List.of(standing(player, faction)), RepManager.renown(player), false));
+        send(player, new SyncStandingsPayload(List.of(standing(player, faction)), RepManager.renown(player), false));
     }
 
     public static void syncRenown(ServerPlayer player, int renown) {
-        PacketDistributor.sendToPlayer(player, new SyncStandingsPayload(List.of(), renown, false));
+        send(player, new SyncStandingsPayload(List.of(), renown, false));
     }
 
     public static Standing standing(ServerPlayer player, ResourceLocation faction) {

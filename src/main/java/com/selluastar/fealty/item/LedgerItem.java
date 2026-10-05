@@ -21,7 +21,7 @@ public class LedgerItem extends Item {
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-            net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(serverPlayer,
+            com.selluastar.fealty.network.FealtyNetwork.send(serverPlayer,
                     new com.selluastar.fealty.network.OpenScreenPayload(com.selluastar.fealty.network.OpenScreenPayload.JOURNAL, "reputation"));
         }
         return InteractionResultHolder.sidedSuccess(player.getItemInHand(hand), level.isClientSide);
