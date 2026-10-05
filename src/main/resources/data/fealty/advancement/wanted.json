@@ -1,0 +1,26 @@
+{
+  "display": {
+    "icon": {
+      "id": "fealty:bounty_notice"
+    },
+    "title": {
+      "translate": "advancement.fealty.wanted"
+    },
+    "description": {
+      "translate": "advancement.fealty.wanted.desc"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "wanted": {
+      "trigger": "fealty:event",
+      "conditions": {
+        "event": "fealty:wanted"
+      }
+    }
+  },
+  "parent": "fealty:hated"
+}

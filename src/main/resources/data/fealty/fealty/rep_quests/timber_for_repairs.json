@@ -1,0 +1,28 @@
+{
+  "title": {
+    "translate": "quest.fealty.timber_for_repairs"
+  },
+  "description": {
+    "translate": "quest.fealty.timber_for_repairs.desc"
+  },
+  "tiers": {
+    "fealty:distrusted": 8,
+    "fealty:neutral": 10
+  },
+  "difficulty": 1,
+  "reward": {
+    "rep": 6,
+    "loot_table": "fealty:quest_rewards/common"
+  },
+  "objective": {
+    "type": "fealty:fetch",
+    "items": [
+      {
+        "ingredient": {
+          "tag": "minecraft:logs"
+        },
+        "count": 64
+      }
+    ]
+  }
+}

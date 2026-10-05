@@ -1,0 +1,346 @@
+package com.selluastar.fealty.village;
+
+import java.util.Optional;
+import java.util.UUID;
+
+import org.jetbrains.annotations.Nullable;
+
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.StringRepresentable;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
+
+/** What Fealty knows about one village faction. */
+public final class VillageRecord {
+    public static final Codec<VillageRecord> CODEC = RecordCodecBuilder.create(i -> i.group(
+            ResourceLocation.CODEC.fieldOf("id").forGetter(VillageRecord::id),
+            Level.RESOURCE_KEY_CODEC.fieldOf("dimension").forGetter(VillageRecord::dimension),
+            BlockPos.CODEC.fieldOf("center").forGetter(VillageRecord::center),
+            BoundingBox.CODEC.fieldOf("bounds").forGetter(VillageRecord::bounds),
+            ResourceLocation.CODEC.fieldOf("template").forGetter(VillageRecord::template),
+            ResourceLocation.CODEC.optionalFieldOf("structure").forGetter(r -> Optional.ofNullable(r.structure)),
+            Codec.STRING.fieldOf("name").forGetter(VillageRecord::name),
+            Codec.BOOL.optionalFieldOf("has_elder", false).forGetter(VillageRecord::hasElder),
+            ElderInfo.CODEC.optionalFieldOf("elder", new ElderInfo()).forGetter(VillageRecord::elder),
+            LordInfo.CODEC.optionalFieldOf("lord", new LordInfo()).forGetter(VillageRecord::lord),
+            Codec.BOOL.optionalFieldOf("initialized", false).forGetter(VillageRecord::isInitialized),
+            UUIDUtil.CODEC.optionalFieldOf("tyrant_for").forGetter(r -> Optional.ofNullable(r.tyrantFor)),
+            Codec.BOOL.optionalFieldOf("tyrant_spawned", false).forGetter(VillageRecord::isTyrantSpawned)
+    ).apply(i, (id, dim, center, bounds, template, structure, name, hasElder, elder, lord, init, tyrantFor, tyrantSpawned) -> {
+        VillageRecord r = new VillageRecord(id, dim, center, bounds, template, structure.orElse(null), name, hasElder);
+        r.elder = elder;
+        r.lord = lord;
+        r.initialized = init;
+        r.tyrantFor = tyrantFor.orElse(null);
+        r.tyrantSpawned = tyrantSpawned;
+        return r;
+    }));
+
+    private final ResourceLocation id;
+    private final ResourceKey<Level> dimension;
+    private final BlockPos center;
+    private final BoundingBox bounds;
+    private final ResourceLocation template;
+    @Nullable
+    private final ResourceLocation structure;
+    private final String name;
+    private final boolean hasElder;
+    private ElderInfo elder = new ElderInfo();
+    private LordInfo lord = new LordInfo();
+    private boolean initialized;
+    @Nullable
+    private UUID tyrantFor;
+    private boolean tyrantSpawned;
+
+    public VillageRecord(ResourceLocation id, ResourceKey<Level> dimension, BlockPos center, BoundingBox bounds,
+                         ResourceLocation template, @Nullable ResourceLocation structure, String name, boolean hasElder) {
+        this.id = id;
+        this.dimension = dimension;
+        this.center = center;
+        this.bounds = bounds;
+        this.template = template;
+        this.structure = structure;
+        this.name = name;
+        this.hasElder = hasElder;
+    }
+
+    public ResourceLocation id() {
+        return id;
+    }
+
+    public ResourceKey<Level> dimension() {
+        return dimension;
+    }
+
+    public BlockPos center() {
+        return center;
+    }
+
+    public BoundingBox bounds() {
+        return bounds;
+    }
+
+    public boolean contains(ResourceKey<Level> dim, BlockPos pos) {
+        return dimension.equals(dim) && bounds.isInside(pos);
+    }
+
+    public ResourceLocation template() {
+        return template;
+    }
+
+    @Nullable
+    public ResourceLocation structure() {
+        return structure;
+    }
+
+    public String name() {
+        return name;
+    }
+
+    /** Whether this village is meant to have a trusting elder (its structure is a castle village). */
+    public boolean hasElder() {
+        return hasElder;
+    }
+
+    public ElderInfo elder() {
+        return elder;
+    }
+
+    public LordInfo lord() {
+        return lord;
+    }
+
+    public boolean isInitialized() {
+        return initialized;
+    }
+
+    public void setInitialized(boolean initialized) {
+        this.initialized = initialized;
+    }
+
+    /** The wanted player the Tyrant Lord has seized this village to catch, if any. */
+    @Nullable
+    public UUID tyrantFor() {
+        return tyrantFor;
+    }
+
+    public void setTyrantFor(@Nullable UUID player) {
+        this.tyrantFor = player;
+        this.tyrantSpawned = false;
+    }
+
+    public boolean isTyrantSpawned() {
+        return tyrantSpawned;
+    }
+
+    public void setTyrantSpawned(boolean spawned) {
+        this.tyrantSpawned = spawned;
+    }
+
+    public boolean isBroken() {
+        return elder.state == ElderState.BROKEN;
+    }
+
+    public enum ElderState implements StringRepresentable {
+        NONE("none"),
+        ALIVE("alive"),
+        BROKEN("broken");
+
+        public static final Codec<ElderState> CODEC = StringRepresentable.fromEnum(ElderState::values);
+        private final String name;
+
+        ElderState(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String getSerializedName() {
+            return name;
+        }
+    }
+
+    /** The trusting elder: who they are, where they live and where the village coffer is. */
+    public static final class ElderInfo {
+        static final Codec<ElderInfo> CODEC = RecordCodecBuilder.create(i -> i.group(
+                ElderState.CODEC.optionalFieldOf("state", ElderState.NONE).forGetter(e -> e.state),
+                UUIDUtil.CODEC.optionalFieldOf("uuid").forGetter(e -> Optional.ofNullable(e.uuid)),
+                BlockPos.CODEC.optionalFieldOf("home").forGetter(e -> Optional.ofNullable(e.home)),
+                BlockPos.CODEC.optionalFieldOf("coffer").forGetter(e -> Optional.ofNullable(e.coffer)),
+                Codec.STRING.optionalFieldOf("name", "").forGetter(e -> e.name),
+                Codec.LONG.optionalFieldOf("broken_since", 0L).forGetter(e -> e.brokenSince)
+        ).apply(i, (state, uuid, home, coffer, name, broken) -> {
+            ElderInfo e = new ElderInfo();
+            e.state = state;
+            e.uuid = uuid.orElse(null);
+            e.home = home.orElse(null);
+            e.coffer = coffer.orElse(null);
+            e.name = name;
+            e.brokenSince = broken;
+            return e;
+        }));
+
+        private ElderState state = ElderState.NONE;
+        @Nullable
+        private UUID uuid;
+        @Nullable
+        private BlockPos home;
+        @Nullable
+        private BlockPos coffer;
+        private String name = "";
+        private long brokenSince;
+
+        public ElderState state() {
+            return state;
+        }
+
+        public void setState(ElderState state) {
+            this.state = state;
+        }
+
+        @Nullable
+        public UUID uuid() {
+            return uuid;
+        }
+
+        public void setUuid(@Nullable UUID uuid) {
+            this.uuid = uuid;
+        }
+
+        @Nullable
+        public BlockPos home() {
+            return home;
+        }
+
+        public void setHome(@Nullable BlockPos home) {
+            this.home = home;
+        }
+
+        @Nullable
+        public BlockPos coffer() {
+            return coffer;
+        }
+
+        public void setCoffer(@Nullable BlockPos coffer) {
+            this.coffer = coffer;
+        }
+
+        public String name() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public long brokenSince() {
+            return brokenSince;
+        }
+
+        public void setBrokenSince(long brokenSince) {
+            this.brokenSince = brokenSince;
+        }
+    }
+
+    /** The village's sworn lord, if any, and their tax settings. */
+    public static final class LordInfo {
+        static final Codec<LordInfo> CODEC = RecordCodecBuilder.create(i -> i.group(
+                UUIDUtil.CODEC.optionalFieldOf("uuid").forGetter(l -> Optional.ofNullable(l.uuid)),
+                Codec.STRING.optionalFieldOf("name", "").forGetter(l -> l.name),
+                Codec.intRange(0, 4).optionalFieldOf("tax", 2).forGetter(l -> l.taxLevel),
+                Codec.LONG.optionalFieldOf("last_tribute_day", 0L).forGetter(l -> l.lastTributeDay),
+                Codec.LONG.optionalFieldOf("last_tax_day", 0L).forGetter(l -> l.lastTaxDay),
+                Codec.LONG.optionalFieldOf("sworn_day", 0L).forGetter(l -> l.swornDay),
+                Codec.INT.optionalFieldOf("pending_tribute", 0).forGetter(l -> l.pendingTribute)
+        ).apply(i, (uuid, name, tax, tribute, taxDay, sworn, pending) -> {
+            LordInfo l = new LordInfo();
+            l.uuid = uuid.orElse(null);
+            l.name = name;
+            l.taxLevel = tax;
+            l.lastTributeDay = tribute;
+            l.lastTaxDay = taxDay;
+            l.swornDay = sworn;
+            l.pendingTribute = pending;
+            return l;
+        }));
+
+        @Nullable
+        private UUID uuid;
+        private String name = "";
+        private int taxLevel = 2;
+        private long lastTributeDay;
+        private long lastTaxDay;
+        private long swornDay;
+        private int pendingTribute;
+
+        @Nullable
+        public UUID uuid() {
+            return uuid;
+        }
+
+        public boolean isLord(UUID player) {
+            return player.equals(uuid);
+        }
+
+        public String name() {
+            return name;
+        }
+
+        public int taxLevel() {
+            return taxLevel;
+        }
+
+        public void setTaxLevel(int taxLevel) {
+            this.taxLevel = Math.max(0, Math.min(4, taxLevel));
+        }
+
+        public long lastTributeDay() {
+            return lastTributeDay;
+        }
+
+        public void setLastTributeDay(long day) {
+            this.lastTributeDay = day;
+        }
+
+        public long lastTaxDay() {
+            return lastTaxDay;
+        }
+
+        public void setLastTaxDay(long day) {
+            this.lastTaxDay = day;
+        }
+
+        public long swornDay() {
+            return swornDay;
+        }
+
+        /** Tribute periods owed but not yet paid into the coffer (paid when the village is next loaded). */
+        public int pendingTribute() {
+            return pendingTribute;
+        }
+
+        public void setPendingTribute(int pendingTribute) {
+            this.pendingTribute = Math.max(0, pendingTribute);
+        }
+
+        public void swear(UUID lord, String lordName, long day) {
+            this.uuid = lord;
+            this.name = lordName;
+            this.swornDay = day;
+            this.lastTributeDay = day;
+            this.lastTaxDay = day;
+            this.taxLevel = 2;
+            this.pendingTribute = 0;
+        }
+
+        public void clear() {
+            this.uuid = null;
+            this.name = "";
+        }
+    }
+}

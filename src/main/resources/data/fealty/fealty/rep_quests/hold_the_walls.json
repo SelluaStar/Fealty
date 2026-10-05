@@ -1,0 +1,23 @@
+{
+  "title": {
+    "translate": "quest.fealty.hold_the_walls"
+  },
+  "description": {
+    "translate": "quest.fealty.hold_the_walls.desc"
+  },
+  "tiers": {
+    "fealty:distrusted": 4,
+    "fealty:neutral": 6,
+    "fealty:trusted": 8,
+    "fealty:honored": 8
+  },
+  "difficulty": 4,
+  "reward": {
+    "rep": 15,
+    "loot_table": "fealty:quest_rewards/rare"
+  },
+  "objective": {
+    "type": "fealty:defend_raid",
+    "omen_level": 0
+  }
+}

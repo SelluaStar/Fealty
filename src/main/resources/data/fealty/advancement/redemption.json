@@ -1,0 +1,26 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:totem_of_undying"
+    },
+    "title": {
+      "translate": "advancement.fealty.redemption"
+    },
+    "description": {
+      "translate": "advancement.fealty.redemption.desc"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "redeemed": {
+      "trigger": "fealty:event",
+      "conditions": {
+        "event": "fealty:redeemed"
+      }
+    }
+  },
+  "parent": "fealty:hated"
+}

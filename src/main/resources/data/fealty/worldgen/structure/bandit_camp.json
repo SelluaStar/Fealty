@@ -1,0 +1,7 @@
+{
+  "type": "fealty:bandit_camp",
+  "biomes": "#fealty:has_structure/bandit_camp",
+  "step": "surface_structures",
+  "spawn_overrides": {},
+  "terrain_adaptation": "beard_thin"
+}

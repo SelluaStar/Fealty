@@ -1,0 +1,37 @@
+{
+  "title": {
+    "translate": "quest.fealty.night_terror"
+  },
+  "description": {
+    "translate": "quest.fealty.night_terror.desc"
+  },
+  "tiers": {
+    "fealty:hated": 10
+  },
+  "difficulty": 5,
+  "reward": {
+    "rep": 15
+  },
+  "objective": {
+    "type": "fealty:hunt",
+    "targets": [
+      {
+        "entity": "minecraft:wither_skeleton",
+        "health_multiplier": 5.0,
+        "damage_bonus": 4.0,
+        "equipment": {
+          "mainhand": {
+            "id": "minecraft:stone_sword",
+            "count": 1
+          }
+        }
+      },
+      {
+        "entity": "minecraft:witch",
+        "health_multiplier": 6.0
+      }
+    ],
+    "min_distance": 100,
+    "max_distance": 220
+  }
+}

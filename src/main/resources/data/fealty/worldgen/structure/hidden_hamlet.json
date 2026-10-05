@@ -1,0 +1,7 @@
+{
+  "type": "fealty:hidden_hamlet",
+  "biomes": "#fealty:has_structure/hidden_hamlet",
+  "step": "surface_structures",
+  "spawn_overrides": {},
+  "terrain_adaptation": "beard_thin"
+}

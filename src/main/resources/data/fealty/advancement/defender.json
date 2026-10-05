@@ -1,0 +1,26 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:shield"
+    },
+    "title": {
+      "translate": "advancement.fealty.defender"
+    },
+    "description": {
+      "translate": "advancement.fealty.defender.desc"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "defended": {
+      "trigger": "fealty:event",
+      "conditions": {
+        "event": "fealty:raid_defended"
+      }
+    }
+  },
+  "parent": "fealty:met_elder"
+}

@@ -1,0 +1,9 @@
+{
+  "kind": "static",
+  "name": {
+    "translate": "fealty.faction.bandits"
+  },
+  "renown_share": 0.0,
+  "renown_start_factor": -0.25,
+  "members": "#fealty:bandits"
+}

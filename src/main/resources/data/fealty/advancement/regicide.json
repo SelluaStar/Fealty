@@ -1,0 +1,26 @@
+{
+  "display": {
+    "icon": {
+      "id": "fealty:tyrant_crown"
+    },
+    "title": {
+      "translate": "advancement.fealty.regicide"
+    },
+    "description": {
+      "translate": "advancement.fealty.regicide.desc"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "slain": {
+      "trigger": "fealty:event",
+      "conditions": {
+        "event": "fealty:tyrant_slain"
+      }
+    }
+  },
+  "parent": "fealty:wanted"
+}

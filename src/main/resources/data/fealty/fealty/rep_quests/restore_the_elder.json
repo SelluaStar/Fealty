@@ -1,0 +1,45 @@
+{
+  "title": {
+    "translate": "quest.fealty.restore_the_elder"
+  },
+  "description": {
+    "translate": "quest.fealty.restore_the_elder.desc"
+  },
+  "tiers": {},
+  "difficulty": 5,
+  "reward": {
+    "rep": 15,
+    "loot_table": "fealty:quest_rewards/rare",
+    "experience": 100
+  },
+  "objective": {
+    "type": "fealty:restore_elder",
+    "items": [
+      {
+        "ingredient": {
+          "item": "minecraft:gold_ingot"
+        },
+        "count": 16
+      },
+      {
+        "ingredient": {
+          "item": "minecraft:book"
+        },
+        "count": 8
+      },
+      {
+        "ingredient": {
+          "tag": "minecraft:candles"
+        },
+        "count": 4
+      },
+      {
+        "ingredient": {
+          "item": "minecraft:emerald"
+        },
+        "count": 16
+      }
+    ]
+  },
+  "pool": "fealty:restore"
+}

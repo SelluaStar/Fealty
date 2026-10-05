@@ -1,0 +1,26 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:stone_sword"
+    },
+    "title": {
+      "translate": "advancement.fealty.threatened"
+    },
+    "description": {
+      "translate": "advancement.fealty.threatened.desc"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "threat": {
+      "trigger": "fealty:event",
+      "conditions": {
+        "event": "fealty:threatened"
+      }
+    }
+  },
+  "parent": "fealty:root"
+}

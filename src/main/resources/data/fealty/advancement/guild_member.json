@@ -1,0 +1,26 @@
+{
+  "display": {
+    "icon": {
+      "id": "fealty:rogue_boots"
+    },
+    "title": {
+      "translate": "advancement.fealty.guild_member"
+    },
+    "description": {
+      "translate": "advancement.fealty.guild_member.desc"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "joined": {
+      "trigger": "fealty:event",
+      "conditions": {
+        "event": "fealty:guild_joined"
+      }
+    }
+  },
+  "parent": "fealty:black_market"
+}

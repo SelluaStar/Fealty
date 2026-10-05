@@ -1,0 +1,26 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:crossbow"
+    },
+    "title": {
+      "translate": "advancement.fealty.bandit_followers"
+    },
+    "description": {
+      "translate": "advancement.fealty.bandit_followers.desc"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "hired": {
+      "trigger": "fealty:event",
+      "conditions": {
+        "event": "fealty:follower_hired"
+      }
+    }
+  },
+  "parent": "fealty:black_market"
+}

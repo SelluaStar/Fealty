@@ -1,0 +1,44 @@
+{
+  "kind": "rare_villager",
+  "start_tier": "fealty:trusted",
+  "steps": [
+    {
+      "role": "smith",
+      "professions": [
+        "minecraft:armorer",
+        "minecraft:weaponsmith",
+        "minecraft:toolsmith"
+      ],
+      "quest": "fealty:chain/smith_ore"
+    },
+    {
+      "role": "cartographer",
+      "professions": [
+        "minecraft:cartographer"
+      ],
+      "quest": "fealty:chain/cartographer_survey"
+    },
+    {
+      "role": "cleric",
+      "professions": [
+        "minecraft:cleric"
+      ],
+      "quest": "fealty:chain/cleric_relic"
+    }
+  ],
+  "steps_reward": {
+    "id": "fealty:signet_of_the_old_crown",
+    "count": 1
+  },
+  "map_structure": "#fealty:hidden_hamlets",
+  "trial_quest": "fealty:chain/keeper_trial",
+  "trial_reward": {
+    "id": "fealty:keepers_charter",
+    "count": 1
+  },
+  "final_reward": {
+    "id": "fealty:royal_writ",
+    "count": 1
+  },
+  "repeatable": true
+}

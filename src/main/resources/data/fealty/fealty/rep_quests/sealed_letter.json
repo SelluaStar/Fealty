@@ -1,0 +1,23 @@
+{
+  "title": {
+    "translate": "quest.fealty.sealed_letter"
+  },
+  "description": {
+    "translate": "quest.fealty.sealed_letter.desc"
+  },
+  "tiers": {
+    "fealty:distrusted": 6,
+    "fealty:neutral": 10,
+    "fealty:trusted": 10,
+    "fealty:honored": 10
+  },
+  "difficulty": 2,
+  "reward": {
+    "rep": 8,
+    "renown": 3,
+    "loot_table": "fealty:quest_rewards/common"
+  },
+  "objective": {
+    "type": "fealty:courier"
+  }
+}

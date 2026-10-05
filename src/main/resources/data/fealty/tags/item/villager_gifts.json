@@ -1,0 +1,14 @@
+{
+  "replace": false,
+  "values": [
+    "#minecraft:flowers",
+    "minecraft:bread",
+    "minecraft:cookie",
+    "minecraft:cake",
+    "minecraft:pumpkin_pie",
+    "minecraft:apple",
+    "minecraft:golden_carrot",
+    "minecraft:honey_bottle",
+    "minecraft:emerald"
+  ]
+}

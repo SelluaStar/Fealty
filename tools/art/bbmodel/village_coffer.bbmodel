@@ -1,0 +1,226 @@
+{
+ "meta": {
+  "format_version": "4.10",
+  "model_format": "java_block",
+  "box_uv": false
+ },
+ "name": "village_coffer",
+ "parent": "",
+ "ambientocclusion": true,
+ "front_gui_light": false,
+ "visible_box": [
+  1,
+  1,
+  0
+ ],
+ "variable_placeholders": "",
+ "variable_placeholder_buttons": [],
+ "unhandled_root_fields": {},
+ "resolution": {
+  "width": 16,
+  "height": 16
+ },
+ "elements": [
+  {
+   "name": "box",
+   "box_uv": false,
+   "rescale": false,
+   "locked": false,
+   "from": [
+    1,
+    0,
+    1
+   ],
+   "to": [
+    15,
+    10,
+    15
+   ],
+   "autouv": 0,
+   "color": 0,
+   "origin": [
+    8,
+    8,
+    8
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      6,
+      16,
+      16
+     ],
+     "texture": 1
+    },
+    "south": {
+     "uv": [
+      0,
+      6,
+      16,
+      16
+     ],
+     "texture": 0
+    },
+    "east": {
+     "uv": [
+      0,
+      6,
+      16,
+      16
+     ],
+     "texture": 0
+    },
+    "west": {
+     "uv": [
+      0,
+      6,
+      16,
+      16
+     ],
+     "texture": 0
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": 2
+    }
+   },
+   "type": "cube",
+   "uuid": "0e3247dc-7472-42ce-9abf-9f3757de6464"
+  },
+  {
+   "name": "lid",
+   "box_uv": false,
+   "rescale": false,
+   "locked": false,
+   "from": [
+    1,
+    10,
+    1
+   ],
+   "to": [
+    15,
+    14,
+    15
+   ],
+   "autouv": 0,
+   "color": 0,
+   "origin": [
+    8,
+    8,
+    8
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      4
+     ],
+     "texture": 0
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      4
+     ],
+     "texture": 0
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      4
+     ],
+     "texture": 0
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      4
+     ],
+     "texture": 0
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": 2
+    }
+   },
+   "type": "cube",
+   "uuid": "b13ab2f7-cfbc-4820-98b0-0584cd4d67e9"
+  }
+ ],
+ "outliner": [
+  "0e3247dc-7472-42ce-9abf-9f3757de6464",
+  "b13ab2f7-cfbc-4820-98b0-0584cd4d67e9"
+ ],
+ "textures": [
+  {
+   "path": "",
+   "name": "village_coffer_side.png",
+   "folder": "block",
+   "namespace": "fealty",
+   "id": "0",
+   "width": 16,
+   "height": 16,
+   "uv_width": 16,
+   "uv_height": 16,
+   "particle": false,
+   "visible": true,
+   "mode": "bitmap",
+   "saved": true,
+   "uuid": "03b2400c-19f5-478e-b27e-f87d011d6122",
+   "source": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABn0lEQVR4nKWTu24UQRBFT1XX9MzIlgFpEztAQiuREJHxG44ty4ETB/4XPsKyCP0ZJAiQSM0jQ+LhAMF6d2a6imD2IVkIMFTWrb5XdU9Vy9HxSfAfpQD7B4e3Fq40cnR8Enc/Pad44B60tQHgEbhDXwoRIALFgzYbfXGyKVeTJxjAq3df/6n9BxNGg0f37+ERENDWxrwvVEmJCAYPmiox7wYuP35juruDJcU9mK0Y1FUiqbDVVCz6QlLBkqAqRARJBREBoM22jrSG6B5EwFAcFUEAFcE9yJbwsblRIEJtSiwvDOD1+79n8OLy84bB3tLg8XTCvBtQESwploQ3H654uHeHJhvX3UDxMUpSoR8cUeF6FWHRDZgqbTayjYAALCmzRU9ZnttsJFW222rzBqDJRjcUROD7vCdbWhuMIDfQhuKAst1ULFYGL99++WPeX9V6D7Ip090d2mzMFgNNlfAIynIKxR1VwVTXPCwJP1YMALbqioggm46LEqNxNxQA0jJDk40qKaa6YXD69BkX52e/n9+N2j845OL8bPxMt1LeqJ8qGazC4qEaZQAAAABJRU5ErkJggg=="
+  },
+  {
+   "path": "",
+   "name": "village_coffer_front.png",
+   "folder": "block",
+   "namespace": "fealty",
+   "id": "1",
+   "width": 16,
+   "height": 16,
+   "uv_width": 16,
+   "uv_height": 16,
+   "particle": false,
+   "visible": true,
+   "mode": "bitmap",
+   "saved": true,
+   "uuid": "98626727-1f1e-4778-a8ad-a70268005cc5",
+   "source": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABv0lEQVR4nKWTP2tUQRTFf3Pnvtn3NIQI26yKIGkEK4tAvkZKCSHFFgbxG2hrbWVjG0LKFH4IAxG1sooKNgvxH4hmd9/OzLV4721iDEj0lHfuOXPm3Dtuc7hl/AcEYG1948LEjuM2h1u2dPSClI2cjaqnAGQzcoZZSpiBc5CyUQVlljJBha/9VRTg9fsv/2T/Zp9G4PaNK2QzMKh6ymSWKLxgZsRslIVnUkcOR99ZHiyiXsjZOKYV6BWeOibKQhnXES+Oe8Pyt9uePksAVEGpY8a5pi4AORtmEFNGnKM9Y/9gxP7BCIBuVOIcPRWsLSjAmw/nZXCNx7segOcr8PbjNwBeHn46yeBqK3Bnuc+kjohzqBfUu3nTw7uN9VvXl/Di8OKYxYwTx7h7wrSOqAhVUII2AZ0md6iC4kVYqIp5jwKUQaljwjn4MZkRtLG+ujKYky+1+xFTBoSFsmDaCbx69/mPBO4/OieWM5jvQVBhebBIFZTjaaQsPNmMlI2gnpQzIg4VYVxHUjbUO352GQBc7hWYGUGlWRRrhOvY5ODbwZdBKbygIicZPHiyy97O9t89n8La+gZ7O9vNZ7oQ8wx+ASMsp0tT7fWUAAAAAElFTkSuQmCC"
+  },
+  {
+   "path": "",
+   "name": "village_coffer_top.png",
+   "folder": "block",
+   "namespace": "fealty",
+   "id": "2",
+   "width": 16,
+   "height": 16,
+   "uv_width": 16,
+   "uv_height": 16,
+   "particle": false,
+   "visible": true,
+   "mode": "bitmap",
+   "saved": true,
+   "uuid": "fcea5fa6-3bcd-40b2-9116-0aea5cca258e",
+   "source": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABxklEQVR4nJ2TMWtUQRDHfzO77727d6ZLsBALIWJtPMRvY2GTL2knFgExjYKFYoqAkgQsTO7e290Zi32XOySIZGCLHXZnf/Pf/8jrN8f++PcHAIIKN0NGBMwdEWHWBFZjpo2BVAwBVIU2Bs76IyLAmAvmzqJrmHeBGoK7E1Tou8h6LPRtZMyFGJRcDABlqhhUuB4SmwgquMOYDfdKVMwBWI+ZlGuBCPD+80/uE09eTQVePjug7yIgmBlDKoSgdLG24zirofDx6yXLpwc0UVmNmYsNwbyNrMZCGxUc2hjI5pg7YzZwByp+LkZxr6mNBsUcm1Y2Z0iFNIlVrPYqIhMNRBWaoFsNzveWd/Z4BTDb7h8t4fKvM3ov9XYiAjz8dUJQIRVj0TVcrxOn3654friPTvipGCIQVFGpOn3vjypBDEoqVg2TMot5U/t1JxXD3HkwqzmVquk6lS3Bu08/7sQ7+XLxT/xbH7RReXG4T56cBtB3kdWQmXcRFUFVKGaM2QgqBFXONgRQvzIGoe8a1mNmSIW+i6RSjSVS7S4CTQjcDBn6nQJ7fUsuxnrMFKtDJCqI1dc2l3NxUrbbuZim0Xh7ev7fX7erwR9TaOBM6IvJLQAAAABJRU5ErkJggg=="
+  }
+ ]
+}

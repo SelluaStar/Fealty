@@ -1,0 +1,26 @@
+{
+  "display": {
+    "icon": {
+      "id": "fealty:elders_mantle"
+    },
+    "title": {
+      "translate": "advancement.fealty.restored"
+    },
+    "description": {
+      "translate": "advancement.fealty.restored.desc"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "restored": {
+      "trigger": "fealty:event",
+      "conditions": {
+        "event": "fealty:elder_restored"
+      }
+    }
+  },
+  "parent": "fealty:courier"
+}

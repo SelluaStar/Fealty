@@ -1,0 +1,16 @@
+{
+  "buy": {
+    "id": "minecraft:emerald",
+    "count": 48
+  },
+  "buy_b": {
+    "id": "minecraft:gold_block",
+    "count": 2
+  },
+  "sell": {
+    "id": "minecraft:totem_of_undying",
+    "count": 1
+  },
+  "max_uses": 1,
+  "weight": 3
+}

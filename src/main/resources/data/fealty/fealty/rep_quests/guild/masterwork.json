@@ -1,0 +1,19 @@
+{
+  "title": {
+    "translate": "quest.fealty.guild.masterwork"
+  },
+  "description": {
+    "translate": "quest.fealty.guild.masterwork.desc"
+  },
+  "tiers": {},
+  "difficulty": 5,
+  "reward": {
+    "rep": 20,
+    "loot_table": "fealty:quest_rewards/rare"
+  },
+  "objective": {
+    "type": "fealty:vault_raid",
+    "count": 2
+  },
+  "pool": "fealty:none"
+}

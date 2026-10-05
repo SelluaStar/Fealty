@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "fealty:item/signet_of_the_old_crown"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "display": {
+    "icon": {
+      "id": "fealty:smoke_bomb"
+    },
+    "title": {
+      "translate": "advancement.fealty.black_market"
+    },
+    "description": {
+      "translate": "advancement.fealty.black_market.desc"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "trade": {
+      "trigger": "fealty:event",
+      "conditions": {
+        "event": "fealty:black_market_trade"
+      }
+    }
+  },
+  "parent": "fealty:unseen_theft"
+}

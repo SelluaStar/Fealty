@@ -1,0 +1,26 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:skeleton_skull"
+    },
+    "title": {
+      "translate": "advancement.fealty.village_broken"
+    },
+    "description": {
+      "translate": "advancement.fealty.village_broken.desc"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": true
+  },
+  "criteria": {
+    "broken": {
+      "trigger": "fealty:event",
+      "conditions": {
+        "event": "fealty:village_broken"
+      }
+    }
+  },
+  "parent": "fealty:hated"
+}

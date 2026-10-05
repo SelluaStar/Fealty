@@ -1,0 +1,39 @@
+{
+  "title": {
+    "translate": "quest.fealty.costly_amends"
+  },
+  "description": {
+    "translate": "quest.fealty.costly_amends.desc"
+  },
+  "tiers": {
+    "fealty:hated": 12,
+    "fealty:distrusted": 3
+  },
+  "difficulty": 5,
+  "reward": {
+    "rep": 15
+  },
+  "objective": {
+    "type": "fealty:fetch",
+    "items": [
+      {
+        "ingredient": {
+          "item": "minecraft:diamond"
+        },
+        "count": 8
+      },
+      {
+        "ingredient": {
+          "item": "minecraft:emerald"
+        },
+        "count": 32
+      },
+      {
+        "ingredient": {
+          "item": "minecraft:gold_block"
+        },
+        "count": 4
+      }
+    ]
+  }
+}

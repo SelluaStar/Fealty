@@ -1,0 +1,27 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:golden_apple"
+    },
+    "title": {
+      "translate": "advancement.fealty.honored"
+    },
+    "description": {
+      "translate": "advancement.fealty.honored.desc"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "honored": {
+      "trigger": "fealty:rep_tier",
+      "conditions": {
+        "villages_only": true,
+        "min_tier": "fealty:honored"
+      }
+    }
+  },
+  "parent": "fealty:trusted"
+}

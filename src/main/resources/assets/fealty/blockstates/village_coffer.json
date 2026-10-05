@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "fealty:block/village_coffer"
+    },
+    "facing=east": {
+      "model": "fealty:block/village_coffer",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "fealty:block/village_coffer",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "fealty:block/village_coffer",
+      "y": 270
+    }
+  }
+}

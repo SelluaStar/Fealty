@@ -1,0 +1,32 @@
+{
+  "professions": [
+    "minecraft:librarian"
+  ],
+  "min_tier": "fealty:honored",
+  "min_level": 3,
+  "offers": [
+    {
+      "buy": {
+        "id": "minecraft:emerald",
+        "count": 30
+      },
+      "buy_b": {
+        "id": "minecraft:book",
+        "count": 1
+      },
+      "sell": {
+        "id": "minecraft:enchanted_book",
+        "count": 1,
+        "components": {
+          "minecraft:stored_enchantments": {
+            "levels": {
+              "minecraft:mending": 1
+            }
+          }
+        }
+      },
+      "max_uses": 1,
+      "xp": 20
+    }
+  ]
+}

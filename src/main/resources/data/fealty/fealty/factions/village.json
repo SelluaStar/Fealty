@@ -1,0 +1,12 @@
+{
+  "kind": "village",
+  "name": {
+    "translate": "fealty.faction.village"
+  },
+  "structures": "#minecraft:village",
+  "elder": true,
+  "renown_share": 0.1,
+  "renown_start_factor": 0.25,
+  "priority": 0,
+  "members": "#fealty:village_members"
+}

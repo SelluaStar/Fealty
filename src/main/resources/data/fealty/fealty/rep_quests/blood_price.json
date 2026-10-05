@@ -1,0 +1,32 @@
+{
+  "title": {
+    "translate": "quest.fealty.blood_price"
+  },
+  "description": {
+    "translate": "quest.fealty.blood_price.desc"
+  },
+  "tiers": {
+    "fealty:hated": 8
+  },
+  "difficulty": 5,
+  "reward": {
+    "rep": 15
+  },
+  "objective": {
+    "type": "fealty:fetch",
+    "items": [
+      {
+        "ingredient": {
+          "item": "minecraft:totem_of_undying"
+        },
+        "count": 1
+      },
+      {
+        "ingredient": {
+          "item": "minecraft:emerald_block"
+        },
+        "count": 4
+      }
+    ]
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "buy": {
+    "id": "minecraft:emerald",
+    "count": 9
+  },
+  "sell": {
+    "id": "minecraft:potion",
+    "count": 1,
+    "components": {
+      "minecraft:potion_contents": {
+        "potion": "minecraft:long_invisibility"
+      }
+    }
+  },
+  "max_uses": 3,
+  "weight": 10
+}

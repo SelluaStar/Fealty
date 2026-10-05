@@ -1,0 +1,1 @@
+com.selluastar.fealty.compat.kubejs.FealtyKubePlugin
