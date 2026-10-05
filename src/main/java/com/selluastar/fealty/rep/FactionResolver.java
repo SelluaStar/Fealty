@@ -23,7 +23,11 @@ public final class FactionResolver {
             return Optional.empty();
         }
         if (entity instanceof Villager villager) {
-            // Villagers re-check their bell and home; the stored faction is only a fallback.
+            // A faction set on purpose (a static faction from a mod, data pack or test) sticks. Village membership is
+            // re-checked from the villager's bell and home; the stored village is only a fallback.
+            if (villager.hasData(ModAttachments.FACTION) && !Factions.isVillage(villager.getData(ModAttachments.FACTION))) {
+                return Optional.of(villager.getData(ModAttachments.FACTION));
+            }
             return Optional.of(VillageResolver.villageOf(villager).map(VillageRecord::id).orElse(Factions.WANDERERS));
         }
         if (entity.hasData(ModAttachments.FACTION)) {
