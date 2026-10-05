@@ -24,6 +24,27 @@ public final class ClientPayloads {
         ClientRepCache.setVillageTrades(payload.trades());
     }
 
+    public static void feedback(com.selluastar.fealty.network.FeedbackPayload payload) {
+        com.selluastar.fealty.client.hud.ClientFeedback.handle(payload);
+    }
+
+    public static void quests(com.selluastar.fealty.network.SyncQuestsPayload payload) {
+        ClientQuestCache.set(payload.quests());
+    }
+
+    public static void openScreen(com.selluastar.fealty.network.OpenScreenPayload payload) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (com.selluastar.fealty.network.OpenScreenPayload.JOURNAL.equals(payload.screen())) {
+            com.selluastar.fealty.client.screen.JournalScreen.Page page = com.selluastar.fealty.client.screen.JournalScreen.Page.QUESTS;
+            for (com.selluastar.fealty.client.screen.JournalScreen.Page p : com.selluastar.fealty.client.screen.JournalScreen.Page.values()) {
+                if (p.name().equalsIgnoreCase(payload.argument())) {
+                    page = p;
+                }
+            }
+            minecraft.setScreen(new com.selluastar.fealty.client.screen.JournalScreen(page));
+        }
+    }
+
     public static void openQuestScreen(OpenQuestScreenPayload payload) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.screen instanceof QuestGiverScreen screen && screen.entityId() == payload.entityId()) {

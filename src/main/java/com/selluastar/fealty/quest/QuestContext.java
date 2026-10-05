@@ -14,6 +14,10 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.Level;
 
 /** Everything a quest objective needs to know about one accepted quest. */
 public record QuestContext(ServerPlayer player, ActiveQuest quest, RepQuestDefinition definition) {
@@ -44,6 +48,9 @@ public record QuestContext(ServerPlayer player, ActiveQuest quest, RepQuestDefin
             QuestManager.completeLater(player, quest.giver());
         } else {
             player.sendSystemMessage(Component.translatable("fealty.quest.ready", definition.title()).withStyle(ChatFormatting.GREEN));
+            com.selluastar.fealty.network.Feedback.toast(player, "ready", Component.translatable("fealty.toast.quest_ready"), definition.title());
+            com.selluastar.fealty.network.Feedback.sound(player, net.minecraft.sounds.SoundEvents.NOTE_BLOCK_CHIME, 0.7F, 1.4F);
+            QuestSync.sync(player);
         }
     }
 
@@ -57,6 +64,22 @@ public record QuestContext(ServerPlayer player, ActiveQuest quest, RepQuestDefin
             return data.village(quest.faction());
         }
         return Optional.empty();
+    }
+
+    /** The explicit anchor an objective stored, if any. */
+    public Optional<BlockPos> storedAnchor() {
+        return state().contains("anchor") ? NbtUtils.readBlockPos(state(), "anchor") : Optional.empty();
+    }
+
+    /** The dimension the quest takes place in: its village's, else the player's current one. */
+    public ResourceKey<Level> dimension() {
+        if (state().contains("dimension")) {
+            ResourceLocation id = ResourceLocation.tryParse(state().getString("dimension"));
+            if (id != null) {
+                return ResourceKey.create(Registries.DIMENSION, id);
+            }
+        }
+        return village().map(VillageRecord::dimension).orElse(player.level().dimension());
     }
 
     /** Where the quest is centred: an explicit anchor, else the village, else the player. */

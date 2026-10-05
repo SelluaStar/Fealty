@@ -98,6 +98,7 @@ public final class QuestEvents {
                 ctx.definition().objective().tick(ctx);
             }
         }
+        QuestSync.syncIfChanged(player);
     }
 
     @SubscribeEvent

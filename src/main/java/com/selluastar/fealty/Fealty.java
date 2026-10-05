@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 import com.selluastar.fealty.api.FealtyApi;
 import com.selluastar.fealty.compat.Compat;
+import com.selluastar.fealty.config.FealtyClientConfig;
 import com.selluastar.fealty.config.FealtyConfig;
 import com.selluastar.fealty.network.FealtyNetwork;
 import com.selluastar.fealty.registry.ModRegistries;
@@ -23,6 +24,7 @@ public final class Fealty {
 
     public Fealty(IEventBus modBus, ModContainer container) {
         container.registerConfig(ModConfig.Type.SERVER, FealtyConfig.SPEC);
+        container.registerConfig(ModConfig.Type.CLIENT, FealtyClientConfig.SPEC);
         ModRegistries.register(modBus);
         modBus.addListener(FealtyNetwork::register);
         FealtyApi.setInstance(new RepApiImpl());

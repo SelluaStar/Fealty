@@ -2,7 +2,9 @@ package com.selluastar.fealty.quest;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
+import com.selluastar.fealty.network.QuestView;
 import com.selluastar.fealty.village.VillageRecord;
 
 import net.minecraft.core.BlockPos;
@@ -30,6 +32,19 @@ public interface QuestObjective {
 
     /** Short summary for an offer that has not been accepted yet. */
     List<Component> preview();
+
+    /**
+     * Objective lines with progress for the tracker and journal. By default the screen description without
+     * counts; objectives with counts override this.
+     */
+    default List<QuestView.Line> progress(QuestContext ctx) {
+        return describe(ctx).stream().map(line -> QuestView.Line.text(Component.literal(line.getString()))).toList();
+    }
+
+    /** Where the player should head while the objective is open (the quest's anchor by default). */
+    default Optional<QuestView.Waypoint> waypoint(QuestContext ctx) {
+        return ctx.storedAnchor().map(pos -> new QuestView.Waypoint(ctx.dimension(), pos, Component.empty()));
+    }
 
     /** Whether the player can hand the quest in now. */
     default boolean canTurnIn(QuestContext ctx) {

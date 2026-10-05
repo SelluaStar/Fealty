@@ -12,17 +12,15 @@ import com.selluastar.fealty.data.FealtyDataManager;
 import com.selluastar.fealty.data.SourceSettings;
 import com.selluastar.fealty.data.TierManager;
 import com.selluastar.fealty.network.FealtyNetwork;
+import com.selluastar.fealty.network.Feedback;
 import com.selluastar.fealty.registry.FealtyRegistries;
 import com.selluastar.fealty.registry.ModCriteria;
 
-import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.neoforged.neoforge.common.NeoForge;
 
@@ -49,8 +47,9 @@ public final class RepManager {
         return TierManager.tierFor(rep);
     }
 
+    /** Fealty's day counter: only moves forward, and keeps counting when the daylight cycle is off. */
     public static long day(MinecraftServer server) {
-        return server.overworld().getDayTime() / 24000L;
+        return FealtyCalendar.day(server);
     }
 
     // ---- Reads ----
@@ -270,11 +269,7 @@ public final class RepManager {
         }
         ModCriteria.REP_TIER.get().trigger(player, faction, target, newTier);
         FealtyNetwork.syncStanding(player, faction);
-        if (FealtyConfig.SHOW_REP_CHANGES.get()) {
-            MutableComponent amount = Component.literal((delta > 0 ? "+" : "") + delta)
-                    .withStyle(delta > 0 ? ChatFormatting.GREEN : ChatFormatting.RED);
-            player.displayClientMessage(Component.translatable("fealty.rep.change", amount, Factions.displayName(server, faction)), true);
-        }
+        Feedback.rep(player, Factions.displayName(server, faction), delta, newTier.color());
         return delta;
     }
 
@@ -305,10 +300,16 @@ public final class RepManager {
     private static void announceTier(ServerPlayer player, ResourceLocation faction, RepTier oldTier, RepTier newTier) {
         boolean rising = newTier.rank() > oldTier.rank();
         Component tierName = newTier.displayName().copy().withColor(newTier.color());
-        String key = Factions.RENOWN.equals(faction) ? (rising ? "fealty.renown.rise" : "fealty.renown.fall")
-                : (rising ? "fealty.tier.rise" : "fealty.tier.fall");
-        player.sendSystemMessage(Component.translatable(key, Factions.displayName(player.server, faction), tierName));
-        player.level().playSound(null, player.blockPosition(),
-                rising ? SoundEvents.PLAYER_LEVELUP : SoundEvents.VILLAGER_NO, SoundSource.PLAYERS, 0.6F, rising ? 1.2F : 0.8F);
+        Component factionName = Factions.displayName(player.server, faction);
+        boolean renown = Factions.RENOWN.equals(faction);
+        String key = renown ? (rising ? "fealty.renown.rise" : "fealty.renown.fall") : (rising ? "fealty.tier.rise" : "fealty.tier.fall");
+        player.sendSystemMessage(Component.translatable(key, factionName, tierName));
+        Component detail = Component.translatable(rising ? "fealty.banner.tier_rise" : "fealty.banner.tier_fall", factionName);
+        Feedback.banner(player, newTier.displayName().copy(), detail, newTier.color(), renown ? "renown" : rising ? "heart" : "skull");
+        if (rising && newTier.rank() > TierManager.neutral().rank()) {
+            Feedback.sound(player, SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, 0.6F, 1.0F);
+        } else {
+            Feedback.sound(player, rising ? SoundEvents.PLAYER_LEVELUP : SoundEvents.VILLAGER_NO, 0.6F, rising ? 1.2F : 0.8F);
+        }
     }
 }

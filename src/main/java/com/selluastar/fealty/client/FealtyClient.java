@@ -1,6 +1,10 @@
 package com.selluastar.fealty.client;
 
 import com.selluastar.fealty.Fealty;
+import com.selluastar.fealty.client.hud.AnnouncementLayer;
+import com.selluastar.fealty.client.hud.ClientFeedback;
+import com.selluastar.fealty.client.hud.QuestTrackerLayer;
+import com.selluastar.fealty.client.hud.RepFeedLayer;
 import com.selluastar.fealty.client.render.FealtyHumanoidRenderer;
 import com.selluastar.fealty.client.render.RobedVillagerRenderer;
 import com.selluastar.fealty.registry.ModEntities;
@@ -11,8 +15,10 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
+import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 
-/** Client setup: entity renderers and cleanup on disconnect. */
+/** Client setup: entity renderers, HUD layers and cleanup on disconnect. */
 public final class FealtyClient {
     private FealtyClient() {
     }
@@ -42,6 +48,13 @@ public final class FealtyClient {
                     ctx -> new FealtyHumanoidRenderer<>(ctx, Fealty.id("textures/entity/tyrant_lord.png"), 1.4F));
             event.registerEntityRenderer(ModEntities.SMOKE_BOMB.get(), ThrownItemRenderer::new);
         }
+
+        @SubscribeEvent
+        public static void registerGuiLayers(RegisterGuiLayersEvent event) {
+            event.registerAbove(VanillaGuiLayers.BOSS_OVERLAY, Fealty.id("quest_tracker"), QuestTrackerLayer::render);
+            event.registerAbove(VanillaGuiLayers.BOSS_OVERLAY, Fealty.id("rep_feed"), RepFeedLayer::render);
+            event.registerAbove(VanillaGuiLayers.TITLE, Fealty.id("announcement"), AnnouncementLayer::render);
+        }
     }
 
     @EventBusSubscriber(modid = Fealty.MOD_ID, value = Dist.CLIENT)
@@ -52,6 +65,8 @@ public final class FealtyClient {
         @SubscribeEvent
         public static void onLogout(ClientPlayerNetworkEvent.LoggingOut event) {
             ClientRepCache.clear();
+            ClientQuestCache.clear();
+            ClientFeedback.clear();
         }
     }
 }

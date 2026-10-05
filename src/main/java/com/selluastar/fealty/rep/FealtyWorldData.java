@@ -30,6 +30,11 @@ public final class FealtyWorldData extends SavedData {
 
     private final Map<UUID, PlayerRepData> players = new HashMap<>();
     private final Map<ResourceLocation, VillageRecord> villages = new LinkedHashMap<>();
+    /** Fealty's own day counter, see {@link FealtyCalendar}. */
+    long calendarDay;
+    long calendarLastIndex = Long.MIN_VALUE;
+    long calendarLastAdvance;
+    boolean calendarStarted;
 
     public static FealtyWorldData get(MinecraftServer server) {
         return server.overworld().getDataStorage().computeIfAbsent(FACTORY, NAME);
@@ -47,6 +52,13 @@ public final class FealtyWorldData extends SavedData {
                     .resultOrPartial(e -> Fealty.LOGGER.error("Fealty: failed to load village data: {}", e))
                     .ifPresent(data.villages::putAll);
         }
+        if (tag.contains("calendar")) {
+            CompoundTag calendar = tag.getCompound("calendar");
+            data.calendarDay = calendar.getLong("day");
+            data.calendarLastIndex = calendar.getLong("last_index");
+            data.calendarLastAdvance = calendar.getLong("last_advance");
+            data.calendarStarted = true;
+        }
         return data;
     }
 
@@ -58,6 +70,13 @@ public final class FealtyWorldData extends SavedData {
         VILLAGES_CODEC.encodeStart(NbtOps.INSTANCE, villages)
                 .resultOrPartial(e -> Fealty.LOGGER.error("Fealty: failed to save village data: {}", e))
                 .ifPresent(t -> tag.put("villages", t));
+        if (calendarStarted) {
+            CompoundTag calendar = new CompoundTag();
+            calendar.putLong("day", calendarDay);
+            calendar.putLong("last_index", calendarLastIndex);
+            calendar.putLong("last_advance", calendarLastAdvance);
+            tag.put("calendar", calendar);
+        }
         return tag;
     }
 

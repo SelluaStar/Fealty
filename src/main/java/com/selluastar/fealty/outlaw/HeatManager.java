@@ -24,7 +24,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.MobSpawnType;
-import net.minecraft.world.level.levelgen.Heightmap;
 import net.neoforged.neoforge.common.NeoForge;
 
 /**
@@ -156,11 +155,14 @@ public final class HeatManager {
         for (int i = 0; i < count; i++) {
             double angle = level.getRandom().nextDouble() * Math.PI * 2;
             int distance = 24 + level.getRandom().nextInt(16);
-            BlockPos column = player.blockPosition().offset(Mth.floor(Math.cos(angle) * distance), 0, Mth.floor(Math.sin(angle) * distance));
-            if (!level.isLoaded(column)) {
+            int x = player.getBlockX() + Mth.floor(Math.cos(angle) * distance);
+            int z = player.getBlockZ() + Mth.floor(Math.sin(angle) * distance);
+            // Near the player's height, so hunters reach players underground and never land on the Nether roof.
+            java.util.Optional<BlockPos> spot = com.selluastar.fealty.util.SpawnSpots.nearY(level, x, z, player.getBlockY(), 12);
+            if (spot.isEmpty()) {
                 continue;
             }
-            BlockPos pos = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, column);
+            BlockPos pos = spot.get();
             BountyHunterEntity hunter = ModEntities.BOUNTY_HUNTER.get().create(level);
             if (hunter == null) {
                 continue;

@@ -15,11 +15,9 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
-/** Runs once per in-game day (taxes, optional rep decay) and once per minute (heat). */
+/** Runs once per Fealty day (taxes, optional rep decay) and once per minute (heat). */
 @EventBusSubscriber(modid = Fealty.MOD_ID)
 public final class DailyTicker {
-    private static long lastDay = Long.MIN_VALUE;
-
     private DailyTicker() {
     }
 
@@ -33,14 +31,9 @@ public final class DailyTicker {
         if (ticks % 200 != 0) {
             return;
         }
-        long day = RepManager.day(server);
-        if (lastDay == Long.MIN_VALUE) {
-            lastDay = day;
-            return;
-        }
-        if (day != lastDay) {
-            lastDay = day;
-            onNewDay(server, day);
+        int advanced = FealtyCalendar.tick(server);
+        if (advanced > 0) {
+            onNewDay(server, FealtyCalendar.day(server));
         }
     }
 

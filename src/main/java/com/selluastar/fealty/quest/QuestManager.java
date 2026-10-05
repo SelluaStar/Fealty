@@ -16,6 +16,7 @@ import com.selluastar.fealty.config.FealtyConfig;
 import com.selluastar.fealty.data.FealtyDataManager;
 import com.selluastar.fealty.data.TierManager;
 import com.selluastar.fealty.item.LetterInfo;
+import com.selluastar.fealty.network.Feedback;
 import com.selluastar.fealty.quest.type.CourierObjective;
 import com.selluastar.fealty.registry.ModCriteria;
 import com.selluastar.fealty.registry.ModDataComponents;
@@ -182,6 +183,9 @@ public final class QuestManager {
         NeoForge.EVENT_BUS.post(new RepQuestEvent.Start(player, faction, questId, def.get().typeId()));
         ModCriteria.QUEST.get().trigger(player, questId, def.get().typeId(), QuestTrigger.Status.STARTED);
         player.sendSystemMessage(Component.translatable("fealty.quest.accepted", def.get().title()).withStyle(ChatFormatting.GOLD));
+        Feedback.toast(player, "quest", Component.translatable("fealty.toast.quest_accepted"), def.get().title());
+        Feedback.sound(player, SoundEvents.BOOK_PAGE_TURN, 0.8F, 1.0F);
+        QuestSync.sync(player);
         return true;
     }
 
@@ -196,6 +200,7 @@ public final class QuestManager {
             case PROGRESS -> {
                 ctx.get().dirty();
                 player.sendSystemMessage(Component.translatable("fealty.quest.progress", ctx.get().definition().title()));
+                QuestSync.sync(player);
             }
             case MISSING -> player.displayClientMessage(Component.translatable("fealty.quest.not_ready"), true);
         }
@@ -232,6 +237,8 @@ public final class QuestManager {
         ModCriteria.QUEST.get().trigger(player, ctx.quest().questId(), def.typeId(), QuestTrigger.Status.FAILED);
         player.sendSystemMessage(Component.translatable("fealty.quest.failed." + reason.name().toLowerCase(java.util.Locale.ROOT), def.title())
                 .withStyle(ChatFormatting.RED));
+        Feedback.toast(player, "cross", Component.translatable("fealty.toast.quest_failed"), def.title());
+        QuestSync.sync(player);
     }
 
     public static boolean forceComplete(ServerPlayer player, ResourceLocation giver) {
@@ -271,7 +278,30 @@ public final class QuestManager {
         ModCriteria.QUEST.get().trigger(player, quest.questId(), def.typeId(), QuestTrigger.Status.COMPLETED);
         player.sendSystemMessage(Component.translatable("fealty.quest.completed", def.title()).withStyle(ChatFormatting.GREEN));
         player.level().playSound(null, player.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.7F, 1.0F);
+        Feedback.banner(player, Component.translatable("fealty.banner.quest_complete"), def.title(), 0xF2D675, "check");
+        Feedback.sound(player, SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, 0.6F, 1.0F);
+        RepManager.data(player).addStat("quests_completed", 1);
+        celebrate(player);
         ChainManager.onQuestCompleted(player, quest);
+        QuestSync.sync(player);
+    }
+
+    /** Nearby villagers cheer when the player completes a quest. */
+    private static void celebrate(ServerPlayer player) {
+        net.minecraft.server.level.ServerLevel level = player.serverLevel();
+        for (net.minecraft.world.entity.npc.Villager villager : level.getEntitiesOfClass(net.minecraft.world.entity.npc.Villager.class,
+                player.getBoundingBox().inflate(12), v -> v.isAlive() && !v.isSleeping())) {
+            level.sendParticles(net.minecraft.core.particles.ParticleTypes.HAPPY_VILLAGER, villager.getX(), villager.getY() + 1.8,
+                    villager.getZ(), 6, 0.3, 0.3, 0.3, 0.0);
+            if (villager.onGround() && level.getRandom().nextInt(3) == 0) {
+                villager.getJumpControl().jump();
+            }
+        }
+    }
+
+    /** Forget queued completions (server stopping). */
+    public static void clearPending() {
+        PENDING.clear();
     }
 
     public static void giveRewards(ServerPlayer player, QuestReward reward) {

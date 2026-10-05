@@ -39,7 +39,14 @@ public final class FealtyNetwork {
                 (payload, context) -> com.selluastar.fealty.client.ClientPayloads.openQuestScreen(payload));
         registrar.playToClient(SyncVillageTradesPayload.TYPE, SyncVillageTradesPayload.STREAM_CODEC,
                 (payload, context) -> com.selluastar.fealty.client.ClientPayloads.villageTrades(payload));
+        registrar.playToClient(FeedbackPayload.TYPE, FeedbackPayload.STREAM_CODEC,
+                (payload, context) -> com.selluastar.fealty.client.ClientPayloads.feedback(payload));
+        registrar.playToClient(SyncQuestsPayload.TYPE, SyncQuestsPayload.STREAM_CODEC,
+                (payload, context) -> com.selluastar.fealty.client.ClientPayloads.quests(payload));
+        registrar.playToClient(OpenScreenPayload.TYPE, OpenScreenPayload.STREAM_CODEC,
+                (payload, context) -> com.selluastar.fealty.client.ClientPayloads.openScreen(payload));
         registrar.playToServer(QuestActionPayload.TYPE, QuestActionPayload.STREAM_CODEC, QuestActionPayload::handle);
+        registrar.playToServer(TrackQuestPayload.TYPE, TrackQuestPayload.STREAM_CODEC, TrackQuestPayload::handle);
     }
 
     @SubscribeEvent

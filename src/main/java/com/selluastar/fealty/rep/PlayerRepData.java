@@ -5,12 +5,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.selluastar.fealty.chain.ChainProgress;
 import com.selluastar.fealty.quest.QuestLog;
 
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.resources.ResourceLocation;
 
 /** Everything Fealty remembers about one player. Lives in {@link FealtyWorldData}, so it works while offline. */
@@ -27,8 +29,10 @@ public final class PlayerRepData {
             Codec.unboundedMap(ResourceLocation.CODEC, Codec.LONG).optionalFieldOf("warned", Map.of()).forGetter(d -> d.warnedAt),
             Codec.LONG.optionalFieldOf("next_bounty", 0L).forGetter(d -> d.nextBountyTime),
             ResourceLocation.CODEC.listOf().optionalFieldOf("flags", List.of()).forGetter(d -> List.copyOf(d.flags)),
-            Codec.STRING.optionalFieldOf("name", "").forGetter(d -> d.name)
-    ).apply(i, (rep, renown, heat, wanted, tallies, quests, chains, aggro, warned, nextBounty, flags, name) -> {
+            Codec.STRING.optionalFieldOf("name", "").forGetter(d -> d.name),
+            UUIDUtil.STRING_CODEC.listOf().optionalFieldOf("untracked_quests", List.of()).forGetter(d -> List.copyOf(d.untracked)),
+            Codec.unboundedMap(Codec.STRING, Codec.INT).optionalFieldOf("stats", Map.of()).forGetter(d -> d.stats)
+    ).apply(i, (rep, renown, heat, wanted, tallies, quests, chains, aggro, warned, nextBounty, flags, name, untracked, stats) -> {
         PlayerRepData d = new PlayerRepData();
         d.rep.putAll(rep);
         d.renown = renown;
@@ -42,6 +46,8 @@ public final class PlayerRepData {
         d.nextBountyTime = nextBounty;
         d.flags.addAll(flags);
         d.name = name;
+        d.untracked.addAll(untracked);
+        d.stats.putAll(stats);
         return d;
     }));
 
@@ -57,6 +63,8 @@ public final class PlayerRepData {
     long nextBountyTime;
     final Set<ResourceLocation> flags = new HashSet<>();
     String name = "";
+    final Set<UUID> untracked = new HashSet<>();
+    final Map<String, Integer> stats = new HashMap<>();
 
     public Map<ResourceLocation, Integer> rep() {
         return rep;
@@ -125,6 +133,37 @@ public final class PlayerRepData {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    /** Whether an accepted quest shows in the HUD tracker. Quests are tracked unless the player hides them. */
+    public boolean isTracked(UUID quest) {
+        return !untracked.contains(quest);
+    }
+
+    public void setTracked(UUID quest, boolean tracked) {
+        if (tracked) {
+            untracked.remove(quest);
+        } else {
+            untracked.add(quest);
+        }
+    }
+
+    /** Forget tracking choices for quests that no longer exist. */
+    public void retainTracked(Set<UUID> live) {
+        untracked.retainAll(live);
+    }
+
+    /** Lifetime counters shown in the journal (quests done, gifts given, crimes seen, ...). */
+    public int stat(String key) {
+        return stats.getOrDefault(key, 0);
+    }
+
+    public void addStat(String key, int amount) {
+        stats.merge(key, amount, Integer::sum);
+    }
+
+    public Map<String, Integer> stats() {
+        return stats;
     }
 
     public Tally tally(ResourceLocation faction, ResourceLocation source, long day) {
