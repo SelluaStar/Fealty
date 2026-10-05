@@ -1,6 +1,9 @@
 package com.selluastar.fealty.gametest;
 
 import java.util.List;
+import java.util.UUID;
+
+import com.mojang.authlib.GameProfile;
 
 import com.selluastar.fealty.Fealty;
 import com.selluastar.fealty.api.RepSources;
@@ -24,8 +27,12 @@ import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.item.ItemStack;
@@ -36,6 +43,8 @@ import net.minecraft.world.item.trading.MerchantOffers;
 import net.minecraft.world.level.GameType;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+
+import io.netty.channel.embedded.EmbeddedChannel;
 
 /** In-game tests for the core rules. Run with {@code ./gradlew runGameTestServer}. */
 @GameTestHolder(Fealty.MOD_ID)
@@ -50,8 +59,17 @@ public final class FealtyGameTests {
         return Fealty.id("test_faction_" + (counter++));
     }
 
+    /**
+     * A survival player. The vanilla {@link GameTestHelper#makeMockServerPlayerInLevel()} player always counts as
+     * creative, and creative players commit no crimes.
+     */
     private static ServerPlayer player(GameTestHelper helper) {
-        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        ServerLevel level = helper.getLevel();
+        CommonListenerCookie cookie = CommonListenerCookie.createInitial(new GameProfile(UUID.randomUUID(), "test-mock-player"), false);
+        ServerPlayer player = new ServerPlayer(level.getServer(), level, cookie.gameProfile(), cookie.clientInformation());
+        Connection connection = new Connection(PacketFlow.SERVERBOUND);
+        new EmbeddedChannel(connection);
+        level.getServer().getPlayerList().placeNewPlayer(connection, player, cookie);
         player.setGameMode(GameType.SURVIVAL);
         RepManager.data(player).setRenown(0);
         RepManager.data(player).rep().clear();
