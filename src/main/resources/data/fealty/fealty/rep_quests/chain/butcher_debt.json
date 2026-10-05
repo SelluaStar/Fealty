@@ -1,0 +1,27 @@
+{
+  "title": {
+    "translate": "quest.fealty.chain.butcher_debt"
+  },
+  "description": {
+    "translate": "quest.fealty.chain.butcher_debt.desc"
+  },
+  "tiers": {},
+  "difficulty": 1,
+  "reward": {
+    "rep": 6,
+    "renown": 2,
+    "experience": 25,
+    "loot_table": "fealty:quest_rewards/common"
+  },
+  "objective": {
+    "type": "fealty:talk_to",
+    "message": {
+      "translate": "fealty.talk.chain_debt"
+    },
+    "reply": {
+      "translate": "fealty.talk.chain_debt.reply"
+    },
+    "profession": "minecraft:farmer"
+  },
+  "pool": "fealty:none"
+}

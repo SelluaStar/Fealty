@@ -1,0 +1,26 @@
+{
+  "title": {
+    "translate": "quest.fealty.chain.tanner_seal"
+  },
+  "description": {
+    "translate": "quest.fealty.chain.tanner_seal.desc"
+  },
+  "tiers": {},
+  "difficulty": 1,
+  "reward": {
+    "rep": 6,
+    "renown": 2,
+    "experience": 25,
+    "loot_table": "fealty:quest_rewards/common"
+  },
+  "objective": {
+    "type": "fealty:talk_to",
+    "message": {
+      "translate": "fealty.talk.chain_seal"
+    },
+    "reply": {
+      "translate": "fealty.talk.chain_seal.reply"
+    }
+  },
+  "pool": "fealty:none"
+}

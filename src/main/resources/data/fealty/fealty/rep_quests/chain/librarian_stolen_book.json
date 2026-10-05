@@ -1,0 +1,27 @@
+{
+  "title": {
+    "translate": "quest.fealty.chain.librarian_stolen_book"
+  },
+  "description": {
+    "translate": "quest.fealty.chain.librarian_stolen_book.desc"
+  },
+  "tiers": {},
+  "difficulty": 3,
+  "reward": {
+    "rep": 6,
+    "renown": 2,
+    "experience": 40,
+    "loot_table": "fealty:quest_rewards/common"
+  },
+  "objective": {
+    "type": "fealty:retrieve",
+    "item_name": {
+      "translate": "fealty.item.crown_chronicle"
+    },
+    "item": "minecraft:book",
+    "site": "stash",
+    "min_distance": 80,
+    "max_distance": 160
+  },
+  "pool": "fealty:none"
+}

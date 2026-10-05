@@ -1,0 +1,27 @@
+{
+  "title": {
+    "translate": "quest.fealty.chain.fool_riddle"
+  },
+  "description": {
+    "translate": "quest.fealty.chain.fool_riddle.desc"
+  },
+  "tiers": {},
+  "difficulty": 1,
+  "reward": {
+    "rep": 6,
+    "renown": 2,
+    "experience": 25,
+    "loot_table": "fealty:quest_rewards/common"
+  },
+  "objective": {
+    "type": "fealty:talk_to",
+    "message": {
+      "translate": "fealty.talk.chain_riddle"
+    },
+    "reply": {
+      "translate": "fealty.talk.chain_riddle.reply"
+    },
+    "profession": "minecraft:cleric"
+  },
+  "pool": "fealty:none"
+}

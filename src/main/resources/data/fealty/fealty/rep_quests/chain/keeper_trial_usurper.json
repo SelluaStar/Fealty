@@ -1,9 +1,9 @@
 {
   "title": {
-    "translate": "quest.fealty.chain.keeper_trial"
+    "translate": "quest.fealty.chain.keeper_trial_usurper"
   },
   "description": {
-    "translate": "quest.fealty.chain.keeper_trial.desc"
+    "translate": "quest.fealty.chain.keeper_trial_usurper.desc"
   },
   "tiers": {},
   "difficulty": 5,
@@ -17,31 +17,27 @@
     "type": "fealty:hunt",
     "targets": [
       {
-        "entity": "minecraft:wither_skeleton",
+        "entity": "minecraft:vindicator",
         "name": {
-          "translate": "fealty.hunt.oathbreaker"
+          "translate": "fealty.hunt.usurpers_blade"
         },
-        "health_multiplier": 6.0,
-        "damage_bonus": 6.0,
-        "armor_bonus": 8.0,
+        "health_multiplier": 5.0,
+        "damage_bonus": 4.0,
+        "armor_bonus": 6.0,
         "equipment": {
           "mainhand": {
-            "id": "minecraft:netherite_sword",
+            "id": "minecraft:iron_axe",
             "count": 1
           },
           "chest": {
             "id": "minecraft:iron_chestplate",
             "count": 1
-          },
-          "head": {
-            "id": "minecraft:iron_helmet",
-            "count": 1
           }
         }
       }
     ],
-    "min_distance": 20,
-    "max_distance": 40
+    "min_distance": 30,
+    "max_distance": 70
   },
   "pool": "fealty:none"
 }

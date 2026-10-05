@@ -1,0 +1,25 @@
+{
+  "title": {
+    "translate": "quest.fealty.chain.fisherman_drowned"
+  },
+  "description": {
+    "translate": "quest.fealty.chain.fisherman_drowned.desc"
+  },
+  "tiers": {},
+  "difficulty": 2,
+  "reward": {
+    "rep": 6,
+    "renown": 2,
+    "experience": 40,
+    "loot_table": "fealty:quest_rewards/common"
+  },
+  "objective": {
+    "type": "fealty:kill",
+    "targets": "minecraft:drowned",
+    "count": 6,
+    "label": {
+      "translate": "fealty.label.drowned"
+    }
+  },
+  "pool": "fealty:none"
+}

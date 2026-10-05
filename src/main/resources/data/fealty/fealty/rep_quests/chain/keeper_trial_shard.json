@@ -1,0 +1,27 @@
+{
+  "title": {
+    "translate": "quest.fealty.chain.keeper_trial_shard"
+  },
+  "description": {
+    "translate": "quest.fealty.chain.keeper_trial_shard.desc"
+  },
+  "tiers": {},
+  "difficulty": 5,
+  "reward": {
+    "rep": 10,
+    "renown": 5,
+    "experience": 200,
+    "loot_table": "fealty:quest_rewards/rare"
+  },
+  "objective": {
+    "type": "fealty:retrieve",
+    "item_name": {
+      "translate": "fealty.item.crown_shard"
+    },
+    "item": "minecraft:gold_ingot",
+    "site": "stash",
+    "min_distance": 50,
+    "max_distance": 120
+  },
+  "pool": "fealty:none"
+}

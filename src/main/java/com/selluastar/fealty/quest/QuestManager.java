@@ -105,6 +105,11 @@ public final class QuestManager {
         return count;
     }
 
+    /** Whether the player may take another quest from this giver, under the giver's and the overall limit. */
+    public static boolean hasRoom(ServerPlayer player, ResourceLocation giver, int perGiver) {
+        return RepManager.data(player).quests(giver).actives().size() < perGiver && activeCount(player) < FealtyConfig.MAX_ACTIVE_QUESTS.get();
+    }
+
     public static Optional<QuestContext> byInstance(ServerPlayer player, UUID instance) {
         for (QuestContext ctx : activeContexts(player)) {
             if (ctx.quest().instanceId().equals(instance)) {

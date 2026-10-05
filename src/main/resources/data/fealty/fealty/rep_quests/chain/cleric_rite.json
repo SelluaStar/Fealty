@@ -1,9 +1,9 @@
 {
   "title": {
-    "translate": "quest.fealty.chain.cartographer_survey"
+    "translate": "quest.fealty.chain.cleric_rite"
   },
   "description": {
-    "translate": "quest.fealty.chain.cartographer_survey.desc"
+    "translate": "quest.fealty.chain.cleric_rite.desc"
   },
   "tiers": {},
   "difficulty": 2,
@@ -18,19 +18,19 @@
     "items": [
       {
         "ingredient": {
-          "item": "minecraft:compass"
+          "item": "minecraft:golden_apple"
         },
         "count": 1
       },
       {
         "ingredient": {
-          "item": "minecraft:paper"
+          "item": "minecraft:candle"
         },
-        "count": 16
+        "count": 6
       },
       {
         "ingredient": {
-          "item": "minecraft:ink_sac"
+          "item": "minecraft:glowstone_dust"
         },
         "count": 4
       }

@@ -1,12 +1,12 @@
 {
   "title": {
-    "translate": "quest.fealty.chain.cleric_relic"
+    "translate": "quest.fealty.chain.fool_troll"
   },
   "description": {
-    "translate": "quest.fealty.chain.cleric_relic.desc"
+    "translate": "quest.fealty.chain.fool_troll.desc"
   },
   "tiers": {},
-  "difficulty": 3,
+  "difficulty": 2,
   "reward": {
     "rep": 6,
     "renown": 2,
@@ -17,15 +17,16 @@
     "type": "fealty:hunt",
     "targets": [
       {
-        "entity": "minecraft:zombie_villager",
+        "entity": "minecraft:zombie",
         "name": {
-          "translate": "fealty.hunt.hollow_prior"
+          "translate": "fealty.hunt.bridge_troll"
         },
         "health_multiplier": 4.0,
         "damage_bonus": 3.0,
+        "armor_bonus": 4.0,
         "equipment": {
           "head": {
-            "id": "minecraft:golden_helmet",
+            "id": "minecraft:leather_helmet",
             "count": 1
           }
         }

@@ -1,16 +1,16 @@
 {
   "title": {
-    "translate": "quest.fealty.chain.cartographer_survey"
+    "translate": "quest.fealty.chain.drifter_boots"
   },
   "description": {
-    "translate": "quest.fealty.chain.cartographer_survey.desc"
+    "translate": "quest.fealty.chain.drifter_boots.desc"
   },
   "tiers": {},
-  "difficulty": 2,
+  "difficulty": 1,
   "reward": {
     "rep": 6,
     "renown": 2,
-    "experience": 40,
+    "experience": 25,
     "loot_table": "fealty:quest_rewards/common"
   },
   "objective": {
@@ -18,19 +18,13 @@
     "items": [
       {
         "ingredient": {
-          "item": "minecraft:compass"
+          "item": "minecraft:leather_boots"
         },
         "count": 1
       },
       {
         "ingredient": {
-          "item": "minecraft:paper"
-        },
-        "count": 16
-      },
-      {
-        "ingredient": {
-          "item": "minecraft:ink_sac"
+          "item": "minecraft:bread"
         },
         "count": 4
       }

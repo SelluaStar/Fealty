@@ -53,15 +53,22 @@ public record TalkToObjective(Optional<ResourceLocation> profession, Component m
             return false;
         }
         UUID giver = ctx.state().hasUUID("giver_uuid") ? ctx.state().getUUID("giver_uuid") : null;
+        List<Villager> members = new ArrayList<>();
         List<Villager> candidates = new ArrayList<>();
         for (Villager villager : ctx.level().getEntitiesOfClass(Villager.class, AABB.of(village.get().bounds()),
                 v -> v.isAlive() && !v.isBaby() && !v.getUUID().equals(giver))) {
-            boolean member = FactionResolver.factionOf(villager).map(village.get().id()::equals).orElse(false);
-            boolean fits = profession.isEmpty()
-                    || profession.get().equals(BuiltInRegistries.VILLAGER_PROFESSION.getKey(villager.getVillagerData().getProfession()));
-            if (member && fits) {
+            if (!FactionResolver.factionOf(villager).map(village.get().id()::equals).orElse(false)) {
+                continue;
+            }
+            members.add(villager);
+            if (profession.isEmpty()
+                    || profession.get().equals(BuiltInRegistries.VILLAGER_PROFESSION.getKey(villager.getVillagerData().getProfession()))) {
                 candidates.add(villager);
             }
+        }
+        if (candidates.isEmpty()) {
+            // Nobody of that trade lives here: anyone will pass the word on.
+            candidates = members;
         }
         if (candidates.isEmpty()) {
             ctx.player().sendSystemMessage(Component.translatable("fealty.quest.talk_to.none"));

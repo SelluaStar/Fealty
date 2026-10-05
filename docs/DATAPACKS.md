@@ -144,12 +144,19 @@ Objective types:
 {
   "kind": "rare_villager",
   "start_tier": "fealty:trusted",
-  "steps": [
-    {"role": "smith", "professions": ["minecraft:armorer", "minecraft:weaponsmith", "minecraft:toolsmith"], "quest": "fealty:chain/smith_ore"}
+  "steps_count": 3,
+  "step_pool": [
+    {
+      "role": "smith",
+      "professions": ["minecraft:armorer", "minecraft:weaponsmith", "minecraft:toolsmith"],
+      "variants": ["fealty:chain/smith_ore", "fealty:chain/smith_forge", "fealty:chain/smith_die"]
+    },
+    {"role": "fool", "professions": ["minecraft:nitwit"], "variants": ["fealty:chain/fool_riddle", "fealty:chain/fool_shiny"]},
+    {"role": "drifter", "professions": ["minecraft:none"], "variants": ["fealty:chain/drifter_boots"]}
   ],
   "steps_reward": {"id": "fealty:signet_of_the_old_crown"},
   "map_structure": "#fealty:hidden_hamlets",
-  "trial_quest": "fealty:chain/keeper_trial",
+  "trial_quests": ["fealty:chain/keeper_trial", "fealty:chain/keeper_trial_shard"],
   "trial_reward": {"id": "fealty:keepers_charter"},
   "final_reward": {"id": "fealty:royal_writ"},
   "repeatable": true
@@ -159,12 +166,23 @@ Objective types:
 The `fealty:rare_villager` chain:
 
 1. A Trusted player asks the elder about rumours.
-2. Each step's role goes to a villager of that village (matching profession preferred), who becomes a named
-   villager. Sneak-talk to them for their quest.
-3. When every step is done, the player gets `steps_reward` and a map to `map_structure`.
-4. The Keeper there checks that the player is still at `start_tier` with the origin village.
-5. The Keeper gives `trial_quest`; completing it rewards `trial_reward`.
-6. The Keeper combines `steps_reward` and `trial_reward` into `final_reward`.
+2. The run picks `steps_count` steps from `step_pool`, preferring roles the village has people for (each role
+   needs a different villager), and one of each step's `variants`. A fixed `steps` list (same format) can be used
+   instead of a pool; a step may give a single `quest` instead of `variants`.
+3. Each role goes to a villager of that village: one of the listed `professions` (`minecraft:nitwit` and
+   `minecraft:none` work too), else a jobless villager who takes up the trade, else anyone. The villager gets a
+   name and a title (`fealty.chain.role.<role>`), and their profession is locked so they keep it. Ask them for
+   work in the dialogue box; their greeting is `fealty.chain.villager.greet.<role>`.
+4. If a step's quest cannot start (no structure of its kind nearby, say), another of its variants is set.
+5. When every step is done, the player gets `steps_reward` and a map to `map_structure`, and the villagers'
+   titles go once no other player's run needs them.
+6. The Keeper there checks that the player is still at `start_tier` with the origin village, and sets one of the
+   `trial_quests` (`trial_quest` takes a single one). A failed trial is replaced by another. Completing it
+   rewards `trial_reward`.
+7. The Keeper combines `steps_reward` and `trial_reward` into `final_reward`.
+
+Named villagers keep their role through being zombified and cured. If one dies, any villager of the village
+can be asked to take their place.
 
 The `fealty:thieves_guild` chain (`kind: guild`) is handed out one step at a time by the guild fence. Each step
 can carry its own `rewards`.

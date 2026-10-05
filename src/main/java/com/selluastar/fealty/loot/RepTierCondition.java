@@ -3,7 +3,6 @@ package com.selluastar.fealty.loot;
 import java.util.Optional;
 import java.util.Set;
 
-import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.selluastar.fealty.advancement.RepTierTrigger;

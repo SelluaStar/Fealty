@@ -1,0 +1,25 @@
+{
+  "title": {
+    "translate": "quest.fealty.chain.mason_shafts"
+  },
+  "description": {
+    "translate": "quest.fealty.chain.mason_shafts.desc"
+  },
+  "tiers": {},
+  "difficulty": 2,
+  "reward": {
+    "rep": 6,
+    "renown": 2,
+    "experience": 50,
+    "loot_table": "fealty:quest_rewards/common"
+  },
+  "objective": {
+    "type": "fealty:explore",
+    "structure": "#minecraft:mineshaft",
+    "search": 60,
+    "label": {
+      "translate": "fealty.label.mineshaft"
+    }
+  },
+  "pool": "fealty:none"
+}

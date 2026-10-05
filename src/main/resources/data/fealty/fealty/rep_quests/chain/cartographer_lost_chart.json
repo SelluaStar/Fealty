@@ -1,0 +1,27 @@
+{
+  "title": {
+    "translate": "quest.fealty.chain.cartographer_lost_chart"
+  },
+  "description": {
+    "translate": "quest.fealty.chain.cartographer_lost_chart.desc"
+  },
+  "tiers": {},
+  "difficulty": 2,
+  "reward": {
+    "rep": 6,
+    "renown": 2,
+    "experience": 40,
+    "loot_table": "fealty:quest_rewards/common"
+  },
+  "objective": {
+    "type": "fealty:retrieve",
+    "item_name": {
+      "translate": "fealty.item.weathered_chart"
+    },
+    "item": "minecraft:map",
+    "site": "cache",
+    "min_distance": 60,
+    "max_distance": 140
+  },
+  "pool": "fealty:none"
+}

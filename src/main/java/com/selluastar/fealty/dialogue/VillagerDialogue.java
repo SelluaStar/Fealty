@@ -55,6 +55,7 @@ final class VillagerDialogue {
     }
 
     static DialogueNode node(ServerPlayer player, Villager villager, @Nullable Component reply) {
+        ChainManager.checkRole(villager);
         Component text = reply != null ? reply
                 : DialogueLines.pick("greet", SpeakerContext.of(villager, player), villager.getRandom(), player.getDisplayName())
                 .orElse(Component.translatable("fealty.dialogue.fallback"));

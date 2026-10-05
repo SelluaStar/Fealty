@@ -127,7 +127,7 @@ public final class ThievesGuild {
                         Component.translatable("fealty.fence.done"), rep, true, List.of(), List.of());
             }
             ResourceLocation key = ChainManager.stepKey(CHAIN, next);
-            List<OpenQuestScreenPayload.QuestEntry> quests = QuestGivers.entries(player, key, List.of(def.get().steps().get(next).quest()));
+            List<OpenQuestScreenPayload.QuestEntry> quests = QuestGivers.entries(player, key, def.get().steps().get(next).firstQuest().stream().toList());
             Component greeting = Component.translatable(next == 0 ? "fealty.fence.recruit" : "fealty.fence.next", player.getDisplayName());
             return new OpenQuestScreenPayload(entity.getId(), entity.getDisplayName(), subtitle, greeting, rep, true, quests, List.of());
         }
@@ -148,7 +148,8 @@ public final class ThievesGuild {
             switch (action) {
                 case QuestActionPayload.ACCEPT -> {
                     RepManager.meet(player, Factions.THIEVES_GUILD);
-                    if (QuestManager.accept(player, key, Factions.THIEVES_GUILD, def.get().steps().get(next).quest(), new CompoundTag())
+                    Optional<ResourceLocation> quest = def.get().steps().get(next).firstQuest();
+                    if (quest.isPresent() && QuestManager.accept(player, key, Factions.THIEVES_GUILD, quest.get(), new CompoundTag())
                             && data.setFlag(JOINED)) {
                         FealtyEvents.fire(player, FealtyEvents.GUILD_JOINED);
                     }

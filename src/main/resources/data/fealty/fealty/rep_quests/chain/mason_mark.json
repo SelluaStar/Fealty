@@ -1,9 +1,9 @@
 {
   "title": {
-    "translate": "quest.fealty.chain.cartographer_survey"
+    "translate": "quest.fealty.chain.mason_mark"
   },
   "description": {
-    "translate": "quest.fealty.chain.cartographer_survey.desc"
+    "translate": "quest.fealty.chain.mason_mark.desc"
   },
   "tiers": {},
   "difficulty": 2,
@@ -18,19 +18,13 @@
     "items": [
       {
         "ingredient": {
-          "item": "minecraft:compass"
+          "item": "minecraft:stone_bricks"
         },
-        "count": 1
+        "count": 32
       },
       {
         "ingredient": {
-          "item": "minecraft:paper"
-        },
-        "count": 16
-      },
-      {
-        "ingredient": {
-          "item": "minecraft:ink_sac"
+          "item": "minecraft:chiseled_stone_bricks"
         },
         "count": 4
       }

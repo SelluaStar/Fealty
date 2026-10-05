@@ -1,12 +1,12 @@
 {
   "title": {
-    "translate": "quest.fealty.chain.cleric_relic"
+    "translate": "quest.fealty.chain.fletcher_bone_archer"
   },
   "description": {
-    "translate": "quest.fealty.chain.cleric_relic.desc"
+    "translate": "quest.fealty.chain.fletcher_bone_archer.desc"
   },
   "tiers": {},
-  "difficulty": 3,
+  "difficulty": 2,
   "reward": {
     "rep": 6,
     "renown": 2,
@@ -17,15 +17,20 @@
     "type": "fealty:hunt",
     "targets": [
       {
-        "entity": "minecraft:zombie_villager",
+        "entity": "minecraft:skeleton",
         "name": {
-          "translate": "fealty.hunt.hollow_prior"
+          "translate": "fealty.hunt.bone_archer"
         },
         "health_multiplier": 4.0,
-        "damage_bonus": 3.0,
+        "damage_bonus": 2.0,
+        "armor_bonus": 4.0,
         "equipment": {
+          "mainhand": {
+            "id": "minecraft:bow",
+            "count": 1
+          },
           "head": {
-            "id": "minecraft:golden_helmet",
+            "id": "minecraft:chainmail_helmet",
             "count": 1
           }
         }

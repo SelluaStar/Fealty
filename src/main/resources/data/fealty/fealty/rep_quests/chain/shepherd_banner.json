@@ -1,9 +1,9 @@
 {
   "title": {
-    "translate": "quest.fealty.chain.cartographer_survey"
+    "translate": "quest.fealty.chain.shepherd_banner"
   },
   "description": {
-    "translate": "quest.fealty.chain.cartographer_survey.desc"
+    "translate": "quest.fealty.chain.shepherd_banner.desc"
   },
   "tiers": {},
   "difficulty": 2,
@@ -18,19 +18,19 @@
     "items": [
       {
         "ingredient": {
-          "item": "minecraft:compass"
+          "item": "minecraft:white_wool"
         },
-        "count": 1
+        "count": 12
       },
       {
         "ingredient": {
-          "item": "minecraft:paper"
+          "item": "minecraft:yellow_dye"
         },
-        "count": 16
+        "count": 4
       },
       {
         "ingredient": {
-          "item": "minecraft:ink_sac"
+          "item": "minecraft:blue_dye"
         },
         "count": 4
       }

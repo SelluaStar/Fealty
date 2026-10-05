@@ -1,0 +1,25 @@
+{
+  "title": {
+    "translate": "quest.fealty.chain.cartographer_outpost"
+  },
+  "description": {
+    "translate": "quest.fealty.chain.cartographer_outpost.desc"
+  },
+  "tiers": {},
+  "difficulty": 3,
+  "reward": {
+    "rep": 6,
+    "renown": 2,
+    "experience": 60,
+    "loot_table": "fealty:quest_rewards/common"
+  },
+  "objective": {
+    "type": "fealty:explore",
+    "structure": "#fealty:pillager_outposts",
+    "search": 60,
+    "label": {
+      "translate": "fealty.label.pillager_outpost"
+    }
+  },
+  "pool": "fealty:none"
+}

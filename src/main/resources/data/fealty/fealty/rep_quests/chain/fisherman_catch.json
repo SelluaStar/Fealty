@@ -1,9 +1,9 @@
 {
   "title": {
-    "translate": "quest.fealty.chain.cartographer_survey"
+    "translate": "quest.fealty.chain.fisherman_catch"
   },
   "description": {
-    "translate": "quest.fealty.chain.cartographer_survey.desc"
+    "translate": "quest.fealty.chain.fisherman_catch.desc"
   },
   "tiers": {},
   "difficulty": 2,
@@ -18,21 +18,15 @@
     "items": [
       {
         "ingredient": {
-          "item": "minecraft:compass"
+          "item": "minecraft:cod"
         },
-        "count": 1
+        "count": 10
       },
       {
         "ingredient": {
-          "item": "minecraft:paper"
+          "item": "minecraft:salmon"
         },
-        "count": 16
-      },
-      {
-        "ingredient": {
-          "item": "minecraft:ink_sac"
-        },
-        "count": 4
+        "count": 6
       }
     ]
   },
