@@ -5,7 +5,9 @@ import com.selluastar.fealty.client.hud.AnnouncementLayer;
 import com.selluastar.fealty.client.hud.ClientFeedback;
 import com.selluastar.fealty.client.hud.QuestTrackerLayer;
 import com.selluastar.fealty.client.hud.RepFeedLayer;
+import com.selluastar.fealty.client.hud.RetinueLayer;
 import com.selluastar.fealty.client.render.FealtyHumanoidRenderer;
+import com.selluastar.fealty.client.render.GuardRenderer;
 import com.selluastar.fealty.client.render.RobedVillagerRenderer;
 import com.selluastar.fealty.registry.ModEntities;
 
@@ -46,6 +48,7 @@ public final class FealtyClient {
                     ctx -> new FealtyHumanoidRenderer<>(ctx, Fealty.id("textures/entity/bounty_hunter.png"), 1.0F));
             event.registerEntityRenderer(ModEntities.TYRANT_LORD.get(),
                     ctx -> new FealtyHumanoidRenderer<>(ctx, Fealty.id("textures/entity/tyrant_lord.png"), 1.4F));
+            event.registerEntityRenderer(ModEntities.VILLAGE_GUARD.get(), GuardRenderer::new);
             event.registerEntityRenderer(ModEntities.SMOKE_BOMB.get(), ThrownItemRenderer::new);
         }
 
@@ -53,6 +56,7 @@ public final class FealtyClient {
         public static void registerGuiLayers(RegisterGuiLayersEvent event) {
             event.registerAbove(VanillaGuiLayers.BOSS_OVERLAY, Fealty.id("quest_tracker"), QuestTrackerLayer::render);
             event.registerAbove(VanillaGuiLayers.BOSS_OVERLAY, Fealty.id("rep_feed"), RepFeedLayer::render);
+            event.registerAbove(VanillaGuiLayers.BOSS_OVERLAY, Fealty.id("retinue"), RetinueLayer::render);
             event.registerAbove(VanillaGuiLayers.TITLE, Fealty.id("announcement"), AnnouncementLayer::render);
         }
     }
@@ -69,6 +73,7 @@ public final class FealtyClient {
             ClientFeedback.clear();
             com.selluastar.fealty.client.bubble.SpeechBubbles.clear();
             com.selluastar.fealty.client.bubble.QuestMarkers.clear();
+            RetinueLayer.clear();
         }
     }
 }

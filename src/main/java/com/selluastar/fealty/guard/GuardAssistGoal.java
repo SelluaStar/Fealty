@@ -1,5 +1,6 @@
 package com.selluastar.fealty.guard;
 
+import java.util.EnumSet;
 import java.util.Optional;
 
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +28,7 @@ public class GuardAssistGoal extends TargetGoal {
 
     public GuardAssistGoal(Mob guard) {
         super(guard, false);
+        setFlags(EnumSet.of(Flag.TARGET));
     }
 
     @Override
@@ -40,12 +42,14 @@ public class GuardAssistGoal extends TargetGoal {
             return false;
         }
         candidate = null;
-        for (Player p : mob.level().getEntitiesOfClass(Player.class, mob.getBoundingBox().inflate(24))) {
+        // Look no further than the guard can follow a target, or the fight is dropped as soon as it starts.
+        double range = Math.min(24.0, getFollowDistance());
+        for (Player p : mob.level().getEntitiesOfClass(Player.class, mob.getBoundingBox().inflate(range))) {
             if (!(p instanceof ServerPlayer player) || player.isSpectator()) {
                 continue;
             }
             GuardStance stance = GuardManager.stance(player, faction.get());
-            if (!stance.assists() || (stance == GuardStance.ASSIST && mob.distanceToSqr(player) > 16 * 16)) {
+            if (!stance.assists() || (stance == GuardStance.ASSIST && mob.distanceToSqr(player) > Math.min(16.0, range) * Math.min(16.0, range))) {
                 continue;
             }
             LivingEntity attacker = player.getLastHurtByMob();

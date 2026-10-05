@@ -80,6 +80,8 @@ public final class ModItems {
             () -> new DeferredSpawnEggItem(ModEntities.BOUNTY_HUNTER, 0x3C3226, 0xC8A050, new Item.Properties()));
     public static final DeferredItem<DeferredSpawnEggItem> TYRANT_LORD_SPAWN_EGG = ITEMS.register("tyrant_lord_spawn_egg",
             () -> new DeferredSpawnEggItem(ModEntities.TYRANT_LORD, 0x2A1A1A, 0xD4AF37, new Item.Properties()));
+    public static final DeferredItem<DeferredSpawnEggItem> VILLAGE_GUARD_SPAWN_EGG = ITEMS.register("village_guard_spawn_egg",
+            () -> new DeferredSpawnEggItem(ModEntities.VILLAGE_GUARD, 0x8A8F96, 0x1565C0, new Item.Properties()));
 
     private ModItems() {
     }

@@ -12,7 +12,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.util.StringRepresentable;
 
-/** What a guard has been told to do by an Honored player (escort) or a lord (horn commands). */
+/**
+ * What a guard has been told to do by an Honored player (escort) or a lord (horn and spoken commands). The
+ * {@code leader} is the player who gave the order; a lord's orders lapse when they stop being lord.
+ */
 public final class GuardOrders {
     public static final Codec<GuardOrders> CODEC = RecordCodecBuilder.create(i -> i.group(
             Mode.CODEC.optionalFieldOf("mode", Mode.NONE).forGetter(o -> o.mode),
@@ -68,6 +71,11 @@ public final class GuardOrders {
         return mode != Mode.NONE && (until <= 0 || gameTime < until);
     }
 
+    /** Whether these are a lord's orders (as opposed to an escort, or none). */
+    public boolean isLordsOrder() {
+        return mode == Mode.FOLLOW || mode == Mode.HOLD || mode == Mode.GUARD || mode == Mode.RETURN;
+    }
+
     public enum Mode implements StringRepresentable {
         NONE("none"),
         /** Follow an Honored player for a while. */
@@ -77,7 +85,11 @@ public final class GuardOrders {
         /** Lord's command: stay here. */
         HOLD("hold"),
         /** Lord's command: patrol and defend the village (the normal behaviour). */
-        DEFEND("defend");
+        DEFEND("defend"),
+        /** Lord's command: keep watch over the area around a spot. */
+        GUARD("guard"),
+        /** Lord's command: head back to the village. */
+        RETURN("return");
 
         public static final Codec<Mode> CODEC = StringRepresentable.fromEnum(Mode::values);
         private final String name;

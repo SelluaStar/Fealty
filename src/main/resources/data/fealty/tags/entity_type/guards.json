@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
+    "fealty:village_guard",
     "minecraft:iron_golem",
     {
       "id": "guardvillagers:guard",

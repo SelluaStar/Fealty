@@ -8,6 +8,7 @@ import java.util.UUID;
 
 import com.selluastar.fealty.Fealty;
 import com.selluastar.fealty.api.RepTier;
+import com.selluastar.fealty.guard.GarrisonManager;
 import com.selluastar.fealty.lordship.LordshipManager;
 import com.selluastar.fealty.outlaw.TyrantEvent;
 import com.selluastar.fealty.rep.RepManager;
@@ -62,6 +63,7 @@ public final class VillageTracker {
             LAST_VILLAGE_TICK.put(record.id(), time);
             ElderManager.tickVillage(level, record);
             LordshipManager.tickVillage(level, record);
+            GarrisonManager.tickVillage(level, record);
         }
     }
 

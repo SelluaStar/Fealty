@@ -12,6 +12,7 @@ public final class FealtyClientConfig {
     public static final ModConfigSpec.IntValue TRACKER_MAX_QUESTS;
     public static final ModConfigSpec.BooleanValue REP_FEED;
     public static final ModConfigSpec.BooleanValue ANNOUNCEMENTS;
+    public static final ModConfigSpec.BooleanValue RETINUE_BAR;
     public static final ModConfigSpec.BooleanValue SPEECH_BUBBLES;
     public static final ModConfigSpec.BooleanValue QUEST_MARKERS;
     public static final ModConfigSpec.IntValue TYPEWRITER_SPEED;
@@ -42,6 +43,8 @@ public final class FealtyClientConfig {
                 .define("rep_feed", true);
         ANNOUNCEMENTS = b.comment("Show banners for tier changes, quest completions and lordship.")
                 .define("announcements", true);
+        RETINUE_BAR = b.comment("Show the guards following you at the top of the screen.")
+                .define("retinue_bar", true);
         b.pop();
         b.push("world");
         SPEECH_BUBBLES = b.comment("Show speech bubbles above villagers, guards and other NPCs.")

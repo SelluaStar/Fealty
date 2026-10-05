@@ -12,6 +12,7 @@ import java.util.UUID;
 import org.jetbrains.annotations.Nullable;
 
 import com.selluastar.fealty.Fealty;
+import com.selluastar.fealty.entity.VillageGuardEntity;
 import com.selluastar.fealty.network.FealtyNetwork;
 import com.selluastar.fealty.network.OpenDialoguePayload;
 import com.selluastar.fealty.network.OpenScreenPayload;
@@ -59,6 +60,9 @@ public final class DialogueService {
     private static Optional<DialogueNode> build(ServerPlayer player, Entity npc, @Nullable Component reply) {
         if (npc instanceof Villager villager) {
             return Optional.of(VillagerDialogue.node(player, villager, reply));
+        }
+        if (npc instanceof VillageGuardEntity guard) {
+            return Optional.of(GuardDialogue.node(player, guard, reply));
         }
         Optional<QuestGiver> giver = QuestGivers.forEntity(npc);
         return giver.map(g -> GiverDialogue.node(player, npc, g, reply));
@@ -117,6 +121,8 @@ public final class DialogueService {
         }
         if (npc instanceof Villager villager) {
             VillagerDialogue.handle(player, villager, option);
+        } else if (npc instanceof VillageGuardEntity guard) {
+            GuardDialogue.handle(player, guard, option);
         } else {
             QuestGivers.forEntity(npc).ifPresent(giver -> GiverDialogue.handle(player, npc, giver, option));
         }

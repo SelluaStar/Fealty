@@ -12,6 +12,8 @@ import com.selluastar.fealty.api.GuardStance;
 import com.selluastar.fealty.api.RepTier;
 import com.selluastar.fealty.api.Severity;
 import com.selluastar.fealty.config.FealtyConfig;
+import com.selluastar.fealty.dialogue.Speech;
+import com.selluastar.fealty.entity.VillageGuardEntity;
 import com.selluastar.fealty.mixin.MobAccessor;
 import com.selluastar.fealty.outlaw.HeatManager;
 import com.selluastar.fealty.registry.ModAttachments;
@@ -20,6 +22,7 @@ import com.selluastar.fealty.rep.FealtyWorldData;
 import com.selluastar.fealty.rep.PlayerRepData;
 import com.selluastar.fealty.rep.RepManager;
 import com.selluastar.fealty.village.VillageRecord;
+import com.selluastar.fealty.village.VillageResolver;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -31,6 +34,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.animal.IronGolem;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -49,21 +53,43 @@ public final class GuardManager {
     private GuardManager() {
     }
 
+    /**
+     * Whether a mob guards a village. Golems players build are their own, except those a lord builds in a village
+     * they rule, which join its guard.
+     */
     public static boolean isGuard(Mob mob) {
-        return mob.getType().is(FealtyTags.Entities.GUARDS) && !(mob instanceof IronGolem golem && golem.isPlayerCreated());
+        return mob.getType().is(FealtyTags.Entities.GUARDS)
+                && !(mob instanceof IronGolem golem && golem.isPlayerCreated() && !golem.hasData(ModAttachments.FACTION));
     }
 
     @SubscribeEvent
     public static void onJoin(EntityJoinLevelEvent event) {
-        if (event.getLevel().isClientSide() || !(event.getEntity() instanceof PathfinderMob mob) || !mob.getType().is(FealtyTags.Entities.GUARDS)) {
+        if (!(event.getLevel() instanceof ServerLevel level) || !(event.getEntity() instanceof PathfinderMob mob)
+                || !mob.getType().is(FealtyTags.Entities.GUARDS)) {
             return;
+        }
+        if (mob instanceof IronGolem golem && golem.isPlayerCreated() && !event.loadedFromDisk() && !golem.hasData(ModAttachments.FACTION)) {
+            joinLordsVillage(level, golem);
         }
         MobAccessor accessor = (MobAccessor) mob;
         accessor.fealty$getTargetSelector().addGoal(1, new GuardHostilePlayerGoal(mob));
         accessor.fealty$getTargetSelector().addGoal(2, new GuardAssistGoal(mob));
         accessor.fealty$getGoalSelector().addGoal(0, new GuardStandDownGoal(mob));
-        accessor.fealty$getGoalSelector().addGoal(2, new GuardOrdersGoal(mob));
+        // Above the golem's own walk back to the village (priority 2), so a lord's orders win.
+        accessor.fealty$getGoalSelector().addGoal(1, new GuardOrdersGoal(mob));
         accessor.fealty$getGoalSelector().addGoal(5, new GuardWatchGoal(mob));
+    }
+
+    /** A golem built by the lord of the village it stands in becomes one of that village's guards. */
+    private static void joinLordsVillage(ServerLevel level, IronGolem golem) {
+        Optional<VillageRecord> village = VillageResolver.villageAt(level, golem.blockPosition());
+        if (village.isEmpty() || village.get().lord().uuid() == null) {
+            return;
+        }
+        Player builder = level.getNearestPlayer(golem, 8.0);
+        if (builder != null && village.get().lord().isLord(builder.getUUID())) {
+            golem.setData(ModAttachments.FACTION, village.get().id());
+        }
     }
 
     /** Whether a guard should attack the player right now. */
@@ -157,6 +183,11 @@ public final class GuardManager {
             if (last == null || now - last > GREET_COOLDOWN) {
                 GREETED.put(key, now);
                 guard.getLookControl().setLookAt(player);
+                if (guard instanceof VillageGuardEntity) {
+                    // Fealty guards say it out loud.
+                    Speech.bark(guard, "guard_greet", player, 0);
+                    break;
+                }
                 int line = guard.getRandom().nextInt(4);
                 String key2 = village.lord().isLord(player.getUUID()) ? "fealty.guard.greet_lord." + line
                         : (stance == GuardStance.ESCORT ? "fealty.guard.greet_hero." : "fealty.guard.greet.") + line;

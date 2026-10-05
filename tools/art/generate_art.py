@@ -269,6 +269,165 @@ def humanoid_texture(seed, skin, hair, shirt, coat, trousers, boots, belt, hood=
     return p.img
 
 
+# ------------------------------------------------------------------------------------------------ village guards
+
+GUARD_STEEL = "#8A8F96"
+
+
+def mail(p, base, amount=0.06):
+    """Riveted mail: rings in alternating rows."""
+    def fn(x, y, w, h):
+        ring = 1.12 if (x + (y % 2)) % 2 == 0 else 0.86
+        return shade(base, ring * (1.0 + p.rand.uniform(-amount, amount)))
+    return fn
+
+
+def guard_texture(seed, rank, skin, hair, eye="#3B3B3B", beard=None):
+    """A guard of the village watch on the player skin layout. The tabard is a separate, tinted layer; the chest
+    emblem here shows through the hole the tabard leaves for it."""
+    p = Painter(64, 64, seed)
+    S, H, EYE = hexc(skin), hexc(hair), hexc(eye)
+    STEEL, DARK, LEATHER, GOLD = hexc(GUARD_STEEL), hexc("#4A4E55"), hexc("#5A4128"), hexc("#D4AF37")
+    BEARD = hexc(beard) if beard else None
+    archer = rank == "archer"
+    sergeant = rank == "sergeant"
+    HOOD = hexc("#4E5B31")
+    GAMBESON = hexc("#B8A27C")
+
+    def face(x, y, w, h):
+        if y <= 1:
+            return shade(H, 0.9 + 0.15 * p.rand.random())
+        if y == 3:
+            if x in (1, 5):
+                return hexc("#F2F2F2")
+            if x in (2, 6):
+                return EYE
+        if BEARD is not None and y >= 5 and not (y == 5 and 2 <= x <= 5):
+            return shade(BEARD, 0.9 + 0.15 * p.rand.random())
+        if y == 6 and 2 <= x <= 5:
+            return shade(S, 0.75)
+        return shade(S, 1.0 + p.rand.uniform(-0.04, 0.04))
+
+    def head_side(x, y, w, h):
+        if y <= 2 or (y <= 4 and x >= w - 2):
+            return shade(H, 0.9 + 0.1 * p.rand.random())
+        return shade(S, 0.93 + 0.05 * p.rand.random())
+
+    p.box(0, 0, 8, 8, 8, top=p.noise(H), bottom=p.noise(shade(S, 0.8)), front=face, right=head_side,
+          left=lambda x, y, w, h: head_side(w - 1 - x, y, w, h), back=lambda x, y, w, h: shade(H, 0.85 + 0.15 * p.rand.random()))
+
+    # Helmet (hat layer): kettle hat and mail coif; the archer wears a hood; the sergeant's helm has a gold band.
+    if archer:
+        def hood_front(x, y, w, h):
+            if y <= 1 or x == 0 or x == w - 1:
+                return cloth(p, HOOD)(x, y, w, h)
+            return None
+        p.box(32, 0, 8, 8, 8, top=cloth(p, HOOD), front=hood_front, sides=cloth(p, HOOD))
+    else:
+        def helm_front(x, y, w, h):
+            if y == 0:
+                return shade(STEEL, 1.15)
+            if y == 1:
+                return shade(GOLD, 0.95) if sergeant else shade(STEEL, 0.95)
+            if x == 0 or x == w - 1:
+                return mail(p, DARK)(x, y, w, h) if y >= 4 else shade(STEEL, 0.85)
+            if sergeant and y == 2 and x in (3, 4):
+                return shade(STEEL, 0.7)  # nasal guard
+            return None
+
+        def helm_side(x, y, w, h):
+            if y <= 1:
+                return shade(STEEL, 1.05 if y == 0 else 0.95) if not (sergeant and y == 1) else shade(GOLD, 0.9)
+            return mail(p, DARK)(x, y, w, h) if y >= 2 else None
+        p.box(32, 0, 8, 8, 8, top=lambda x, y, w, h: shade(STEEL, 1.0 + 0.12 * ((x + y) % 2)), front=helm_front, sides=helm_side)
+
+    # Body: mail (gambeson for archers) with a leather belt; the emblem sits on the chest.
+    body = GAMBESON if archer else STEEL
+
+    def torso(x, y, w, h):
+        if y == 8:
+            return shade(GOLD, 1.0) if x in (3, 4) else shade(LEATHER, 0.95 + 0.1 * p.rand.random())
+        if 3 <= y <= 6 and 2 <= x <= 5:
+            # a crown-and-shield emblem, gold on white
+            if y == 3 and x in (2, 3, 4, 5) and (x + y) % 2 == 1:
+                return GOLD
+            if y >= 4 and (x in (2, 5) or y == 6):
+                return shade(GOLD, 0.9)
+            return hexc("#F4EAD0")
+        return (cloth(p, body) if archer else mail(p, body))(x, y, w, h)
+    p.box(16, 16, 8, 12, 4, front=torso, back=lambda x, y, w, h: (cloth(p, body) if archer else mail(p, body))(x, y, w, h),
+          sides=(cloth(p, body) if archer else mail(p, body)), top=mail(p, body), bottom=cloth(p, hexc("#3E3A35")))
+
+    # Arms: mail or padded sleeves, leather gloves; the sergeant wears steel pauldrons on the sleeve layer.
+    def arm(x, y, w, h):
+        if y >= h - 3:
+            return shade(LEATHER, 0.9 + 0.1 * p.rand.random())
+        if archer and y >= h - 5:
+            return shade(LEATHER, 0.8)  # bracers
+        return (cloth(p, GAMBESON) if archer else mail(p, STEEL))(x, y, w, h)
+    for u, v in ((40, 16), (32, 48)):
+        p.box(u, v, 4, 12, 4, front=arm, back=arm, sides=arm, top=mail(p, STEEL), bottom=solid(shade(LEATHER, 0.8)))
+    if sergeant:
+        def pauldron(x, y, w, h):
+            if y <= 2:
+                return shade(STEEL, 1.15 - 0.1 * y) if not (y == 2 and x % 2 == 0) else shade(GOLD, 0.9)
+            return None
+        for u, v in ((40, 32), (48, 48)):
+            p.box(u, v, 4, 12, 4, front=pauldron, back=pauldron, sides=pauldron, top=lambda x, y, w, h: shade(STEEL, 1.15))
+
+    # Legs: dark hose (mail chausses for the sergeant) and boots.
+    hose = hexc("#3E3A35")
+
+    def leg(x, y, w, h):
+        if y >= h - 4:
+            return shade(hexc("#2B1D12"), 0.9 + 0.15 * p.rand.random())
+        return mail(p, DARK)(x, y, w, h) if sergeant else cloth(p, hose)(x, y, w, h)
+    for u, v in ((0, 16), (16, 48)):
+        p.box(u, v, 4, 12, 4, front=leg, back=leg, sides=leg, top=cloth(p, hose), bottom=solid(shade(hexc("#2B1D12"), 0.7)))
+    # A quiver strap across the archer's back
+    if archer:
+        p.box(16, 32, 8, 12, 4, back=lambda x, y, w, h: shade(LEATHER, 0.85) if abs((x - 1) - y * 0.6) < 0.8 else None)
+    return p.img
+
+
+def tabard_texture():
+    """White tabard, tinted at runtime with the village's colour. Shading and a darker hem survive the tint; the belt
+    and the chest emblem stay uncovered."""
+    p = Painter(64, 64, 4242)
+    WHITE = hexc("#FFFFFF")
+
+    def front(x, y, w, h):
+        if x == 0 or x == w - 1 or y == 8:
+            return None  # mail at the sides, the belt across the middle
+        if 3 <= y <= 6 and 2 <= x <= 5:
+            return None  # the emblem
+        c = shade(WHITE, 0.78) if x in (1, w - 2) or y >= h - 1 else WHITE
+        weave = 0.94 if (x + y) % 2 == 0 else 1.0
+        return shade(c, weave * (1.0 - p.rand.uniform(0, 0.05)))
+
+    def back(x, y, w, h):
+        if x == 0 or x == w - 1 or y == 8:
+            return None
+        c = shade(WHITE, 0.78) if x in (1, w - 2) or y >= h - 1 else WHITE
+        return shade(c, (0.94 if (x + y) % 2 == 0 else 1.0) * (1.0 - p.rand.uniform(0, 0.05)))
+    p.box(16, 16, 8, 12, 4, front=front, back=back)
+
+    # The skirt of the tabard hangs over the hips on the jacket layer.
+    def skirt(x, y, w, h):
+        if y < 9 or x == 0 or x == w - 1:
+            return None
+        return shade(WHITE, (0.8 if y == h - 1 else 0.97) * (1.0 - p.rand.uniform(0, 0.05)))
+    p.box(16, 32, 8, 12, 4, front=skirt, back=skirt)
+    return p.img
+
+
+def guard_textures():
+    save(guard_texture(21, "swordsman", skin="#C68E6B", hair="#4E342E", beard="#4E342E"), "entity", "guard", "swordsman.png")
+    save(guard_texture(22, "archer", skin="#D1A07E", hair="#8D6E63", eye="#2E7D32"), "entity", "guard", "archer.png")
+    save(guard_texture(23, "sergeant", skin="#B97A57", hair="#1B1B1B", beard="#212121"), "entity", "guard", "sergeant.png")
+    save(tabard_texture(), "entity", "guard", "tabard.png")
+
+
 # ------------------------------------------------------------------------------------------------ armour layers
 
 def armor_layer(kind):
@@ -807,6 +966,7 @@ def main():
                           belt="#C8A050", beard="#4E342E", scar=True, gold="#C8A050"), "entity", "bounty_hunter.png")
     save(humanoid_texture(8, skin="#C7987A", hair="#1B1B1B", shirt="#4A0E0E", coat="#2A1A1A", trousers="#1B1B1B", boots="#0E0E0E",
                           belt="#D4AF37", beard="#212121", gold="#D4AF37", cape="#6A1010"), "entity", "tyrant_lord.png")
+    guard_textures()
     # Armour layers
     save(armor_layer("rogue_1"), "models", "armor", "rogue_layer_1.png")
     save(armor_layer("rogue_2"), "models", "armor", "rogue_layer_2.png")
@@ -850,4 +1010,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    if sys.argv[1:] == ["guards"]:
+        guard_textures()  # just the guards, leaving the other textures as they are
+    else:
+        main()

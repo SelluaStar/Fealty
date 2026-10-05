@@ -68,6 +68,14 @@ public final class ClientPayloads {
         com.selluastar.fealty.client.bubble.QuestMarkers.set(payload.markers());
     }
 
+    public static void retinue(com.selluastar.fealty.network.RetinuePayload payload) {
+        com.selluastar.fealty.client.hud.RetinueLayer.set(payload.members());
+    }
+
+    public static void openHorn(com.selluastar.fealty.network.OpenHornPayload payload) {
+        Minecraft.getInstance().setScreen(new com.selluastar.fealty.client.screen.HornScreen(payload));
+    }
+
     public static void openQuestScreen(OpenQuestScreenPayload payload) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.screen instanceof QuestGiverScreen screen && screen.entityId() == payload.entityId()) {

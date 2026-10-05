@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.selluastar.fealty.guard.Garrison;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
@@ -27,20 +28,24 @@ public final class VillageRecord {
             ResourceLocation.CODEC.optionalFieldOf("structure").forGetter(r -> Optional.ofNullable(r.structure)),
             Codec.STRING.fieldOf("name").forGetter(VillageRecord::name),
             Codec.BOOL.optionalFieldOf("has_elder", false).forGetter(VillageRecord::hasElder),
-            ElderInfo.CODEC.optionalFieldOf("elder", new ElderInfo()).forGetter(VillageRecord::elder),
-            LordInfo.CODEC.optionalFieldOf("lord", new LordInfo()).forGetter(VillageRecord::lord),
+            ElderInfo.CODEC.optionalFieldOf("elder").forGetter(r -> Optional.of(r.elder)),
+            LordInfo.CODEC.optionalFieldOf("lord").forGetter(r -> Optional.of(r.lord)),
             Codec.BOOL.optionalFieldOf("initialized", false).forGetter(VillageRecord::isInitialized),
             UUIDUtil.CODEC.optionalFieldOf("tyrant_for").forGetter(r -> Optional.ofNullable(r.tyrantFor)),
             Codec.BOOL.optionalFieldOf("tyrant_spawned", false).forGetter(VillageRecord::isTyrantSpawned),
-            Sites.CODEC.optionalFieldOf("sites", new Sites()).forGetter(VillageRecord::sites)
-    ).apply(i, (id, dim, center, bounds, template, structure, name, hasElder, elder, lord, init, tyrantFor, tyrantSpawned, sites) -> {
+            Sites.CODEC.optionalFieldOf("sites").forGetter(r -> Optional.of(r.sites)),
+            Garrison.CODEC.optionalFieldOf("garrison").forGetter(r -> Optional.of(r.garrison))
+    ).apply(i, (id, dim, center, bounds, template, structure, name, hasElder, elder, lord, init, tyrantFor, tyrantSpawned, sites,
+                garrison) -> {
         VillageRecord r = new VillageRecord(id, dim, center, bounds, template, structure.orElse(null), name, hasElder);
-        r.elder = elder;
-        r.lord = lord;
+        // (Each record needs its own copy: a shared default would tie every village missing the field together.)
+        r.elder = elder.orElseGet(ElderInfo::new);
+        r.lord = lord.orElseGet(LordInfo::new);
         r.initialized = init;
         r.tyrantFor = tyrantFor.orElse(null);
         r.tyrantSpawned = tyrantSpawned;
-        r.sites = sites;
+        r.sites = sites.orElseGet(Sites::new);
+        r.garrison = garrison.orElseGet(Garrison::new);
         return r;
     }));
 
@@ -60,6 +65,7 @@ public final class VillageRecord {
     private String name;
     private boolean hasElder;
     private Sites sites = new Sites();
+    private Garrison garrison = new Garrison();
     private ElderInfo elder = new ElderInfo();
     private LordInfo lord = new LordInfo();
     private boolean initialized;
@@ -132,6 +138,11 @@ public final class VillageRecord {
     /** Where the village keeps its things (mailbox, guard post) and how it was found. */
     public Sites sites() {
         return sites;
+    }
+
+    /** The village's own guards. */
+    public Garrison garrison() {
+        return garrison;
     }
 
     /** The village's heraldic colour, used for guard tabards and journal markers. */

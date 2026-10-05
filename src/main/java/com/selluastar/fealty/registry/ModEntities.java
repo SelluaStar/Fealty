@@ -9,6 +9,7 @@ import com.selluastar.fealty.entity.KeeperEntity;
 import com.selluastar.fealty.entity.SmokeBombEntity;
 import com.selluastar.fealty.entity.TyrantLordEntity;
 import com.selluastar.fealty.entity.VillageElderEntity;
+import com.selluastar.fealty.entity.VillageGuardEntity;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityType;
@@ -44,6 +45,9 @@ public final class ModEntities {
     public static final DeferredHolder<EntityType<?>, EntityType<TyrantLordEntity>> TYRANT_LORD = ENTITIES.register("tyrant_lord",
             () -> EntityType.Builder.of(TyrantLordEntity::new, MobCategory.MONSTER).sized(0.84F, 2.6F).eyeHeight(2.25F)
                     .fireImmune().clientTrackingRange(10).build("tyrant_lord"));
+    public static final DeferredHolder<EntityType<?>, EntityType<VillageGuardEntity>> VILLAGE_GUARD = ENTITIES.register("village_guard",
+            () -> EntityType.Builder.of(VillageGuardEntity::new, MobCategory.MISC).sized(0.6F, 1.95F).eyeHeight(1.62F)
+                    .clientTrackingRange(10).build("village_guard"));
     public static final DeferredHolder<EntityType<?>, EntityType<SmokeBombEntity>> SMOKE_BOMB = ENTITIES.register("smoke_bomb",
             () -> EntityType.Builder.<SmokeBombEntity>of(SmokeBombEntity::new, MobCategory.MISC).sized(0.25F, 0.25F)
                     .clientTrackingRange(4).updateInterval(10).build("smoke_bomb"));
@@ -60,5 +64,6 @@ public final class ModEntities {
         event.put(BANDIT_CAPTAIN.get(), BanditEntity.createCaptainAttributes().build());
         event.put(BOUNTY_HUNTER.get(), BountyHunterEntity.createAttributes().build());
         event.put(TYRANT_LORD.get(), TyrantLordEntity.createAttributes().build());
+        event.put(VILLAGE_GUARD.get(), VillageGuardEntity.createAttributes().build());
     }
 }

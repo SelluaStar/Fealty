@@ -16,11 +16,8 @@ import com.selluastar.fealty.api.event.TierChangedEvent;
 import com.selluastar.fealty.block.VillageCofferBlockEntity;
 import com.selluastar.fealty.config.FealtyConfig;
 import com.selluastar.fealty.data.TierManager;
-import com.selluastar.fealty.guard.GuardManager;
-import com.selluastar.fealty.guard.GuardOrders;
 import com.selluastar.fealty.network.FealtyNetwork;
 import com.selluastar.fealty.network.OpenQuestScreenPayload.ActionEntry;
-import com.selluastar.fealty.registry.ModAttachments;
 import com.selluastar.fealty.registry.ModItems;
 import com.selluastar.fealty.rep.FactionResolver;
 import com.selluastar.fealty.rep.Factions;
@@ -29,20 +26,15 @@ import com.selluastar.fealty.rep.RepManager;
 import com.selluastar.fealty.util.Inventories;
 import com.selluastar.fealty.util.Maps;
 import com.selluastar.fealty.village.VillageRecord;
-import com.selluastar.fealty.village.VillageResolver;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.loot.LootParams;
@@ -311,33 +303,5 @@ public final class LordshipManager {
             lord.sendSystemMessage(Component.translatable("fealty.lord.tribute", village.name(), rolls).withStyle(ChatFormatting.GOLD));
             FealtyEvents.fire(lord, FealtyEvents.TRIBUTE_COLLECTED);
         }
-    }
-
-    // ---- The Lord's Horn ----
-
-    public static void blowHorn(ServerPlayer player, GuardOrders.Mode order) {
-        ServerLevel level = player.serverLevel();
-        Optional<VillageRecord> village = VillageResolver.villageAt(level, player.blockPosition());
-        if (village.isEmpty() || !village.get().lord().isLord(player.getUUID())) {
-            player.displayClientMessage(Component.translatable("fealty.horn.no_village"), true);
-            return;
-        }
-        ResourceLocation id = village.get().id();
-        List<Mob> guards = level.getEntitiesOfClass(Mob.class, player.getBoundingBox().inflate(64),
-                m -> m.isAlive() && GuardManager.isGuard(m) && id.equals(FactionResolver.factionOf(m).orElse(null)));
-        guards.sort((a, b) -> Double.compare(a.distanceToSqr(player), b.distanceToSqr(player)));
-        int limit = Math.min(guards.size(), FealtyConfig.MAX_COMMANDED_GUARDS.get());
-        for (int i = 0; i < limit; i++) {
-            Mob guard = guards.get(i);
-            GuardOrders orders = guard.getData(ModAttachments.GUARD_ORDERS);
-            switch (order) {
-                case FOLLOW -> orders.set(GuardOrders.Mode.FOLLOW, player.getUUID(), 0, null);
-                case HOLD -> orders.set(GuardOrders.Mode.HOLD, null, 0, guard.blockPosition());
-                default -> orders.clear();
-            }
-        }
-        level.playSound(null, player.blockPosition(), SoundEvents.GOAT_HORN_SOUND_VARIANTS.get(1).value(), SoundSource.PLAYERS, 6.0F, 1.0F);
-        player.displayClientMessage(Component.translatable("fealty.horn.ordered." + order.getSerializedName(), limit), true);
-        FealtyEvents.fire(player, FealtyEvents.GUARDS_COMMANDED);
     }
 }

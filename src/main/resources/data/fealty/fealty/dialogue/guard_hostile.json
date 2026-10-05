@@ -1,0 +1,30 @@
+{
+  "context": "guard_hostile",
+  "lines": [
+    {
+      "text": {
+        "translate": "fealty.line.guard_hostile.any.0"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.guard_hostile.any.1"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.guard_hostile.any.2"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.guard_hostile.any.3"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.guard_hostile.any.4"
+      }
+    }
+  ]
+}

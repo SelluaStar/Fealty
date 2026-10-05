@@ -27,6 +27,15 @@ public final class FealtyConfig {
     public static final ModConfigSpec.IntValue GUARD_AGGRO_TICKS;
     public static final ModConfigSpec.IntValue GUARD_WARNING_WINDOW;
     public static final ModConfigSpec.IntValue ESCORT_TICKS;
+    public static final ModConfigSpec.BooleanValue FEALTY_GUARDS;
+    public static final ModConfigSpec.IntValue VILLAGERS_PER_GUARD;
+    public static final ModConfigSpec.IntValue MIN_GUARDS;
+    public static final ModConfigSpec.IntValue MAX_GUARDS;
+    public static final ModConfigSpec.IntValue EMPTY_VILLAGE_GUARDS;
+    public static final ModConfigSpec.IntValue SERGEANT_POPULATION;
+    public static final ModConfigSpec.IntValue GUARD_RESPAWN_DAYS;
+    public static final ModConfigSpec.IntValue HORN_SUMMON_COUNT;
+    public static final ModConfigSpec.IntValue HORN_ARRIVAL_SECONDS;
 
     // Threats and trade
     public static final ModConfigSpec.IntValue THREAT_COOLDOWN;
@@ -116,6 +125,16 @@ public final class FealtyConfig {
                 .defineInRange("guard_warning_window", 6000, 20, 240000);
         ESCORT_TICKS = b.comment("How long a guard escorts an Honored player (ticks)")
                 .defineInRange("escort_ticks", 24000, 20, 240000);
+        FEALTY_GUARDS = b.comment("Villages keep a watch of Fealty guards (swordsmen, archers and a sergeant in the village's colours).",
+                        "Iron golems and guards from other mods listed in #fealty:guards work either way.")
+                .define("fealty_guards", true);
+        VILLAGERS_PER_GUARD = b.comment("One guard for every this many villagers").defineInRange("villagers_per_guard", 4, 1, 100);
+        MIN_GUARDS = b.comment("Fewest guards a village with villagers keeps").defineInRange("min_guards", 2, 0, 32);
+        MAX_GUARDS = b.comment("Most guards a village keeps (not counting the sergeant)").defineInRange("max_guards", 6, 0, 32);
+        EMPTY_VILLAGE_GUARDS = b.comment("Guards for a village with no villagers (a castle, say)").defineInRange("empty_village_guards", 3, 0, 32);
+        SERGEANT_POPULATION = b.comment("Villages with at least this many villagers also have a sergeant (0 for never)")
+                .defineInRange("sergeant_population", 12, 0, 1000);
+        GUARD_RESPAWN_DAYS = b.comment("Days before a fallen guard is replaced").defineInRange("guard_respawn_days", 1, 0, 100);
         b.pop();
 
         b.comment("Threats, trades and gifts").push("trade");
@@ -189,6 +208,10 @@ public final class FealtyConfig {
         TAX_DAILY_REP = b.comment("Daily rep change for the lord at tax levels none, light, fair, heavy, crushing")
                 .defineList("tax_daily_rep", List.of(2, 1, 0, -1, -3), () -> 0, o -> o instanceof Integer);
         MAX_COMMANDED_GUARDS = b.comment("Most guards a Lord's Horn can command at once").defineInRange("max_commanded_guards", 8, 1, 64);
+        HORN_SUMMON_COUNT = b.comment("How many of the village's guards answer the horn's call, wherever the lord is")
+                .defineInRange("horn_summon_count", 4, 0, 32);
+        HORN_ARRIVAL_SECONDS = b.comment("Seconds before called guards arrive from the village")
+                .defineInRange("horn_arrival_seconds", 5, 0, 600);
         b.pop();
 
         b.comment("Outlaw path: Renown gates, followers and wanted escalation").push("outlaw");
