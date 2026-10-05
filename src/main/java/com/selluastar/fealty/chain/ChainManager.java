@@ -281,6 +281,19 @@ public final class ChainManager {
 
     // ---- Completion ----
 
+    /** A chain quest ended without success. A failed or abandoned Keeper's trial can be taken up again. */
+    public static void onQuestEnded(ServerPlayer player, ActiveQuest quest) {
+        Optional<ChainKey> key = parse(quest.giver());
+        if (key.isEmpty() || key.get().step() >= 0) {
+            return;
+        }
+        ChainProgress progress = progress(player, key.get().chain());
+        if (progress != null && progress.stage() == STAGE_TRIAL) {
+            progress.setStage(STAGE_HAMLET);
+            FealtyWorldData.get(player.server).setDirty();
+        }
+    }
+
     public static void onQuestCompleted(ServerPlayer player, ActiveQuest quest) {
         Optional<ChainKey> key = parse(quest.giver());
         if (key.isEmpty()) {

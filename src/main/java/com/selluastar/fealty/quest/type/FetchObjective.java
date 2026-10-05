@@ -1,5 +1,6 @@
 package com.selluastar.fealty.quest.type;
 
+import com.selluastar.fealty.network.QuestView;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -68,4 +69,14 @@ public record FetchObjective(List<ItemRequirement> items) implements QuestObject
         items.forEach(req -> req.take(ctx.player()));
         return TurnIn.COMPLETE;
     }
+
+    @Override
+    public List<QuestView.Line> progress(QuestContext ctx) {
+        List<QuestView.Line> lines = new ArrayList<>();
+        for (ItemRequirement req : items) {
+            lines.add(QuestView.Line.count(Component.translatable("fealty.objective.bring", req.displayName()), req.countIn(ctx.player()), req.count()));
+        }
+        return lines;
+    }
+
 }

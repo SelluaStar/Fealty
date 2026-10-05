@@ -1,0 +1,27 @@
+{
+  "title": {
+    "translate": "quest.fealty.wolves_in_the_woods"
+  },
+  "description": {
+    "translate": "quest.fealty.wolves_in_the_woods.desc"
+  },
+  "pool": "fealty:redemption",
+  "tiers": {
+    "fealty:distrusted": 6,
+    "fealty:neutral": 8,
+    "fealty:trusted": 6
+  },
+  "difficulty": 2,
+  "reward": {
+    "rep": 8,
+    "loot_table": "fealty:quest_rewards/common"
+  },
+  "objective": {
+    "type": "fealty:kill",
+    "targets": "minecraft:wolf",
+    "count": 6,
+    "label": {
+      "translate": "fealty.label.wolves"
+    }
+  }
+}

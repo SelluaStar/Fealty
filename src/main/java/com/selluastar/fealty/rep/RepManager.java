@@ -215,6 +215,26 @@ public final class RepManager {
         return applySource(player, faction, sourceId, 1.0F);
     }
 
+    /**
+     * Apply an explicit amount under a source's daily cap. Used for favors, whose amount comes from the quest but
+     * whose daily total is capped by the {@code fealty:favor} source settings.
+     */
+    public static int applyCapped(ServerPlayer player, ResourceLocation faction, ResourceLocation sourceId, int amount) {
+        SourceSettings settings = FealtyDataManager.source(sourceId);
+        if (settings.dailyCap() <= 0 || amount <= 0) {
+            return change(player, faction, amount, sourceId);
+        }
+        PlayerRepData.Tally tally = data(player).tally(faction, sourceId, day(player.server));
+        int room = settings.dailyCap() - tally.applied;
+        if (room <= 0) {
+            return 0;
+        }
+        int applied = change(player, faction, Math.min(amount, room), sourceId);
+        tally.applied += Math.abs(applied);
+        FealtyWorldData.get(player.server).setDirty();
+        return applied;
+    }
+
     /** The amount a source applies: the data pack value, else the registered default. */
     public static int baseAmount(ResourceLocation sourceId) {
         SourceSettings settings = FealtyDataManager.source(sourceId);

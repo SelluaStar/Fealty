@@ -1,0 +1,33 @@
+{
+  "title": {
+    "translate": "quest.fealty.favor.nitwit_slime"
+  },
+  "description": {
+    "translate": "quest.fealty.favor.nitwit_slime.desc"
+  },
+  "pool": "fealty:favor",
+  "tiers": {
+    "fealty:distrusted": 6,
+    "fealty:neutral": 10,
+    "fealty:trusted": 10,
+    "fealty:honored": 8
+  },
+  "difficulty": 1,
+  "reward": {
+    "rep": 2,
+    "experience": 10
+  },
+  "time_limit": 48000,
+  "professions": [
+    "minecraft:nitwit"
+  ],
+  "objective": {
+    "type": "fealty:kill",
+    "targets": "#minecraft:zombies",
+    "count": 1,
+    "label": {
+      "translate": "fealty.label.zombie"
+    },
+    "near_village": true
+  }
+}

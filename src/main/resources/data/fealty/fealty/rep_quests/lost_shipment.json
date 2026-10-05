@@ -1,0 +1,29 @@
+{
+  "title": {
+    "translate": "quest.fealty.lost_shipment"
+  },
+  "description": {
+    "translate": "quest.fealty.lost_shipment.desc"
+  },
+  "pool": "fealty:redemption",
+  "tiers": {
+    "fealty:distrusted": 6,
+    "fealty:neutral": 8,
+    "fealty:trusted": 8
+  },
+  "difficulty": 2,
+  "reward": {
+    "rep": 12,
+    "loot_table": "fealty:quest_rewards/common"
+  },
+  "objective": {
+    "type": "fealty:retrieve",
+    "item_name": {
+      "translate": "fealty.item.shipment"
+    },
+    "item": "minecraft:chest",
+    "site": "cart",
+    "min_distance": 80,
+    "max_distance": 180
+  }
+}

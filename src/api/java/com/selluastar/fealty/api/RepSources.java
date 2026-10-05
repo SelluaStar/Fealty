@@ -13,6 +13,8 @@ public final class RepSources {
     public static final ResourceLocation COURIER = FealtyApi.id("courier");
     public static final ResourceLocation LIBERATION = FealtyApi.id("liberation");
     public static final ResourceLocation TAX = FealtyApi.id("tax");
+    /** Small favors done for ordinary villagers. */
+    public static final ResourceLocation FAVOR = FealtyApi.id("favor");
     // Crimes
     public static final ResourceLocation BREAK_BLOCK = FealtyApi.id("break_block");
     public static final ResourceLocation STEAL = FealtyApi.id("steal");

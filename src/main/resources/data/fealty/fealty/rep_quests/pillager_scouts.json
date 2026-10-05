@@ -1,0 +1,27 @@
+{
+  "title": {
+    "translate": "quest.fealty.pillager_scouts"
+  },
+  "description": {
+    "translate": "quest.fealty.pillager_scouts.desc"
+  },
+  "pool": "fealty:redemption",
+  "tiers": {
+    "fealty:trusted": 8,
+    "fealty:honored": 8
+  },
+  "difficulty": 3,
+  "reward": {
+    "rep": 12,
+    "renown": 2,
+    "loot_table": "fealty:quest_rewards/rare"
+  },
+  "objective": {
+    "type": "fealty:kill",
+    "targets": "minecraft:pillager",
+    "count": 4,
+    "label": {
+      "translate": "fealty.label.pillagers"
+    }
+  }
+}

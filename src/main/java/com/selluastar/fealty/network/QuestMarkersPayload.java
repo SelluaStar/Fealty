@@ -26,7 +26,9 @@ public record QuestMarkersPayload(List<Marker> markers) implements CustomPacketP
         /** A quest is ready to hand in here (gold ?). */
         READY,
         /** The player carries a letter for this person. */
-        LETTER
+        LETTER,
+        /** Someone a quest asks the player to find or speak to. */
+        TARGET
     }
 
     public record Marker(int entityId, Kind kind) {

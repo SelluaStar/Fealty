@@ -50,31 +50,59 @@ public final class QuestManager {
     private QuestManager() {
     }
 
-    private record PendingCompletion(UUID player, ResourceLocation giver) {
+    private record PendingCompletion(UUID player, UUID instance) {
     }
 
     // ---- Lookup ----
 
+    /** The oldest accepted quest with a giver. */
     public static Optional<QuestContext> context(ServerPlayer player, ResourceLocation giver) {
-        PlayerRepData data = RepManager.data(player);
-        QuestLog log = data.allQuests().get(giver);
-        if (log == null || log.active() == null) {
-            return Optional.empty();
+        List<QuestContext> list = contexts(player, giver);
+        return list.isEmpty() ? Optional.empty() : Optional.of(list.getFirst());
+    }
+
+    /** Every accepted quest with a giver. */
+    public static List<QuestContext> contexts(ServerPlayer player, ResourceLocation giver) {
+        QuestLog log = RepManager.data(player).allQuests().get(giver);
+        List<QuestContext> list = new ArrayList<>();
+        if (log != null) {
+            for (ActiveQuest quest : List.copyOf(log.actives())) {
+                FealtyDataManager.quest(quest.questId()).ifPresent(def -> list.add(new QuestContext(player, quest, def)));
+            }
         }
-        ActiveQuest quest = log.active();
-        return FealtyDataManager.quest(quest.questId()).map(def -> new QuestContext(player, quest, def));
+        return list;
+    }
+
+    /** The accepted quest with a giver for a quest id, or the oldest one if the id is null or not found. */
+    public static Optional<QuestContext> context(ServerPlayer player, ResourceLocation giver, @org.jetbrains.annotations.Nullable ResourceLocation questId) {
+        List<QuestContext> list = contexts(player, giver);
+        if (questId != null) {
+            for (QuestContext ctx : list) {
+                if (ctx.quest().questId().equals(questId)) {
+                    return Optional.of(ctx);
+                }
+            }
+        }
+        return list.isEmpty() ? Optional.empty() : Optional.of(list.getFirst());
     }
 
     /** Every quest the player has accepted, as a snapshot safe to iterate while quests change. */
     public static List<QuestContext> activeContexts(ServerPlayer player) {
         List<QuestContext> list = new ArrayList<>();
         for (QuestLog log : RepManager.data(player).allQuests().values()) {
-            ActiveQuest quest = log.active();
-            if (quest != null) {
+            for (ActiveQuest quest : List.copyOf(log.actives())) {
                 FealtyDataManager.quest(quest.questId()).ifPresent(def -> list.add(new QuestContext(player, quest, def)));
             }
         }
         return list;
+    }
+
+    public static int activeCount(ServerPlayer player) {
+        int count = 0;
+        for (QuestLog log : RepManager.data(player).allQuests().values()) {
+            count += log.actives().size();
+        }
+        return count;
     }
 
     public static Optional<QuestContext> byInstance(ServerPlayer player, UUID instance) {
@@ -88,23 +116,29 @@ public final class QuestManager {
 
     // ---- Offers ----
 
-    /** Today's redemption offers from a village elder, weighted by the player's tier, without repeats until the pool cycles. */
+    /**
+     * Today's redemption offers from a village elder, weighted by the player's tier, without repeats until the pool
+     * cycles. They are rolled once per Fealty day; accepted offers are gone until tomorrow's roll.
+     */
     public static List<ResourceLocation> offers(ServerPlayer player, VillageRecord village) {
         QuestLog log = RepManager.data(player).quests(village.id());
         long day = RepManager.day(player.server);
         RepTier tier = RepManager.getTier(player, village.id());
-        boolean valid = log.offersDay() == day && !log.offers().isEmpty();
-        for (ResourceLocation id : log.offers()) {
-            Optional<RepQuestDefinition> def = FealtyDataManager.quest(id);
-            valid &= def.isPresent() && def.get().weightAt(tier.id()) > 0;
-        }
-        if (!valid) {
+        if (log.offersDay() != day) {
             log.offers().clear();
             log.offers().addAll(roll(log, RepQuestDefinition.REDEMPTION, tier, player.getRandom(), FealtyConfig.QUEST_OFFERS.get()));
             log.setOffersDay(day);
             FealtyWorldData.get(player.server).setDirty();
         }
-        return List.copyOf(log.offers());
+        // A tier change during the day hides offers that no longer suit the player.
+        List<ResourceLocation> open = new ArrayList<>();
+        for (ResourceLocation id : log.offers()) {
+            Optional<RepQuestDefinition> def = FealtyDataManager.quest(id);
+            if (def.isPresent() && def.get().weightAt(tier.id()) > 0 && log.find(id).isEmpty()) {
+                open.add(id);
+            }
+        }
+        return open;
     }
 
     /** Weighted picks from a pool, skipping quests done since the pool last cycled. */
@@ -150,32 +184,58 @@ public final class QuestManager {
     public static Optional<com.selluastar.fealty.network.OpenQuestScreenPayload.QuestEntry> offerEntry(ResourceLocation id) {
         return FealtyDataManager.quest(id).map(def -> new com.selluastar.fealty.network.OpenQuestScreenPayload.QuestEntry(id, def.title(),
                 def.description(), def.objective().preview(), def.reward().rep(), def.difficulty(),
-                com.selluastar.fealty.network.OpenQuestScreenPayload.Status.OFFER));
+                com.selluastar.fealty.network.OpenQuestScreenPayload.Status.OFFER, rewards(def)));
+    }
+
+    /** The reward preview for a quest. */
+    public static com.selluastar.fealty.network.OpenQuestScreenPayload.Rewards rewards(RepQuestDefinition def) {
+        QuestReward reward = def.reward();
+        List<ItemStack> items = reward.items().stream().map(ItemStack::copy).limit(6).toList();
+        return new com.selluastar.fealty.network.OpenQuestScreenPayload.Rewards(items, reward.renown(), reward.experience(),
+                reward.lootTable().isPresent(), def.timeLimit());
     }
 
     // ---- Lifecycle ----
 
+    /** Accept a quest from a giver that allows one quest at a time. */
+    public static boolean accept(ServerPlayer player, ResourceLocation giver, ResourceLocation faction, ResourceLocation questId, CompoundTag initialState) {
+        return accept(player, giver, faction, questId, initialState, 1);
+    }
+
     /**
-     * Accept a quest from a giver. Only one quest can be active per giver (so one redemption quest per village).
+     * Accept a quest from a giver.
      *
      * @param faction the faction the reward raises
+     * @param perGiver how many quests this giver may have running with the player at once
      */
-    public static boolean accept(ServerPlayer player, ResourceLocation giver, ResourceLocation faction, ResourceLocation questId, CompoundTag initialState) {
+    public static boolean accept(ServerPlayer player, ResourceLocation giver, ResourceLocation faction, ResourceLocation questId,
+                                 CompoundTag initialState, int perGiver) {
         PlayerRepData data = RepManager.data(player);
         QuestLog log = data.quests(giver);
-        if (log.active() != null) {
+        if (log.find(questId).isPresent()) {
+            return false;
+        }
+        if (log.actives().size() >= perGiver) {
             player.sendSystemMessage(Component.translatable("fealty.quest.already_active"));
+            return false;
+        }
+        if (activeCount(player) >= FealtyConfig.MAX_ACTIVE_QUESTS.get()) {
+            player.sendSystemMessage(Component.translatable("fealty.quest.too_many", FealtyConfig.MAX_ACTIVE_QUESTS.get()));
             return false;
         }
         Optional<RepQuestDefinition> def = FealtyDataManager.quest(questId);
         if (def.isEmpty()) {
             return false;
         }
-        ActiveQuest quest = new ActiveQuest(UUID.randomUUID(), questId, giver, faction, player.level().getGameTime(), initialState, false);
-        log.setActive(quest);
+        CompoundTag state = initialState.copy();
+        if (!state.contains("dimension")) {
+            state.putString("dimension", player.level().dimension().location().toString());
+        }
+        ActiveQuest quest = new ActiveQuest(UUID.randomUUID(), questId, giver, faction, player.level().getGameTime(), state, false);
+        log.add(quest);
         QuestContext ctx = new QuestContext(player, quest, def.get());
         if (!def.get().objective().start(ctx)) {
-            log.setActive(null);
+            log.remove(quest.instanceId());
             return false;
         }
         log.offers().remove(questId);
@@ -190,7 +250,16 @@ public final class QuestManager {
     }
 
     public static boolean turnIn(ServerPlayer player, ResourceLocation giver) {
-        Optional<QuestContext> ctx = context(player, giver);
+        return turnIn(player, giver, null);
+    }
+
+    /**
+     * Hand in a quest with a giver: the one with this quest id, else the first that is ready, else the oldest.
+     */
+    public static boolean turnIn(ServerPlayer player, ResourceLocation giver, @org.jetbrains.annotations.Nullable ResourceLocation questId) {
+        Optional<QuestContext> ctx = questId != null ? context(player, giver, questId)
+                : contexts(player, giver).stream().filter(c -> c.definition().objective().canTurnIn(c)).findFirst()
+                .or(() -> context(player, giver));
         if (ctx.isEmpty()) {
             return false;
         }
@@ -208,10 +277,27 @@ public final class QuestManager {
     }
 
     public static boolean abandon(ServerPlayer player, ResourceLocation giver, boolean penalty) {
-        Optional<QuestContext> ctx = context(player, giver);
+        return abandon(player, giver, null, penalty);
+    }
+
+    public static boolean abandon(ServerPlayer player, ResourceLocation giver, @org.jetbrains.annotations.Nullable ResourceLocation questId,
+                                  boolean penalty) {
+        Optional<QuestContext> ctx = context(player, giver, questId);
         if (ctx.isEmpty()) {
             return false;
         }
+        end(ctx.get(), RepQuestEvent.Reason.ABANDONED, penalty);
+        return true;
+    }
+
+    /** Abandon from the journal. Quests whose giver punishes abandoning still do. */
+    public static boolean abandonInstance(ServerPlayer player, UUID instance) {
+        Optional<QuestContext> ctx = byInstance(player, instance);
+        if (ctx.isEmpty()) {
+            return false;
+        }
+        ResourceLocation giver = ctx.get().quest().giver();
+        boolean penalty = Factions.isVillage(giver) || giver.getPath().startsWith("chain/thieves_guild");
         end(ctx.get(), RepQuestEvent.Reason.ABANDONED, penalty);
         return true;
     }
@@ -220,11 +306,33 @@ public final class QuestManager {
         end(ctx, reason, true);
     }
 
+    /** End a quest that failed through no fault of the player (the giver died), with no penalty. */
+    public static void failQuietly(QuestContext ctx, RepQuestEvent.Reason reason) {
+        end(ctx, reason, false);
+    }
+
+    /**
+     * Whether the person who gave the quest is gone: a village elder's quests end when the village is Broken (except
+     * the quest to restore it), and a favor ends when the villager who asked it dies.
+     */
+    public static boolean giverLost(QuestContext ctx) {
+        ResourceLocation giver = ctx.quest().giver();
+        if (Factions.isVillage(giver)) {
+            return !ctx.definition().pool().equals(RepQuestDefinition.RESTORE)
+                    && FealtyWorldData.get(ctx.server()).village(giver).map(VillageRecord::isBroken).orElse(false);
+        }
+        if (FavorManager.isFavorKey(giver) && ctx.state().hasUUID("giver_uuid")) {
+            net.minecraft.world.entity.Entity entity = ctx.questLevel().getEntity(ctx.state().getUUID("giver_uuid"));
+            return ctx.state().getBoolean("giver_died") || (entity != null && !entity.isAlive());
+        }
+        return false;
+    }
+
     private static void end(QuestContext ctx, RepQuestEvent.Reason reason, boolean penalty) {
         ServerPlayer player = ctx.player();
         RepQuestDefinition def = ctx.definition();
         def.objective().cleanup(ctx, false);
-        RepManager.data(player).quests(ctx.quest().giver()).setActive(null);
+        RepManager.data(player).quests(ctx.quest().giver()).remove(ctx.quest().instanceId());
         FealtyWorldData.get(player.server).setDirty();
         if (penalty) {
             if (def.failRep() != 0) {
@@ -234,6 +342,7 @@ public final class QuestManager {
             }
         }
         NeoForge.EVENT_BUS.post(new RepQuestEvent.Fail(player, ctx.quest().faction(), ctx.quest().questId(), def.typeId(), reason));
+        ChainManager.onQuestEnded(player, ctx.quest());
         ModCriteria.QUEST.get().trigger(player, ctx.quest().questId(), def.typeId(), QuestTrigger.Status.FAILED);
         player.sendSystemMessage(Component.translatable("fealty.quest.failed." + reason.name().toLowerCase(java.util.Locale.ROOT), def.title())
                 .withStyle(ChatFormatting.RED));
@@ -253,7 +362,7 @@ public final class QuestManager {
         ActiveQuest quest = ctx.quest();
         def.objective().cleanup(ctx, true);
         QuestLog log = RepManager.data(player).quests(quest.giver());
-        log.setActive(null);
+        log.remove(quest.instanceId());
         log.completed().add(quest.questId());
         log.incrementCompleted();
         FealtyWorldData.get(player.server).setDirty();
@@ -262,7 +371,11 @@ public final class QuestManager {
         QuestReward reward = def.reward();
         if (reward.rep() != 0) {
             RepManager.meet(player, quest.faction());
-            RepManager.change(player, quest.faction(), reward.rep(), RepSources.QUEST);
+            if (def.pool().equals(RepQuestDefinition.FAVOR)) {
+                RepManager.applyCapped(player, quest.faction(), RepSources.FAVOR, reward.rep());
+            } else {
+                RepManager.change(player, quest.faction(), reward.rep(), RepSources.QUEST);
+            }
         }
         if (reward.renown() != 0) {
             RepManager.change(player, Factions.RENOWN, reward.renown(), RepSources.QUEST);
@@ -323,8 +436,8 @@ public final class QuestManager {
     }
 
     /** Complete a quest after the current event finishes (used by quests that complete on the spot). */
-    public static void completeLater(ServerPlayer player, ResourceLocation giver) {
-        PENDING.add(new PendingCompletion(player.getUUID(), giver));
+    public static void completeLater(ServerPlayer player, UUID instance) {
+        PENDING.add(new PendingCompletion(player.getUUID(), instance));
     }
 
     static void processPending(MinecraftServer server) {
@@ -336,7 +449,7 @@ public final class QuestManager {
         for (PendingCompletion pending : copy) {
             ServerPlayer player = server.getPlayerList().getPlayer(pending.player());
             if (player != null) {
-                context(player, pending.giver()).filter(ctx -> ctx.quest().isReady()).ifPresent(QuestManager::complete);
+                byInstance(player, pending.instance()).filter(ctx -> ctx.quest().isReady()).ifPresent(QuestManager::complete);
             }
         }
     }

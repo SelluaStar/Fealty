@@ -1,5 +1,6 @@
 package com.selluastar.fealty.quest.type;
 
+import com.selluastar.fealty.network.QuestView;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -113,4 +114,19 @@ public record StealObjective(List<ItemRequirement> items, boolean unseen) implem
         items.forEach(req -> req.take(ctx.player()));
         return TurnIn.COMPLETE;
     }
+
+    @Override
+    public List<QuestView.Line> progress(QuestContext ctx) {
+        List<QuestView.Line> lines = new ArrayList<>();
+        for (int k = 0; k < items.size(); k++) {
+            ItemRequirement req = items.get(k);
+            lines.add(QuestView.Line.count(Component.translatable(unseen ? "fealty.objective.steal_unseen" : "fealty.objective.steal",
+                    req.displayName()), progress(ctx, k), req.count()));
+        }
+        if (ctx.quest().isReady()) {
+            lines.add(QuestView.Line.text(Component.translatable("fealty.quest.steal.bring")));
+        }
+        return lines;
+    }
+
 }

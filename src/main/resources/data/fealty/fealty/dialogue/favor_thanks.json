@@ -1,0 +1,25 @@
+{
+  "context": "favor_thanks",
+  "lines": [
+    {
+      "text": {
+        "translate": "fealty.line.favor_thanks.any.0"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.favor_thanks.any.1"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.favor_thanks.any.2"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.favor_thanks.any.3"
+      }
+    }
+  ]
+}

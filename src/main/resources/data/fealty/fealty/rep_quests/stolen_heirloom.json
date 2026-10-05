@@ -1,0 +1,29 @@
+{
+  "title": {
+    "translate": "quest.fealty.stolen_heirloom"
+  },
+  "description": {
+    "translate": "quest.fealty.stolen_heirloom.desc"
+  },
+  "pool": "fealty:redemption",
+  "tiers": {
+    "fealty:trusted": 8,
+    "fealty:honored": 10
+  },
+  "difficulty": 3,
+  "reward": {
+    "rep": 14,
+    "renown": 3,
+    "loot_table": "fealty:quest_rewards/rare"
+  },
+  "objective": {
+    "type": "fealty:retrieve",
+    "item_name": {
+      "translate": "fealty.item.signet_ring"
+    },
+    "item": "minecraft:gold_ingot",
+    "site": "stash",
+    "min_distance": 80,
+    "max_distance": 180
+  }
+}

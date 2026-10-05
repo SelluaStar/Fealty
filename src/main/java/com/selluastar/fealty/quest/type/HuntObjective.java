@@ -1,5 +1,6 @@
 package com.selluastar.fealty.quest.type;
 
+import com.selluastar.fealty.network.QuestView;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -208,9 +209,20 @@ public record HuntObjective(List<Target> targets, int minDistance, int maxDistan
             return;
         }
         UUID id = ctx.state().getUUID("entity");
-        Entity entity = ctx.level().getEntity(id);
+        Entity entity = ctx.questLevel().getEntity(id);
         if (entity != null) {
             entity.discard();
         }
     }
+
+    @Override
+    public List<QuestView.Line> progress(QuestContext ctx) {
+        return List.of(QuestView.Line.check(Component.translatable("fealty.objective.hunt", name(ctx)), ctx.quest().isReady()));
+    }
+
+    @Override
+    public java.util.Optional<QuestView.Waypoint> waypoint(QuestContext ctx) {
+        return lair(ctx).map(pos -> new QuestView.Waypoint(ctx.dimension(), pos, name(ctx)));
+    }
+
 }

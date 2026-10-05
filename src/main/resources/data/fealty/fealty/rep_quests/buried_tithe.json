@@ -1,0 +1,29 @@
+{
+  "title": {
+    "translate": "quest.fealty.buried_tithe"
+  },
+  "description": {
+    "translate": "quest.fealty.buried_tithe.desc"
+  },
+  "pool": "fealty:redemption",
+  "tiers": {
+    "fealty:neutral": 6,
+    "fealty:trusted": 8,
+    "fealty:honored": 6
+  },
+  "difficulty": 2,
+  "reward": {
+    "rep": 10,
+    "loot_table": "fealty:quest_rewards/common"
+  },
+  "objective": {
+    "type": "fealty:retrieve",
+    "item_name": {
+      "translate": "fealty.item.tithe_box"
+    },
+    "item": "minecraft:chest",
+    "site": "cache",
+    "min_distance": 60,
+    "max_distance": 140
+  }
+}

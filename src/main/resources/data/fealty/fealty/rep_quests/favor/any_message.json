@@ -1,0 +1,31 @@
+{
+  "title": {
+    "translate": "quest.fealty.favor.any_message"
+  },
+  "description": {
+    "translate": "quest.fealty.favor.any_message.desc"
+  },
+  "pool": "fealty:favor",
+  "tiers": {
+    "fealty:distrusted": 6,
+    "fealty:neutral": 10,
+    "fealty:trusted": 10,
+    "fealty:honored": 8
+  },
+  "difficulty": 1,
+  "reward": {
+    "rep": 2,
+    "experience": 5
+  },
+  "time_limit": 48000,
+  "professions": [],
+  "objective": {
+    "type": "fealty:talk_to",
+    "message": {
+      "translate": "fealty.talk.any_message"
+    },
+    "reply": {
+      "translate": "fealty.talk.any_message.reply"
+    }
+  }
+}

@@ -3,7 +3,9 @@ package com.selluastar.fealty.quest;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
+import com.selluastar.fealty.dialogue.DialogueNode;
 import com.selluastar.fealty.network.QuestView;
 import com.selluastar.fealty.village.VillageRecord;
 
@@ -11,6 +13,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.item.Item;
@@ -39,6 +42,24 @@ public interface QuestObjective {
      */
     default List<QuestView.Line> progress(QuestContext ctx) {
         return describe(ctx).stream().map(line -> QuestView.Line.text(Component.literal(line.getString()))).toList();
+    }
+
+    /**
+     * Extra replies this quest adds when the player talks to an NPC, for example delivering a message. Option ids only
+     * need to be unique within the quest.
+     */
+    default List<DialogueNode.Option> dialogueOptions(QuestContext ctx, Entity npc) {
+        return List.of();
+    }
+
+    /** The player picked one of this quest's dialogue replies. Return what the NPC answers, or empty to ignore it. */
+    default Optional<Component> onDialogue(QuestContext ctx, Entity npc, String option) {
+        return Optional.empty();
+    }
+
+    /** Entities this quest wants the player to find, marked above their heads. */
+    default List<UUID> markedEntities(QuestContext ctx) {
+        return List.of();
     }
 
     /** Where the player should head while the objective is open (the quest's anchor by default). */

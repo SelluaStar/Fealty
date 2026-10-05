@@ -103,7 +103,7 @@ public final class BubbleRenderer {
 
     private static void drawMarker(Font font, PoseStack pose, MultiBufferSource buffers, QuestMarkersPayload.Kind kind, float time) {
         String symbol = switch (kind) {
-            case OFFER, FAVOR -> "!";
+            case OFFER, FAVOR, TARGET -> "!";
             case ACTIVE, READY -> "?";
             case LETTER -> "✉";
         };
@@ -111,7 +111,7 @@ public final class BubbleRenderer {
             case OFFER, READY -> 0xF2C230;
             case FAVOR -> 0xF4EAD0;
             case ACTIVE -> 0x9E9E9E;
-            case LETTER -> 0x90CAF9;
+            case LETTER, TARGET -> 0x90CAF9;
         };
         float bob = Mth.sin(time * 0.12F) * 1.5F;
         pose.pushPose();

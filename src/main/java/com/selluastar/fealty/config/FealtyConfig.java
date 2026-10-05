@@ -54,6 +54,10 @@ public final class FealtyConfig {
     public static final ModConfigSpec.IntValue COURIER_MIN_DISTANCE;
     public static final ModConfigSpec.IntValue COURIER_MAX_DISTANCE;
     public static final ModConfigSpec.IntValue RESTORE_SEARCH_RADIUS;
+    public static final ModConfigSpec.IntValue MAX_ACTIVE_QUESTS;
+    public static final ModConfigSpec.IntValue ELDER_QUESTS_AT_ONCE;
+    public static final ModConfigSpec.BooleanValue FAVORS;
+    public static final ModConfigSpec.DoubleValue FAVOR_CHANCE;
 
     // Lordship
     public static final ModConfigSpec.IntValue MAX_LORDSHIPS;
@@ -165,6 +169,14 @@ public final class FealtyConfig {
                 .defineInRange("courier_max_distance", 3000, 100, 100000);
         RESTORE_SEARCH_RADIUS = b.comment("Radius in which a neighbouring elder offers to restore a broken village")
                 .defineInRange("restore_search_radius", 3000, 100, 100000);
+        MAX_ACTIVE_QUESTS = b.comment("Most quests a player can have accepted at once, across all givers")
+                .defineInRange("max_active_quests", 8, 1, 32);
+        ELDER_QUESTS_AT_ONCE = b.comment("How many of one elder's quests a player can take on at once")
+                .defineInRange("elder_quests_at_once", 2, 1, 6);
+        FAVORS = b.comment("Ordinary villagers ask small favors (one a day each, some days none)")
+                .define("favors", true);
+        FAVOR_CHANCE = b.comment("Chance a villager has a favor to ask on a given day")
+                .defineInRange("favor_chance", 0.5, 0.0, 1.0);
         b.pop();
 
         b.comment("Village lordship").push("lordship");

@@ -1,0 +1,34 @@
+{
+  "title": {
+    "translate": "quest.fealty.favor.drifter_work"
+  },
+  "description": {
+    "translate": "quest.fealty.favor.drifter_work.desc"
+  },
+  "pool": "fealty:favor",
+  "tiers": {
+    "fealty:distrusted": 6,
+    "fealty:neutral": 10,
+    "fealty:trusted": 10,
+    "fealty:honored": 8
+  },
+  "difficulty": 1,
+  "reward": {
+    "rep": 2,
+    "experience": 5
+  },
+  "time_limit": 48000,
+  "professions": [
+    "minecraft:none"
+  ],
+  "objective": {
+    "type": "fealty:talk_to",
+    "message": {
+      "translate": "fealty.talk.drifter_work"
+    },
+    "reply": {
+      "translate": "fealty.talk.drifter_work.reply"
+    },
+    "profession": "minecraft:toolsmith"
+  }
+}

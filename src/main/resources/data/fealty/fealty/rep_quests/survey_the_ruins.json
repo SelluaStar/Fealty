@@ -1,0 +1,28 @@
+{
+  "title": {
+    "translate": "quest.fealty.survey_the_ruins"
+  },
+  "description": {
+    "translate": "quest.fealty.survey_the_ruins.desc"
+  },
+  "pool": "fealty:redemption",
+  "tiers": {
+    "fealty:neutral": 6,
+    "fealty:trusted": 8,
+    "fealty:honored": 6
+  },
+  "difficulty": 2,
+  "reward": {
+    "rep": 8,
+    "renown": 2,
+    "experience": 40
+  },
+  "objective": {
+    "type": "fealty:explore",
+    "structure": "#minecraft:ruined_portal",
+    "search": 60,
+    "label": {
+      "translate": "fealty.label.ruined_portal"
+    }
+  }
+}

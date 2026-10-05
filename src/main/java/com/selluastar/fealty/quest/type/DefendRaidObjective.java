@@ -1,5 +1,6 @@
 package com.selluastar.fealty.quest.type;
 
+import com.selluastar.fealty.network.QuestView;
 import java.util.List;
 import java.util.Optional;
 
@@ -95,4 +96,17 @@ public record DefendRaidObjective(int omenLevel) implements QuestObjective {
             ctx.setReady();
         }
     }
+
+    @Override
+    public List<QuestView.Line> progress(QuestContext ctx) {
+        boolean seen = ctx.state().getBoolean("seen_raid");
+        return List.of(QuestView.Line.check(Component.translatable(seen ? "fealty.objective.raid_fight" : "fealty.objective.raid_wait"),
+                ctx.quest().isReady()));
+    }
+
+    @Override
+    public java.util.Optional<QuestView.Waypoint> waypoint(QuestContext ctx) {
+        return ctx.village().map(v -> new QuestView.Waypoint(v.dimension(), v.center(), Component.literal(v.name())));
+    }
+
 }

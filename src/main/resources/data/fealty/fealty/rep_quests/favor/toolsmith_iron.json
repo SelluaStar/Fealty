@@ -1,0 +1,41 @@
+{
+  "title": {
+    "translate": "quest.fealty.favor.toolsmith_iron"
+  },
+  "description": {
+    "translate": "quest.fealty.favor.toolsmith_iron.desc"
+  },
+  "pool": "fealty:favor",
+  "tiers": {
+    "fealty:distrusted": 6,
+    "fealty:neutral": 10,
+    "fealty:trusted": 10,
+    "fealty:honored": 8
+  },
+  "difficulty": 1,
+  "reward": {
+    "rep": 3,
+    "experience": 10,
+    "items": [
+      {
+        "id": "minecraft:emerald",
+        "count": 2
+      }
+    ]
+  },
+  "time_limit": 48000,
+  "professions": [
+    "minecraft:toolsmith"
+  ],
+  "objective": {
+    "type": "fealty:fetch",
+    "items": [
+      {
+        "ingredient": {
+          "item": "minecraft:iron_ingot"
+        },
+        "count": 5
+      }
+    ]
+  }
+}

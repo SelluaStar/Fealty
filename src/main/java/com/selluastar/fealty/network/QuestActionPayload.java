@@ -23,6 +23,8 @@ public record QuestActionPayload(int entityId, String action, String argument) i
     public static final String ACCEPT = "accept";
     public static final String TURN_IN = "turn_in";
     public static final String ABANDON = "abandon";
+    /** Back from the quest board to the dialogue box. */
+    public static final String TALK = "talk";
 
     @Override
     public Type<? extends CustomPacketPayload> type() {
@@ -35,6 +37,10 @@ public record QuestActionPayload(int entityId, String action, String argument) i
         }
         Entity entity = player.level().getEntity(payload.entityId());
         if (entity == null || !entity.isAlive() || entity.distanceToSqr(player) > 8 * 8) {
+            return;
+        }
+        if (TALK.equals(payload.action())) {
+            com.selluastar.fealty.dialogue.DialogueService.open(player, entity);
             return;
         }
         QuestGivers.forEntity(entity).ifPresent(giver -> {

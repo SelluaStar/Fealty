@@ -29,6 +29,12 @@ public record QuestContext(ServerPlayer player, ActiveQuest quest, RepQuestDefin
         return player.serverLevel();
     }
 
+    /** The level the quest takes place in (its village's dimension), falling back to the player's. */
+    public ServerLevel questLevel() {
+        ServerLevel level = player.server.getLevel(dimension());
+        return level != null ? level : player.serverLevel();
+    }
+
     public MinecraftServer server() {
         return player.server;
     }
@@ -45,7 +51,7 @@ public record QuestContext(ServerPlayer player, ActiveQuest quest, RepQuestDefin
         quest.setReady(true);
         dirty();
         if (definition.objective().completesOnReady()) {
-            QuestManager.completeLater(player, quest.giver());
+            QuestManager.completeLater(player, quest.instanceId());
         } else {
             player.sendSystemMessage(Component.translatable("fealty.quest.ready", definition.title()).withStyle(ChatFormatting.GREEN));
             com.selluastar.fealty.network.Feedback.toast(player, "ready", Component.translatable("fealty.toast.quest_ready"), definition.title());

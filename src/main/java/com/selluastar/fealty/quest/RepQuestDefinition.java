@@ -24,15 +24,18 @@ import net.minecraft.resources.ResourceLocation;
  *   "difficulty": 1,
  *   "reward": { "rep": 6, "loot_table": "fealty:quest_rewards/common" },
  *   "time_limit": 0,
- *   "objective": { "type": "fealty:fetch", "items": [ { "item": "minecraft:bread", "count": 24 } ] }
+ *   "objective": { "type": "fealty:fetch", "items": [ { "ingredient": {"item": "minecraft:bread"}, "count": 24 } ] }
  * }
  * }</pre>
  * {@code tiers} maps the tiers the quest is offered at to its weight there (higher is more likely). An empty
  * map offers it at every tier with weight 10. Quests in pool {@code fealty:none} are only used by chains.
  */
 public record RepQuestDefinition(Component title, Component description, ResourceLocation pool, Map<ResourceLocation, Integer> tiers,
-                                 int difficulty, QuestReward reward, int timeLimit, int failRep, QuestObjective objective) {
+                                 int difficulty, QuestReward reward, int timeLimit, int failRep, QuestObjective objective,
+                                 List<ResourceLocation> professions) {
     public static final ResourceLocation REDEMPTION = Fealty.id("redemption");
+    /** Small daily requests from ordinary villagers, filtered by {@code professions}. */
+    public static final ResourceLocation FAVOR = Fealty.id("favor");
     public static final ResourceLocation RESTORE = Fealty.id("restore");
     public static final ResourceLocation NONE = Fealty.id("none");
 
@@ -48,8 +51,14 @@ public record RepQuestDefinition(Component title, Component description, Resourc
             QuestReward.CODEC.optionalFieldOf("reward", QuestReward.NONE).forGetter(RepQuestDefinition::reward),
             Codec.intRange(0, Integer.MAX_VALUE).optionalFieldOf("time_limit", 0).forGetter(RepQuestDefinition::timeLimit),
             Codec.INT.optionalFieldOf("fail_rep", 0).forGetter(RepQuestDefinition::failRep),
-            OBJECTIVE_CODEC.fieldOf("objective").forGetter(RepQuestDefinition::objective)
+            OBJECTIVE_CODEC.fieldOf("objective").forGetter(RepQuestDefinition::objective),
+            ResourceLocation.CODEC.listOf().optionalFieldOf("professions", List.of()).forGetter(RepQuestDefinition::professions)
     ).apply(i, RepQuestDefinition::new));
+
+    /** Whether a villager with this profession may ask this quest (an empty list allows any). */
+    public boolean suits(ResourceLocation profession) {
+        return professions.isEmpty() || professions.contains(profession);
+    }
 
     /** Weight of this quest at a tier, or 0 if it is not offered there. */
     public int weightAt(ResourceLocation tier) {

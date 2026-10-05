@@ -1,0 +1,26 @@
+{
+  "title": {
+    "translate": "quest.fealty.atonement_hunt"
+  },
+  "description": {
+    "translate": "quest.fealty.atonement_hunt.desc"
+  },
+  "pool": "fealty:redemption",
+  "tiers": {
+    "fealty:hated": 10
+  },
+  "difficulty": 4,
+  "reward": {
+    "rep": 12
+  },
+  "objective": {
+    "type": "fealty:kill",
+    "targets": "#minecraft:undead",
+    "count": 20,
+    "label": {
+      "translate": "fealty.label.undead"
+    },
+    "near_village": true,
+    "night_only": true
+  }
+}

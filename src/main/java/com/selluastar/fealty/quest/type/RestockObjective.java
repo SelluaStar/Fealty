@@ -1,5 +1,6 @@
 package com.selluastar.fealty.quest.type;
 
+import com.selluastar.fealty.network.QuestView;
 import java.util.List;
 
 import com.mojang.serialization.Codec;
@@ -50,6 +51,17 @@ public record RestockObjective(int count) implements QuestObjective {
             return;
         }
         if (ctx.village().map(v -> v.contains(level.dimension(), pos)).orElse(false)) {
+            // Each spot counts once, so placing and breaking the same workstation does not finish the quest.
+            long[] seen = ctx.state().getLongArray("positions");
+            long key = pos.asLong();
+            for (long p : seen) {
+                if (p == key) {
+                    return;
+                }
+            }
+            long[] grown = java.util.Arrays.copyOf(seen, seen.length + 1);
+            grown[seen.length] = key;
+            ctx.state().putLongArray("positions", grown);
             int placed = ctx.getInt("placed") + 1;
             ctx.putInt("placed", placed);
             if (placed >= count) {
@@ -57,4 +69,16 @@ public record RestockObjective(int count) implements QuestObjective {
             }
         }
     }
+
+    @Override
+    public List<QuestView.Line> progress(QuestContext ctx) {
+        String name = ctx.village().map(VillageRecord::name).orElse("?");
+        return List.of(QuestView.Line.count(Component.translatable("fealty.objective.restock", name), ctx.getInt("placed"), count));
+    }
+
+    @Override
+    public java.util.Optional<QuestView.Waypoint> waypoint(QuestContext ctx) {
+        return ctx.village().map(v -> new QuestView.Waypoint(v.dimension(), v.center(), Component.literal(v.name())));
+    }
+
 }

@@ -35,14 +35,23 @@ public final class QuestGivers {
 
     /** The accepted quest for a giver, or the given offers. */
     public static List<OpenQuestScreenPayload.QuestEntry> entries(ServerPlayer player, ResourceLocation giverKey, List<ResourceLocation> offers) {
+        return entries(player, giverKey, offers, 1);
+    }
+
+    /** The quests accepted with a giver, then (while there is room for more) the given offers. */
+    public static List<OpenQuestScreenPayload.QuestEntry> entries(ServerPlayer player, ResourceLocation giverKey, List<ResourceLocation> offers,
+                                                                  int perGiver) {
         List<OpenQuestScreenPayload.QuestEntry> entries = new ArrayList<>();
-        Optional<QuestContext> active = QuestManager.context(player, giverKey);
-        if (active.isPresent()) {
-            entries.add(activeEntry(active.get()));
-            return entries;
+        List<QuestContext> active = QuestManager.contexts(player, giverKey);
+        for (QuestContext ctx : active) {
+            entries.add(activeEntry(ctx));
         }
-        for (ResourceLocation id : offers) {
-            QuestManager.offerEntry(id).ifPresent(entries::add);
+        if (active.size() < perGiver) {
+            for (ResourceLocation id : offers) {
+                if (active.stream().noneMatch(c -> c.quest().questId().equals(id))) {
+                    QuestManager.offerEntry(id).ifPresent(entries::add);
+                }
+            }
         }
         return entries;
     }
@@ -56,6 +65,7 @@ public final class QuestGivers {
             lines.add(Component.translatable("fealty.quest.time_left", Math.max(0, left / 1200)));
         }
         return new OpenQuestScreenPayload.QuestEntry(ctx.quest().questId(), def.title(), def.description(), lines,
-                def.reward().rep(), def.difficulty(), ready ? OpenQuestScreenPayload.Status.READY : OpenQuestScreenPayload.Status.ACTIVE);
+                def.reward().rep(), def.difficulty(), ready ? OpenQuestScreenPayload.Status.READY : OpenQuestScreenPayload.Status.ACTIVE,
+                QuestManager.rewards(def));
     }
 }

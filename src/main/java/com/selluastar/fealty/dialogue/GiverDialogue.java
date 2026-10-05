@@ -61,6 +61,7 @@ final class GiverDialogue {
         if (village.isPresent() && QuestManager.hasLettersFor(player, village.get())) {
             options.add(DialogueNode.Option.of(DELIVER, Component.translatable("fealty.dialogue.option.deliver"), "mail"));
         }
+        options.addAll(DialogueService.questOptions(player, npc));
         for (OpenQuestScreenPayload.ActionEntry action : screen.actions()) {
             options.add(new DialogueNode.Option(ACTION + action.id(), action.label(), iconFor(action.id()), action.enabled(), action.hint()));
         }

@@ -92,8 +92,10 @@ public final class QuestEvents {
         long now = player.level().getGameTime();
         for (QuestContext ctx : QuestManager.activeContexts(player)) {
             int limit = ctx.definition().timeLimit();
-            if (limit > 0 && now - ctx.quest().startTime() > limit && !ctx.quest().isReady()) {
+            if (limit > 0 && now - ctx.quest().startTime() > limit && !ctx.definition().objective().canTurnIn(ctx)) {
                 QuestManager.fail(ctx, RepQuestEvent.Reason.EXPIRED);
+            } else if (QuestManager.giverLost(ctx)) {
+                QuestManager.failQuietly(ctx, RepQuestEvent.Reason.GIVER_LOST);
             } else {
                 ctx.definition().objective().tick(ctx);
             }

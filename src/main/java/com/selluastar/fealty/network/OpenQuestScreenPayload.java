@@ -11,6 +11,7 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
 
 /** Server to client: open (or refresh) a quest giver's screen. */
 public record OpenQuestScreenPayload(int entityId, Component title, Component subtitle, Component greeting, int rep, boolean showRep,
@@ -47,7 +48,7 @@ public record OpenQuestScreenPayload(int entityId, Component title, Component su
 
     /** A quest shown on the screen: an offer to accept, or the accepted quest with its progress. */
     public record QuestEntry(ResourceLocation id, Component title, Component description, List<Component> lines, int repReward,
-                             int difficulty, Status status) {
+                             int difficulty, Status status, Rewards rewards) {
         public static final StreamCodec<RegistryFriendlyByteBuf, QuestEntry> STREAM_CODEC = StreamCodec.of(
                 (buf, e) -> {
                     ResourceLocation.STREAM_CODEC.encode(buf, e.id());
@@ -57,10 +58,32 @@ public record OpenQuestScreenPayload(int entityId, Component title, Component su
                     buf.writeVarInt(e.repReward());
                     buf.writeVarInt(e.difficulty());
                     buf.writeEnum(e.status());
+                    Rewards.STREAM_CODEC.encode(buf, e.rewards());
                 },
                 buf -> new QuestEntry(ResourceLocation.STREAM_CODEC.decode(buf), ComponentSerialization.STREAM_CODEC.decode(buf),
                         ComponentSerialization.STREAM_CODEC.decode(buf), ComponentSerialization.STREAM_CODEC.apply(ByteBufCodecs.list()).decode(buf),
-                        buf.readVarInt(), buf.readVarInt(), buf.readEnum(Status.class)));
+                        buf.readVarInt(), buf.readVarInt(), buf.readEnum(Status.class), Rewards.STREAM_CODEC.decode(buf)));
+
+        public QuestEntry withDescription(Component newDescription) {
+            return new QuestEntry(id, title, newDescription, lines, repReward, difficulty, status, rewards);
+        }
+    }
+
+    /**
+     * What a quest pays besides reputation, for the reward preview.
+     *
+     * @param loot      whether a loot table adds more
+     * @param timeLimit ticks to finish the quest, or 0
+     */
+    public record Rewards(List<ItemStack> items, int renown, int experience, boolean loot, int timeLimit) {
+        public static final Rewards NONE = new Rewards(List.of(), 0, 0, false, 0);
+        public static final StreamCodec<RegistryFriendlyByteBuf, Rewards> STREAM_CODEC = StreamCodec.composite(
+                ItemStack.OPTIONAL_STREAM_CODEC.apply(ByteBufCodecs.list()), Rewards::items,
+                ByteBufCodecs.VAR_INT, Rewards::renown,
+                ByteBufCodecs.VAR_INT, Rewards::experience,
+                ByteBufCodecs.BOOL, Rewards::loot,
+                ByteBufCodecs.VAR_INT, Rewards::timeLimit,
+                Rewards::new);
     }
 
     /** A button for something other than a quest (rumours, presenting a writ, taxes...). */

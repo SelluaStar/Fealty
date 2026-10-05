@@ -1,0 +1,30 @@
+{
+  "title": {
+    "translate": "quest.fealty.spider_nest"
+  },
+  "description": {
+    "translate": "quest.fealty.spider_nest.desc"
+  },
+  "pool": "fealty:redemption",
+  "tiers": {
+    "fealty:neutral": 8,
+    "fealty:trusted": 6
+  },
+  "difficulty": 2,
+  "reward": {
+    "rep": 8,
+    "loot_table": "fealty:quest_rewards/common"
+  },
+  "objective": {
+    "type": "fealty:kill",
+    "targets": [
+      "minecraft:spider",
+      "minecraft:cave_spider"
+    ],
+    "count": 8,
+    "label": {
+      "translate": "fealty.label.spiders"
+    },
+    "near_village": true
+  }
+}

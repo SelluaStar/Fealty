@@ -1,0 +1,38 @@
+{
+  "title": {
+    "translate": "quest.fealty.favor.shepherd_wolves"
+  },
+  "description": {
+    "translate": "quest.fealty.favor.shepherd_wolves.desc"
+  },
+  "pool": "fealty:favor",
+  "tiers": {
+    "fealty:distrusted": 6,
+    "fealty:neutral": 10,
+    "fealty:trusted": 10,
+    "fealty:honored": 8
+  },
+  "difficulty": 2,
+  "reward": {
+    "rep": 3,
+    "experience": 20,
+    "items": [
+      {
+        "id": "minecraft:emerald",
+        "count": 3
+      }
+    ]
+  },
+  "time_limit": 48000,
+  "professions": [
+    "minecraft:shepherd"
+  ],
+  "objective": {
+    "type": "fealty:kill",
+    "targets": "minecraft:wolf",
+    "count": 3,
+    "label": {
+      "translate": "fealty.label.wolves"
+    }
+  }
+}

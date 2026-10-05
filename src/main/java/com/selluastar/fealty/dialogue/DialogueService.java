@@ -1,6 +1,8 @@
 package com.selluastar.fealty.dialogue;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
@@ -13,8 +15,11 @@ import com.selluastar.fealty.Fealty;
 import com.selluastar.fealty.network.FealtyNetwork;
 import com.selluastar.fealty.network.OpenDialoguePayload;
 import com.selluastar.fealty.network.OpenScreenPayload;
+import com.selluastar.fealty.quest.QuestContext;
 import com.selluastar.fealty.quest.QuestGiver;
 import com.selluastar.fealty.quest.QuestGivers;
+import com.selluastar.fealty.quest.QuestManager;
+import com.selluastar.fealty.quest.QuestSync;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -59,7 +64,7 @@ public final class DialogueService {
         return giver.map(g -> GiverDialogue.node(player, npc, g, reply));
     }
 
-    private static void show(ServerPlayer player, Entity npc, DialogueNode node) {
+    static void show(ServerPlayer player, Entity npc, DialogueNode node) {
         Set<String> options = new HashSet<>();
         node.options().forEach(option -> {
             if (option.enabled()) {
@@ -106,10 +111,53 @@ public final class DialogueService {
             close(player);
             return;
         }
+        if (option.startsWith(QUEST_PREFIX)) {
+            questOption(player, npc, option.substring(QUEST_PREFIX.length()));
+            return;
+        }
         if (npc instanceof Villager villager) {
             VillagerDialogue.handle(player, villager, option);
         } else {
             QuestGivers.forEntity(npc).ifPresent(giver -> GiverDialogue.handle(player, npc, giver, option));
+        }
+    }
+
+    // ---- Replies added by quests ----
+
+    static final String QUEST_PREFIX = "q:";
+
+    /** The replies the player's quests add when talking to this NPC (delivering a message, ...). */
+    static List<DialogueNode.Option> questOptions(ServerPlayer player, Entity npc) {
+        List<DialogueNode.Option> options = new ArrayList<>();
+        for (QuestContext ctx : QuestManager.activeContexts(player)) {
+            for (DialogueNode.Option option : ctx.definition().objective().dialogueOptions(ctx, npc)) {
+                options.add(new DialogueNode.Option(QUEST_PREFIX + ctx.quest().instanceId() + ":" + option.id(), option.label(),
+                        option.icon(), option.enabled(), option.hint()));
+            }
+        }
+        return options;
+    }
+
+    private static void questOption(ServerPlayer player, Entity npc, String rest) {
+        int split = rest.indexOf(':');
+        if (split < 0) {
+            return;
+        }
+        UUID instance;
+        try {
+            instance = UUID.fromString(rest.substring(0, split));
+        } catch (IllegalArgumentException e) {
+            return;
+        }
+        String id = rest.substring(split + 1);
+        Optional<QuestContext> ctx = QuestManager.byInstance(player, instance);
+        Optional<Component> answer = ctx.flatMap(c -> c.definition().objective().onDialogue(c, npc, id));
+        if (answer.isPresent()) {
+            Speech.say(npc, answer.get());
+            reply(player, npc, answer.get());
+            QuestSync.syncIfChanged(player);
+        } else {
+            refresh(player, npc);
         }
     }
 

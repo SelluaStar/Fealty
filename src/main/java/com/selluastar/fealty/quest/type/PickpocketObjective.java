@@ -1,5 +1,6 @@
 package com.selluastar.fealty.quest.type;
 
+import com.selluastar.fealty.network.QuestView;
 import java.util.List;
 
 import com.mojang.serialization.Codec;
@@ -50,4 +51,10 @@ public record PickpocketObjective(int count) implements QuestObjective {
             ctx.setReady();
         }
     }
+
+    @Override
+    public List<QuestView.Line> progress(QuestContext ctx) {
+        return List.of(QuestView.Line.count(Component.translatable("fealty.objective.pickpocket"), ctx.getInt("done"), count));
+    }
+
 }

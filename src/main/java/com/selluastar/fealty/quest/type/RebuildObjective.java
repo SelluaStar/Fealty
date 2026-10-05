@@ -1,5 +1,6 @@
 package com.selluastar.fealty.quest.type;
 
+import com.selluastar.fealty.network.QuestView;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -154,6 +155,9 @@ public record RebuildObjective(int count, int radius) implements QuestObjective 
 
     @Override
     public void onBlockPlaced(QuestContext ctx, ServerLevel level, BlockPos pos, BlockState state) {
+        if (!level.dimension().equals(ctx.dimension())) {
+            return;
+        }
         ListTag list = blocks(ctx);
         for (int i = 0; i < list.size(); i++) {
             CompoundTag entry = list.getCompound(i);
@@ -176,7 +180,7 @@ public record RebuildObjective(int count, int radius) implements QuestObjective 
 
     @Override
     public void tick(QuestContext ctx) {
-        if (ctx.quest().isReady() || ctx.level().getGameTime() % 40 != 0) {
+        if (ctx.quest().isReady() || ctx.level().getGameTime() % 40 != 0 || !ctx.level().dimension().equals(ctx.dimension())) {
             return;
         }
         ListTag list = blocks(ctx);
@@ -194,7 +198,7 @@ public record RebuildObjective(int count, int radius) implements QuestObjective 
         if (success) {
             return;
         }
-        ServerLevel level = ctx.level();
+        ServerLevel level = ctx.questLevel();
         ListTag list = blocks(ctx);
         for (int i = 0; i < list.size(); i++) {
             CompoundTag entry = list.getCompound(i);
@@ -208,4 +212,11 @@ public record RebuildObjective(int count, int radius) implements QuestObjective 
             }
         }
     }
+
+    @Override
+    public List<QuestView.Line> progress(QuestContext ctx) {
+        ListTag list = blocks(ctx);
+        return List.of(QuestView.Line.count(Component.translatable("fealty.objective.rebuild"), done(list), list.size()));
+    }
+
 }

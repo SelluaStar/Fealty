@@ -1,5 +1,6 @@
 package com.selluastar.fealty.quest.type;
 
+import com.selluastar.fealty.network.QuestView;
 import java.util.List;
 import java.util.Optional;
 
@@ -73,4 +74,15 @@ public record ClearCampObjective(boolean giveMap, int searchRadius) implements Q
             ctx.setReady();
         }
     }
+
+    @Override
+    public List<QuestView.Line> progress(QuestContext ctx) {
+        return List.of(QuestView.Line.check(Component.translatable("fealty.objective.clear_camp"), ctx.quest().isReady()));
+    }
+
+    @Override
+    public java.util.Optional<QuestView.Waypoint> waypoint(QuestContext ctx) {
+        return camp(ctx).map(pos -> new QuestView.Waypoint(ctx.dimension(), pos, Component.translatable("fealty.objective.camp")));
+    }
+
 }

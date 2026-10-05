@@ -5,13 +5,17 @@ import com.selluastar.fealty.quest.QuestType;
 import com.selluastar.fealty.quest.type.ClearCampObjective;
 import com.selluastar.fealty.quest.type.CourierObjective;
 import com.selluastar.fealty.quest.type.DefendRaidObjective;
+import com.selluastar.fealty.quest.type.ExploreObjective;
 import com.selluastar.fealty.quest.type.FetchObjective;
 import com.selluastar.fealty.quest.type.HuntObjective;
+import com.selluastar.fealty.quest.type.KillObjective;
 import com.selluastar.fealty.quest.type.PickpocketObjective;
 import com.selluastar.fealty.quest.type.RebuildObjective;
 import com.selluastar.fealty.quest.type.RestockObjective;
 import com.selluastar.fealty.quest.type.RestoreElderObjective;
+import com.selluastar.fealty.quest.type.RetrieveObjective;
 import com.selluastar.fealty.quest.type.StealObjective;
+import com.selluastar.fealty.quest.type.TalkToObjective;
 import com.selluastar.fealty.quest.type.VaultRaidObjective;
 
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -53,6 +57,19 @@ public final class ModQuestTypes {
     /** Thieves guild: raid village coffers unseen. */
     public static final DeferredHolder<QuestType<?>, QuestType<VaultRaidObjective>> VAULT_RAID =
             TYPES.register("vault_raid", () -> new QuestType<>(VaultRaidObjective.CODEC));
+
+    /** Defeat a number of creatures (by id or tag), optionally near the village or at night. */
+    public static final DeferredHolder<QuestType<?>, QuestType<KillObjective>> KILL =
+            TYPES.register("kill", () -> new QuestType<>(KillObjective.CODEC));
+    /** Find a structure and report back. */
+    public static final DeferredHolder<QuestType<?>, QuestType<ExploreObjective>> EXPLORE =
+            TYPES.register("explore", () -> new QuestType<>(ExploreObjective.CODEC));
+    /** Carry a message to another villager. */
+    public static final DeferredHolder<QuestType<?>, QuestType<TalkToObjective>> TALK_TO =
+            TYPES.register("talk_to", () -> new QuestType<>(TalkToObjective.CODEC));
+    /** Recover a lost item from a cache, cart or bandit stash out in the wilds. */
+    public static final DeferredHolder<QuestType<?>, QuestType<RetrieveObjective>> RETRIEVE =
+            TYPES.register("retrieve", () -> new QuestType<>(RetrieveObjective.CODEC));
 
     private ModQuestTypes() {
     }

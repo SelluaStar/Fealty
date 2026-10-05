@@ -37,6 +37,8 @@ public class JournalScreen extends Screen {
     private final ScrollList<Standing> standingList = new ScrollList<>(26);
     private final Runnable listener = this::onQuestsChanged;
     private FealtyButton trackButton;
+    private FealtyButton abandonButton;
+    private boolean confirmAbandon;
 
     public JournalScreen(Page page) {
         super(Component.translatable("fealty.journal.title"));
@@ -70,9 +72,12 @@ public class JournalScreen extends Screen {
         standingList.setItems(standings);
 
         trackButton = null;
+        abandonButton = null;
         if (page == Page.QUESTS) {
             trackButton = addRenderableWidget(new FealtyButton(left + WIDTH - 92, top + HEIGHT - 28, 80, 18,
                     Component.empty(), b -> toggleTrack()).icon("pin").pageSound());
+            abandonButton = addRenderableWidget(new FealtyButton(left + WIDTH - 178, top + HEIGHT - 28, 82, 18,
+                    Component.empty(), b -> abandon()).icon("cross").tooltip(Component.translatable("fealty.screen.abandon_hint")));
             updateTrackButton();
         }
     }
@@ -93,9 +98,25 @@ public class JournalScreen extends Screen {
         }
         QuestView quest = questList.selectedItem();
         trackButton.visible = quest != null;
+        abandonButton.visible = quest != null;
         if (quest != null) {
             trackButton.setMessage(Component.translatable(quest.tracked() ? "fealty.journal.untrack" : "fealty.journal.track"));
         }
+        abandonButton.setMessage(Component.translatable(confirmAbandon ? "fealty.screen.abandon_confirm" : "fealty.screen.abandon"));
+    }
+
+    private void abandon() {
+        QuestView quest = questList.selectedItem();
+        if (quest == null) {
+            return;
+        }
+        if (!confirmAbandon) {
+            confirmAbandon = true;
+            updateTrackButton();
+            return;
+        }
+        confirmAbandon = false;
+        net.neoforged.neoforge.network.PacketDistributor.sendToServer(new com.selluastar.fealty.network.AbandonQuestPayload(quest.instance()));
     }
 
     private void toggleTrack() {
@@ -247,7 +268,10 @@ public class JournalScreen extends Screen {
         if (tabs.mouseClicked(mouseX, mouseY)) {
             return true;
         }
-        if (page == Page.QUESTS && questList.mouseClicked(mouseX, mouseY, index -> updateTrackButton())) {
+        if (page == Page.QUESTS && questList.mouseClicked(mouseX, mouseY, index -> {
+            confirmAbandon = false;
+            updateTrackButton();
+        })) {
             return true;
         }
         if (page != Page.QUESTS && standingList.mouseClicked(mouseX, mouseY, index -> { })) {

@@ -31,7 +31,9 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 @EventBusSubscriber(modid = Fealty.MOD_ID)
 public final class QuestMarkerService {
     private static final double RANGE = 32.0;
-    private static final int MAX_GIVERS = 16;
+    private static final int MAX_GIVERS = 24;
+    /** Favors are only marked on villagers this close, so a village is not a sea of markers. */
+    private static final double FAVOR_RANGE = 16.0;
     private static final Map<UUID, Integer> LAST_SENT = new HashMap<>();
 
     private QuestMarkerService() {
@@ -43,14 +45,29 @@ public final class QuestMarkerService {
             return;
         }
         List<QuestMarkersPayload.Marker> markers = new ArrayList<>();
-        List<Entity> givers = player.serverLevel().getEntities((Entity) null, player.getBoundingBox().inflate(RANGE),
-                e -> e.isAlive() && (e instanceof VillageElderEntity || (e instanceof Villager v && ChainManager.hasRole(v))));
+        java.util.Set<java.util.UUID> targets = new java.util.HashSet<>();
+        for (QuestContext ctx : QuestManager.activeContexts(player)) {
+            targets.addAll(ctx.definition().objective().markedEntities(ctx));
+        }
+        List<Entity> nearby = player.serverLevel().getEntities((Entity) null, player.getBoundingBox().inflate(RANGE),
+                e -> e.isAlive() && (e instanceof VillageElderEntity || e instanceof Villager || targets.contains(e.getUUID())));
         int count = 0;
-        for (Entity giver : givers) {
-            if (count++ >= MAX_GIVERS) {
+        for (Entity entity : nearby) {
+            if (count >= MAX_GIVERS) {
                 break;
             }
-            markerFor(player, giver).ifPresent(kind -> markers.add(new QuestMarkersPayload.Marker(giver.getId(), kind)));
+            Optional<QuestMarkersPayload.Kind> kind;
+            if (targets.contains(entity.getUUID())) {
+                kind = Optional.of(QuestMarkersPayload.Kind.TARGET);
+            } else if (entity instanceof Villager villager && !ChainManager.hasRole(villager)) {
+                kind = entity.distanceToSqr(player) <= FAVOR_RANGE * FAVOR_RANGE ? favorMarker(player, villager) : Optional.empty();
+            } else {
+                kind = markerFor(player, entity);
+            }
+            if (kind.isPresent()) {
+                markers.add(new QuestMarkersPayload.Marker(entity.getId(), kind.get()));
+                count++;
+            }
         }
         int hash = markers.hashCode();
         Integer last = LAST_SENT.get(player.getUUID());
@@ -58,6 +75,16 @@ public final class QuestMarkerService {
             LAST_SENT.put(player.getUUID(), hash);
             FealtyNetwork.send(player, new QuestMarkersPayload(markers));
         }
+    }
+
+    /** A favor this villager has for the player (white !), or one the player is doing for them (? or gold ?). */
+    private static Optional<QuestMarkersPayload.Kind> favorMarker(ServerPlayer player, Villager villager) {
+        List<QuestContext> favors = QuestManager.contexts(player, FavorManager.key(villager.getUUID()));
+        if (!favors.isEmpty()) {
+            return Optional.of(favors.getFirst().definition().objective().canTurnIn(favors.getFirst())
+                    ? QuestMarkersPayload.Kind.READY : QuestMarkersPayload.Kind.ACTIVE);
+        }
+        return FavorManager.todaysFavor(player, villager).map(id -> QuestMarkersPayload.Kind.FAVOR);
     }
 
     /** The marker a giver shows this player: ready, in progress, new work, or a letter to deliver. */

@@ -1,0 +1,20 @@
+{
+  "context": "favor_accepted",
+  "lines": [
+    {
+      "text": {
+        "translate": "fealty.line.favor_accepted.any.0"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.favor_accepted.any.1"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.favor_accepted.any.2"
+      }
+    }
+  ]
+}

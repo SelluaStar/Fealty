@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import com.selluastar.fealty.api.RepTier;
 import com.selluastar.fealty.chain.ChainManager;
+import com.selluastar.fealty.config.FealtyConfig;
 import com.selluastar.fealty.data.FealtyDataManager;
 import com.selluastar.fealty.entity.VillageElderEntity;
 import com.selluastar.fealty.lordship.LordshipManager;
@@ -54,14 +55,16 @@ public final class ElderGiver implements QuestGiver {
         String greetingKey = lord ? "fealty.elder.greet.lord" : "fealty.elder.greet." + tier.id().getPath();
         Component greeting = Component.translatableWithFallback(greetingKey, "", player.getDisplayName(), record.name());
 
+        int limit = FealtyConfig.ELDER_QUESTS_AT_ONCE.get();
         List<OpenQuestScreenPayload.QuestEntry> quests = new ArrayList<>(
-                QuestGivers.entries(player, record.id(), QuestManager.offers(player, record)));
-        if (QuestManager.context(player, record.id()).isEmpty()) {
+                QuestGivers.entries(player, record.id(), QuestManager.offers(player, record), limit));
+        List<QuestContext> running = QuestManager.contexts(player, record.id());
+        boolean restoring = running.stream().anyMatch(c -> c.definition().pool().equals(RepQuestDefinition.RESTORE));
+        if (running.size() < limit && !restoring) {
             Optional<VillageRecord> broken = RestoreElderObjective.brokenNear(player.server, record);
             if (broken.isPresent()) {
-                restoreQuest().flatMap(QuestManager::offerEntry).ifPresent(entry -> quests.add(new OpenQuestScreenPayload.QuestEntry(
-                        entry.id(), entry.title(), Component.translatable("fealty.quest.restore.offer", broken.get().name()),
-                        entry.lines(), entry.repReward(), entry.difficulty(), entry.status())));
+                restoreQuest().flatMap(QuestManager::offerEntry).ifPresent(entry -> quests.add(
+                        entry.withDescription(Component.translatable("fealty.quest.restore.offer", broken.get().name()))));
             }
         }
 
@@ -100,14 +103,22 @@ public final class ElderGiver implements QuestGiver {
                         || (def.isPresent() && def.get().pool().equals(RepQuestDefinition.RESTORE)
                         && RestoreElderObjective.brokenNear(player.server, record).isPresent());
                 if (offered) {
-                    QuestManager.accept(player, record.id(), record.id(), id, new CompoundTag());
+                    QuestManager.accept(player, record.id(), record.id(), id, giverState(entity), FealtyConfig.ELDER_QUESTS_AT_ONCE.get());
                 }
             }
-            case QuestActionPayload.TURN_IN -> QuestManager.turnIn(player, record.id());
-            case QuestActionPayload.ABANDON -> QuestManager.abandon(player, record.id(), true);
+            case QuestActionPayload.TURN_IN -> QuestManager.turnIn(player, record.id(), ResourceLocation.tryParse(argument));
+            case QuestActionPayload.ABANDON -> QuestManager.abandon(player, record.id(), ResourceLocation.tryParse(argument), true);
             case ChainManager.ACTION_RUMOURS -> ChainManager.startFromElder(player, record);
             default -> LordshipManager.handleElderAction(player, record, action);
         }
+    }
+
+    /** Where the quest was given and by whom, so the tracker can point the player back. */
+    static CompoundTag giverState(Entity entity) {
+        CompoundTag state = new CompoundTag();
+        state.put("giver_pos", net.minecraft.nbt.NbtUtils.writeBlockPos(entity.blockPosition()));
+        state.putString("giver_name", entity.getDisplayName().getString());
+        return state;
     }
 
     /** Whether the player carries a Royal Writ (shown so the elder can offer fealty). */

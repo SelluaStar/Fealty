@@ -1,5 +1,6 @@
 package com.selluastar.fealty.quest.type;
 
+import com.selluastar.fealty.network.QuestView;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -184,4 +185,28 @@ public record RestoreElderObjective(List<ItemRequirement> items) implements Ques
             }
         }
     }
+
+    @Override
+    public List<QuestView.Line> progress(QuestContext ctx) {
+        List<QuestView.Line> lines = new ArrayList<>();
+        String target = ctx.state().getString("target_name");
+        if (ctx.state().getInt("stage") == 0) {
+            for (ItemRequirement req : items) {
+                lines.add(QuestView.Line.count(Component.translatable("fealty.objective.bring", req.displayName()), req.countIn(ctx.player()), req.count()));
+            }
+            lines.add(QuestView.Line.text(Component.translatable("fealty.objective.restore_mantle")));
+        } else {
+            lines.add(QuestView.Line.check(Component.translatable("fealty.objective.restore", target), ctx.quest().isReady()));
+        }
+        return lines;
+    }
+
+    @Override
+    public java.util.Optional<QuestView.Waypoint> waypoint(QuestContext ctx) {
+        if (ctx.state().getInt("stage") == 0) {
+            return java.util.Optional.empty();
+        }
+        return QuestObjective.super.waypoint(ctx);
+    }
+
 }

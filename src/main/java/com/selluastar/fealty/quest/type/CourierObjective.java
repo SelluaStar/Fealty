@@ -1,5 +1,6 @@
 package com.selluastar.fealty.quest.type;
 
+import com.selluastar.fealty.network.QuestView;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -154,4 +155,11 @@ public record CourierObjective() implements QuestObjective {
             }
         }
     }
+
+    @Override
+    public List<QuestView.Line> progress(QuestContext ctx) {
+        return List.of(QuestView.Line.check(Component.translatable("fealty.objective.courier", ctx.state().getString("to_name")),
+                ctx.quest().isReady()));
+    }
+
 }

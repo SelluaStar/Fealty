@@ -1,5 +1,6 @@
 package com.selluastar.fealty.quest.type;
 
+import com.selluastar.fealty.network.QuestView;
 import java.util.List;
 import java.util.Map;
 
@@ -46,10 +47,25 @@ public record VaultRaidObjective(int count) implements QuestObjective {
         if (!coffer || witnessed || ctx.quest().isReady()) {
             return;
         }
+        // Each coffer raided must belong to a different village.
+        net.minecraft.nbt.ListTag raided = ctx.state().getList("villages", net.minecraft.nbt.Tag.TAG_STRING);
+        for (int i = 0; i < raided.size(); i++) {
+            if (raided.getString(i).equals(village.toString())) {
+                return;
+            }
+        }
+        raided.add(net.minecraft.nbt.StringTag.valueOf(village.toString()));
+        ctx.state().put("villages", raided);
         int done = ctx.getInt("done") + 1;
         ctx.putInt("done", done);
         if (done >= count) {
             ctx.setReady();
         }
     }
+
+    @Override
+    public List<QuestView.Line> progress(QuestContext ctx) {
+        return List.of(QuestView.Line.count(Component.translatable("fealty.objective.vault_raid"), ctx.getInt("done"), count));
+    }
+
 }

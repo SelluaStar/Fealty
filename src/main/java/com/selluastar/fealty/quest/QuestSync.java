@@ -80,6 +80,12 @@ public final class QuestSync {
 
     /** Where to hand the quest in: the giver's home if known, else the village. */
     private static Optional<QuestView.Waypoint> returnWaypoint(QuestContext ctx) {
+        if (ctx.state().hasUUID("giver_uuid") && ctx.player().level().dimension().equals(ctx.dimension())) {
+            net.minecraft.world.entity.Entity giver = ctx.questLevel().getEntity(ctx.state().getUUID("giver_uuid"));
+            if (giver != null) {
+                return Optional.of(new QuestView.Waypoint(ctx.dimension(), giver.blockPosition(), giverName(ctx)));
+            }
+        }
         if (ctx.state().contains("giver_pos")) {
             return net.minecraft.nbt.NbtUtils.readBlockPos(ctx.state(), "giver_pos")
                     .map(pos -> new QuestView.Waypoint(ctx.dimension(), pos, giverName(ctx)));
