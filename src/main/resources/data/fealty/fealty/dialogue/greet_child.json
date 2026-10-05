@@ -1,0 +1,74 @@
+{
+  "context": "greet_child",
+  "lines": [
+    {
+      "text": {
+        "translate": "fealty.line.greet_child.hated.0"
+      },
+      "tiers": [
+        "fealty:hated",
+        "fealty:distrusted"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet_child.hated.1"
+      },
+      "tiers": [
+        "fealty:hated",
+        "fealty:distrusted"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet_child.neutral.0"
+      },
+      "tiers": [
+        "fealty:neutral"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet_child.neutral.1"
+      },
+      "tiers": [
+        "fealty:neutral"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet_child.neutral.2"
+      },
+      "tiers": [
+        "fealty:neutral"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet_child.trusted.0"
+      },
+      "tiers": [
+        "fealty:trusted",
+        "fealty:honored"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet_child.trusted.1"
+      },
+      "tiers": [
+        "fealty:trusted",
+        "fealty:honored"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet_child.trusted.2"
+      },
+      "tiers": [
+        "fealty:trusted",
+        "fealty:honored"
+      ]
+    }
+  ]
+}

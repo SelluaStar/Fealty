@@ -44,6 +44,8 @@ public final class FealtyDataManager {
         event.addListener(new CodecDataLoader<>("fealty/quest_chains", QuestChainDefinition.CODEC, registries, m -> chains = Map.copyOf(m)));
         event.addListener(new CodecDataLoader<>("fealty/village_trades", VillageTradeDefinition.CODEC, registries, m -> villageTrades = Map.copyOf(m)));
         event.addListener(new CodecDataLoader<>("fealty/black_market", BlackMarketOffer.CODEC, registries, m -> blackMarket = Map.copyOf(m)));
+        event.addListener(new CodecDataLoader<>("fealty/dialogue", com.selluastar.fealty.dialogue.DialogueLine.File.CODEC, registries,
+                com.selluastar.fealty.dialogue.DialogueLines::apply));
     }
 
     private static void setFactions(Map<ResourceLocation, FactionDefinition> loaded) {

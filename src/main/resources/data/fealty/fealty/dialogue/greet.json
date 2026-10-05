@@ -1,0 +1,731 @@
+{
+  "context": "greet",
+  "lines": [
+    {
+      "text": {
+        "translate": "fealty.line.greet.hated.0"
+      },
+      "tiers": [
+        "fealty:hated"
+      ],
+      "lord": false
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.hated.1"
+      },
+      "tiers": [
+        "fealty:hated"
+      ],
+      "lord": false
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.hated.2"
+      },
+      "tiers": [
+        "fealty:hated"
+      ],
+      "lord": false
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.hated.3"
+      },
+      "tiers": [
+        "fealty:hated"
+      ],
+      "lord": false
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.distrusted.0"
+      },
+      "tiers": [
+        "fealty:distrusted"
+      ],
+      "lord": false
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.distrusted.1"
+      },
+      "tiers": [
+        "fealty:distrusted"
+      ],
+      "lord": false
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.distrusted.2"
+      },
+      "tiers": [
+        "fealty:distrusted"
+      ],
+      "lord": false
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.distrusted.3"
+      },
+      "tiers": [
+        "fealty:distrusted"
+      ],
+      "lord": false
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.neutral.0"
+      },
+      "tiers": [
+        "fealty:neutral"
+      ],
+      "lord": false,
+      "broken": false
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.neutral.1"
+      },
+      "tiers": [
+        "fealty:neutral"
+      ],
+      "lord": false,
+      "broken": false
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.neutral.2"
+      },
+      "tiers": [
+        "fealty:neutral"
+      ],
+      "lord": false,
+      "broken": false
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.neutral.3"
+      },
+      "tiers": [
+        "fealty:neutral"
+      ],
+      "lord": false,
+      "broken": false
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.trusted.0"
+      },
+      "tiers": [
+        "fealty:trusted"
+      ],
+      "lord": false,
+      "broken": false
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.trusted.1"
+      },
+      "tiers": [
+        "fealty:trusted"
+      ],
+      "lord": false,
+      "broken": false
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.trusted.2"
+      },
+      "tiers": [
+        "fealty:trusted"
+      ],
+      "lord": false,
+      "broken": false
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.trusted.3"
+      },
+      "tiers": [
+        "fealty:trusted"
+      ],
+      "lord": false,
+      "broken": false
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.honored.0"
+      },
+      "tiers": [
+        "fealty:honored"
+      ],
+      "lord": false,
+      "broken": false,
+      "weight": 1
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.honored.1"
+      },
+      "tiers": [
+        "fealty:honored"
+      ],
+      "lord": false,
+      "broken": false,
+      "weight": 1
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.honored.2"
+      },
+      "tiers": [
+        "fealty:honored"
+      ],
+      "lord": false,
+      "broken": false,
+      "weight": 1
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.honored.3"
+      },
+      "tiers": [
+        "fealty:honored"
+      ],
+      "lord": false,
+      "broken": false,
+      "weight": 1
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.lord.0"
+      },
+      "lord": true
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.lord.1"
+      },
+      "lord": true
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.lord.2"
+      },
+      "lord": true
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.lord.3"
+      },
+      "lord": true
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.broken.0"
+      },
+      "broken": true,
+      "lord": false,
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.broken.1"
+      },
+      "broken": true,
+      "lord": false,
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.broken.2"
+      },
+      "broken": true,
+      "lord": false,
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.night.0"
+      },
+      "night": true,
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ],
+      "lord": false
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.night.1"
+      },
+      "night": true,
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ],
+      "lord": false
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.night.2"
+      },
+      "night": true,
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ],
+      "lord": false
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.farmer.0"
+      },
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ],
+      "lord": false,
+      "professions": [
+        "minecraft:farmer"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.farmer.1"
+      },
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ],
+      "lord": false,
+      "professions": [
+        "minecraft:farmer"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.librarian.0"
+      },
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ],
+      "lord": false,
+      "professions": [
+        "minecraft:librarian"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.librarian.1"
+      },
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ],
+      "lord": false,
+      "professions": [
+        "minecraft:librarian"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.cleric.0"
+      },
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ],
+      "lord": false,
+      "professions": [
+        "minecraft:cleric"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.cleric.1"
+      },
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ],
+      "lord": false,
+      "professions": [
+        "minecraft:cleric"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.armorer.0"
+      },
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ],
+      "lord": false,
+      "professions": [
+        "minecraft:armorer"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.armorer.1"
+      },
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ],
+      "lord": false,
+      "professions": [
+        "minecraft:armorer"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.weaponsmith.0"
+      },
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ],
+      "lord": false,
+      "professions": [
+        "minecraft:weaponsmith"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.weaponsmith.1"
+      },
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ],
+      "lord": false,
+      "professions": [
+        "minecraft:weaponsmith"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.toolsmith.0"
+      },
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ],
+      "lord": false,
+      "professions": [
+        "minecraft:toolsmith"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.toolsmith.1"
+      },
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ],
+      "lord": false,
+      "professions": [
+        "minecraft:toolsmith"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.fisherman.0"
+      },
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ],
+      "lord": false,
+      "professions": [
+        "minecraft:fisherman"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.fisherman.1"
+      },
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ],
+      "lord": false,
+      "professions": [
+        "minecraft:fisherman"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.cartographer.0"
+      },
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ],
+      "lord": false,
+      "professions": [
+        "minecraft:cartographer"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.cartographer.1"
+      },
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ],
+      "lord": false,
+      "professions": [
+        "minecraft:cartographer"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.shepherd.0"
+      },
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ],
+      "lord": false,
+      "professions": [
+        "minecraft:shepherd"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.shepherd.1"
+      },
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ],
+      "lord": false,
+      "professions": [
+        "minecraft:shepherd"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.butcher.0"
+      },
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ],
+      "lord": false,
+      "professions": [
+        "minecraft:butcher"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.butcher.1"
+      },
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ],
+      "lord": false,
+      "professions": [
+        "minecraft:butcher"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.mason.0"
+      },
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ],
+      "lord": false,
+      "professions": [
+        "minecraft:mason"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.mason.1"
+      },
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ],
+      "lord": false,
+      "professions": [
+        "minecraft:mason"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.fletcher.0"
+      },
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ],
+      "lord": false,
+      "professions": [
+        "minecraft:fletcher"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.fletcher.1"
+      },
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ],
+      "lord": false,
+      "professions": [
+        "minecraft:fletcher"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.leatherworker.0"
+      },
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ],
+      "lord": false,
+      "professions": [
+        "minecraft:leatherworker"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.leatherworker.1"
+      },
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ],
+      "lord": false,
+      "professions": [
+        "minecraft:leatherworker"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.nitwit.0"
+      },
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ],
+      "lord": false,
+      "professions": [
+        "minecraft:nitwit"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.nitwit.1"
+      },
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ],
+      "lord": false,
+      "professions": [
+        "minecraft:nitwit"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.nitwit.2"
+      },
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ],
+      "lord": false,
+      "professions": [
+        "minecraft:nitwit"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.none.0"
+      },
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ],
+      "lord": false,
+      "professions": [
+        "minecraft:none"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.greet.none.1"
+      },
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ],
+      "lord": false,
+      "professions": [
+        "minecraft:none"
+      ]
+    }
+  ]
+}

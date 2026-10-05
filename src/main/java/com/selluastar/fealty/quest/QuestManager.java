@@ -343,6 +343,17 @@ public final class QuestManager {
 
     // ---- Couriers ----
 
+    /** Whether the player carries a letter of theirs addressed to this village. */
+    public static boolean hasLettersFor(ServerPlayer player, VillageRecord village) {
+        for (ItemStack stack : player.getInventory().items) {
+            LetterInfo info = stack.get(ModDataComponents.LETTER.get());
+            if (info != null && info.to().equals(village.id()) && info.owner().equals(player.getUUID())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /** Hand over every letter the player carries for this village. @return whether any were delivered */
     public static boolean tryDeliverLetters(ServerPlayer player, VillageRecord village) {
         boolean delivered = false;

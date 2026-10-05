@@ -4,10 +4,7 @@ import org.jetbrains.annotations.Nullable;
 
 import com.selluastar.fealty.quest.ElderGiver;
 import com.selluastar.fealty.quest.QuestGiver;
-import com.selluastar.fealty.quest.QuestGivers;
-import com.selluastar.fealty.quest.QuestManager;
 import com.selluastar.fealty.registry.ModAttachments;
-import com.selluastar.fealty.rep.FealtyWorldData;
 import com.selluastar.fealty.village.ElderManager;
 import com.selluastar.fealty.village.VillageRecord;
 
@@ -59,10 +56,7 @@ public class VillageElderEntity extends QuestGiverEntity {
     @Override
     protected void onInteract(ServerPlayer player) {
         com.selluastar.fealty.advancement.FealtyEvents.fire(player, com.selluastar.fealty.advancement.FealtyEvents.MET_ELDER);
-        if (village != null) {
-            FealtyWorldData.get(player.server).village(village).ifPresent(record -> QuestManager.tryDeliverLetters(player, record));
-        }
-        QuestGivers.open(player, this);
+        super.onInteract(player);
     }
 
     @Override

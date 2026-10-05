@@ -1,0 +1,25 @@
+{
+  "context": "work_none",
+  "lines": [
+    {
+      "text": {
+        "translate": "fealty.line.work_none.any.0"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.work_none.any.1"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.work_none.any.2"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.work_none.any.3"
+      }
+    }
+  ]
+}

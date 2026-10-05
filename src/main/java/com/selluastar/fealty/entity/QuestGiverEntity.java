@@ -78,7 +78,9 @@ public abstract class QuestGiverEntity extends PathfinderMob {
     }
 
     protected void onInteract(ServerPlayer player) {
-        QuestGivers.open(player, this);
+        if (!com.selluastar.fealty.dialogue.DialogueService.open(player, this)) {
+            QuestGivers.open(player, this);
+        }
     }
 
     public void setHome(BlockPos pos) {

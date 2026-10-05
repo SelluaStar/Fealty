@@ -1,0 +1,25 @@
+{
+  "context": "gift_thanks",
+  "lines": [
+    {
+      "text": {
+        "translate": "fealty.line.gift_thanks.any.0"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.gift_thanks.any.1"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.gift_thanks.any.2"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.gift_thanks.any.3"
+      }
+    }
+  ]
+}

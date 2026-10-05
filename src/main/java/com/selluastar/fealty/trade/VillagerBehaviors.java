@@ -13,6 +13,7 @@ import com.selluastar.fealty.api.RepTier;
 import com.selluastar.fealty.config.FealtyConfig;
 import com.selluastar.fealty.data.TierData;
 import com.selluastar.fealty.data.TierManager;
+import com.selluastar.fealty.dialogue.Speech;
 import com.selluastar.fealty.entity.BlackMarketeerEntity;
 import com.selluastar.fealty.guard.GuardManager;
 import com.selluastar.fealty.quest.QuestEvents;
@@ -48,6 +49,7 @@ import net.neoforged.neoforge.event.entity.player.TradeWithVillagerEvent;
 public final class VillagerBehaviors {
     private static final ResourceKey<LootTable> GENERIC_GIFT = ResourceKey.create(Registries.LOOT_TABLE, Fealty.id("gameplay/honored_gift"));
     private static final Map<UUID, Long> LAST_RAID_REWARD = new HashMap<>();
+    private static final Map<UUID, Long> LAST_GREETED = new HashMap<>();
 
     private VillagerBehaviors() {
     }
@@ -55,7 +57,11 @@ public final class VillagerBehaviors {
     /** Called once a second for a player standing in a village. */
     public static void tickNearPlayer(ServerPlayer player, VillageRecord village) {
         GuardManager.tickPlayer(player, village);
-        if (player.isSpectator() || player.isCreative()) {
+        if (player.isSpectator()) {
+            return;
+        }
+        greet(player, village);
+        if (player.isCreative()) {
             return;
         }
         RepTier tier = RepManager.getTier(player, village.id());
@@ -85,6 +91,33 @@ public final class VillagerBehaviors {
         }
     }
 
+    /** Now and then a villager near the player says hello (or tells them to go away), as a speech bubble. */
+    private static void greet(ServerPlayer player, VillageRecord village) {
+        long now = player.level().getGameTime();
+        Long last = LAST_GREETED.get(player.getUUID());
+        if ((last != null && now - last < 240) || player.getRandom().nextInt(3) != 0) {
+            return;
+        }
+        Villager nearest = null;
+        double best = 36.0;
+        for (Villager villager : player.serverLevel().getEntitiesOfClass(Villager.class, player.getBoundingBox().inflate(6),
+                v -> v.isAlive() && !v.isSleeping() && !v.isTrading() && v.hasLineOfSight(player))) {
+            double d = villager.distanceToSqr(player);
+            if (d < best && Speech.sinceLastSpoke(villager) > 600) {
+                best = d;
+                nearest = villager;
+            }
+        }
+        if (nearest == null || !FactionResolver.factionOf(nearest).map(village.id()::equals).orElse(false)) {
+            return;
+        }
+        Villager speaker = nearest;
+        Speech.bark(speaker, speaker.isBaby() ? "greet_child" : "greet", player, 600).ifPresent(line -> {
+            LAST_GREETED.put(player.getUUID(), now);
+            speaker.getLookControl().setLookAt(player);
+        });
+    }
+
     private static void giveGift(ServerLevel level, Villager villager, ServerPlayer player) {
         ResourceLocation profession = BuiltInRegistries.VILLAGER_PROFESSION.getKey(villager.getVillagerData().getProfession());
         ResourceKey<LootTable> vanilla = ResourceKey.create(Registries.LOOT_TABLE,
@@ -106,6 +139,7 @@ public final class VillagerBehaviors {
             BehaviorUtils.throwItem(villager, stack, player.position());
         }
         player.displayClientMessage(Component.translatable("fealty.gift.received", villager.getDisplayName()), true);
+        Speech.bark(villager, "gift_give", player, 0);
         FealtyEvents.fire(player, FealtyEvents.GIFT_RECEIVED);
     }
 

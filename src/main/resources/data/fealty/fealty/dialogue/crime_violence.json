@@ -1,0 +1,20 @@
+{
+  "context": "crime_violence",
+  "lines": [
+    {
+      "text": {
+        "translate": "fealty.line.crime_violence.any.0"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.crime_violence.any.1"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.crime_violence.any.2"
+      }
+    }
+  ]
+}

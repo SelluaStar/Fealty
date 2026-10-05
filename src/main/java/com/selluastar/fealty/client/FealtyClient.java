@@ -67,6 +67,8 @@ public final class FealtyClient {
             ClientRepCache.clear();
             ClientQuestCache.clear();
             ClientFeedback.clear();
+            com.selluastar.fealty.client.bubble.SpeechBubbles.clear();
+            com.selluastar.fealty.client.bubble.QuestMarkers.clear();
         }
     }
 }

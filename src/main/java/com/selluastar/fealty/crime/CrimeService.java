@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import com.selluastar.fealty.api.Severity;
 import com.selluastar.fealty.api.event.CrimeWitnessedEvent;
 import com.selluastar.fealty.data.FealtyDataManager;
+import com.selluastar.fealty.dialogue.Speech;
 import com.selluastar.fealty.data.SourceSettings;
 import com.selluastar.fealty.guard.GuardManager;
 import com.selluastar.fealty.outlaw.HeatManager;
@@ -26,6 +27,31 @@ import net.neoforged.neoforge.common.NeoForge;
 /** Resolves a crime: who saw it, what it costs, and who comes running. */
 public final class CrimeService {
     private CrimeService() {
+    }
+
+    /** The first witness who can talk cries out about what they saw. */
+    private static void shout(ServerPlayer player, List<LivingEntity> witnesses, ResourceLocation crime) {
+        String context = crimeContext(crime);
+        for (LivingEntity witness : witnesses) {
+            if (witness.isAlive() && Speech.bark(witness, context, player, 60).isPresent()) {
+                return;
+            }
+        }
+    }
+
+    /** Dialogue context for the kind of crime: theft, violence, vandalism, or anything else. */
+    public static String crimeContext(ResourceLocation crime) {
+        String path = crime.getPath();
+        if (path.contains("steal") || path.contains("pickpocket") || path.contains("vault") || path.contains("harvest")) {
+            return "crime_theft";
+        }
+        if (path.contains("kill") || path.contains("hit") || path.contains("attack")) {
+            return "crime_violence";
+        }
+        if (path.contains("break") || path.contains("arson") || path.contains("explo") || path.contains("trample")) {
+            return "crime_vandalism";
+        }
+        return "crime";
     }
 
     public record Result(boolean witnessed, int repChange, Severity severity) {
@@ -79,7 +105,9 @@ public final class CrimeService {
         if (!witnesses.isEmpty()) {
             player.displayClientMessage(Component.translatable("fealty.crime.seen",
                     witnesses.getFirst().getDisplayName()), true);
+            shout(player, witnesses, crime);
         }
+        RepManager.data(player).addStat("crimes_seen", 1);
         ModCriteria.CRIME.get().trigger(player, crime, true);
         return new Result(true, change, severity);
     }

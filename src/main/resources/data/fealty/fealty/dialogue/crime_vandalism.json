@@ -1,0 +1,20 @@
+{
+  "context": "crime_vandalism",
+  "lines": [
+    {
+      "text": {
+        "translate": "fealty.line.crime_vandalism.any.0"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.crime_vandalism.any.1"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.crime_vandalism.any.2"
+      }
+    }
+  ]
+}

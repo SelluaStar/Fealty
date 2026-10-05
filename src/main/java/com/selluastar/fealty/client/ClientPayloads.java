@@ -34,6 +34,12 @@ public final class ClientPayloads {
 
     public static void openScreen(com.selluastar.fealty.network.OpenScreenPayload payload) {
         Minecraft minecraft = Minecraft.getInstance();
+        if (com.selluastar.fealty.network.OpenScreenPayload.CLOSE.equals(payload.screen())) {
+            if (minecraft.screen instanceof com.selluastar.fealty.client.screen.DialogueScreen) {
+                minecraft.setScreen(null);
+            }
+            return;
+        }
         if (com.selluastar.fealty.network.OpenScreenPayload.JOURNAL.equals(payload.screen())) {
             com.selluastar.fealty.client.screen.JournalScreen.Page page = com.selluastar.fealty.client.screen.JournalScreen.Page.QUESTS;
             for (com.selluastar.fealty.client.screen.JournalScreen.Page p : com.selluastar.fealty.client.screen.JournalScreen.Page.values()) {
@@ -43,6 +49,23 @@ public final class ClientPayloads {
             }
             minecraft.setScreen(new com.selluastar.fealty.client.screen.JournalScreen(page));
         }
+    }
+
+    public static void dialogue(com.selluastar.fealty.network.OpenDialoguePayload payload) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.screen instanceof com.selluastar.fealty.client.screen.DialogueScreen screen && screen.entityId() == payload.entityId()) {
+            screen.update(payload.node());
+        } else {
+            minecraft.setScreen(new com.selluastar.fealty.client.screen.DialogueScreen(payload.entityId(), payload.node()));
+        }
+    }
+
+    public static void speech(com.selluastar.fealty.network.SpeechBubblePayload payload) {
+        com.selluastar.fealty.client.bubble.SpeechBubbles.add(payload.entityId(), payload.text(), payload.ticks());
+    }
+
+    public static void markers(com.selluastar.fealty.network.QuestMarkersPayload payload) {
+        com.selluastar.fealty.client.bubble.QuestMarkers.set(payload.markers());
     }
 
     public static void openQuestScreen(OpenQuestScreenPayload payload) {

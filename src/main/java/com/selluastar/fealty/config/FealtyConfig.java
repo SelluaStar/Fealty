@@ -34,6 +34,7 @@ public final class FealtyConfig {
     public static final ModConfigSpec.IntValue REFUSAL_TICKS;
     public static final ModConfigSpec.IntValue GIFT_COOLDOWN;
     public static final ModConfigSpec.IntValue HONORED_GIFT_COOLDOWN;
+    public static final ModConfigSpec.BooleanValue VILLAGER_DIALOGUE;
 
     // Villages
     public static final ModConfigSpec.IntValue VILLAGE_MARGIN;
@@ -124,6 +125,9 @@ public final class FealtyConfig {
                 .defineInRange("gift_cooldown", 24000, 0, 2400000);
         HONORED_GIFT_COOLDOWN = b.comment("Cooldown per villager between gifts villagers give Honored players (ticks)")
                 .defineInRange("honored_gift_cooldown", 24000, 0, 2400000);
+        VILLAGER_DIALOGUE = b.comment("Right-clicking a villager opens the dialogue box (trade, work, news, gifts).",
+                        "Sneak-right-click still trades straight away. Off: right-click trades as in vanilla.")
+                .define("villager_dialogue", true);
         b.pop();
 
         b.comment("Village detection and the trusting elder").push("villages");

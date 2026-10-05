@@ -1,0 +1,72 @@
+{
+  "context": "farewell",
+  "lines": [
+    {
+      "text": {
+        "translate": "fealty.line.farewell.friendly.0"
+      },
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.farewell.friendly.1"
+      },
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.farewell.friendly.2"
+      },
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.farewell.friendly.3"
+      },
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.farewell.hostile.0"
+      },
+      "tiers": [
+        "fealty:hated",
+        "fealty:distrusted"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.farewell.hostile.1"
+      },
+      "tiers": [
+        "fealty:hated",
+        "fealty:distrusted"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.farewell.hostile.2"
+      },
+      "tiers": [
+        "fealty:hated",
+        "fealty:distrusted"
+      ]
+    }
+  ]
+}

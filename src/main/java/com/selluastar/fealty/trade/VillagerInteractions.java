@@ -6,23 +6,22 @@ import com.selluastar.fealty.Fealty;
 import com.selluastar.fealty.advancement.FealtyEvents;
 import com.selluastar.fealty.api.FealtyTags;
 import com.selluastar.fealty.api.RepSources;
-import com.selluastar.fealty.api.RepTier;
 import com.selluastar.fealty.api.event.ThreatEvent;
-import com.selluastar.fealty.chain.ChainManager;
 import com.selluastar.fealty.config.FealtyConfig;
 import com.selluastar.fealty.crime.CrimeService;
 import com.selluastar.fealty.data.TierData;
 import com.selluastar.fealty.data.TierManager;
 import com.selluastar.fealty.data.TradePolicy;
+import com.selluastar.fealty.dialogue.DialogueLines;
+import com.selluastar.fealty.dialogue.DialogueService;
+import com.selluastar.fealty.dialogue.SpeakerContext;
+import com.selluastar.fealty.dialogue.Speech;
 import com.selluastar.fealty.item.TyrantCrownItem;
 import com.selluastar.fealty.outlaw.ThievesGuild;
 import com.selluastar.fealty.quest.QuestEvents;
 import com.selluastar.fealty.registry.ModAttachments;
 import com.selluastar.fealty.rep.FactionResolver;
-import com.selluastar.fealty.rep.Factions;
-import com.selluastar.fealty.rep.FealtyWorldData;
 import com.selluastar.fealty.rep.RepManager;
-import com.selluastar.fealty.village.VillageRecord;
 
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
@@ -32,14 +31,14 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.item.AxeItem;
 import net.minecraft.world.item.BowItem;
 import net.minecraft.world.item.CrossbowItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.MaceItem;
 import net.minecraft.world.item.SwordItem;
-import net.minecraft.world.item.AxeItem;
 import net.minecraft.world.item.TridentItem;
-import net.minecraft.world.entity.npc.Villager;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -49,17 +48,15 @@ import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 /**
  * What happens when a player uses a villager:
  * <ul>
+ *     <li>plain use: the dialogue box (trade, work, news, gifts, threats), unless {@code villager_dialogue} is off</li>
  *     <li>sneak + drawn weapon: threaten (Neutral price once, costs rep, guards may react)</li>
  *     <li>sneak + a wanted item: gift (+rep, once a day per villager)</li>
- *     <li>sneak + empty hand: talk (or pick their pocket from behind)</li>
- *     <li>plain use: trade, unless the villager refuses you</li>
+ *     <li>sneak + empty hand from behind: pick their pocket</li>
+ *     <li>sneak otherwise: trade straight away, unless the villager refuses you</li>
  * </ul>
  */
 @EventBusSubscriber(modid = Fealty.MOD_ID)
 public final class VillagerInteractions {
-    private static final java.util.Set<String> DIALOGUE_GROUPS =
-            java.util.Set.of("hated", "distrusted", "neutral", "trusted", "honored", "lord", "broken");
-
     private VillagerInteractions() {
     }
 
@@ -81,19 +78,18 @@ public final class VillagerInteractions {
             } else if (isThreatWeapon(held)) {
                 threaten(player, villager, faction.get());
                 handled = true;
-            } else if (!held.isEmpty() && held.is(FealtyTags.Items.VILLAGER_GIFTS)) {
+            } else if (isGift(held)) {
                 gift(player, villager, faction.get(), held);
                 handled = true;
-            } else if (held.isEmpty()) {
-                if (!ChainManager.onTalk(player, villager) && !ThievesGuild.tryPickpocket(player, villager, faction.get())) {
-                    talk(player, villager, faction.get());
-                }
+            } else if (held.isEmpty() && ThievesGuild.tryPickpocket(player, villager, faction.get())) {
                 handled = true;
             } else {
-                handled = false;
+                handled = refusesTrade(player, villager, faction.get()).isPresent();
             }
+        } else if (FealtyConfig.VILLAGER_DIALOGUE.get()) {
+            handled = DialogueService.open(player, villager);
         } else {
-            handled = refusesTrade(player, villager, faction.get());
+            handled = refusesTrade(player, villager, faction.get()).isPresent();
         }
         if (handled) {
             event.setCanceled(true);
@@ -110,58 +106,73 @@ public final class VillagerInteractions {
                 || stack.getItem() instanceof BowItem || stack.getItem() instanceof CrossbowItem;
     }
 
+    public static boolean isGift(ItemStack stack) {
+        return !stack.isEmpty() && stack.is(FealtyTags.Items.VILLAGER_GIFTS);
+    }
+
     // ---- Trading ----
 
-    private static boolean refusesTrade(ServerPlayer player, Villager villager, ResourceLocation faction) {
+    /**
+     * Whether the villager refuses to trade with the player. A refusal is said out loud and returned as the
+     * villager's reply.
+     */
+    public static Optional<Component> refusesTrade(ServerPlayer player, Villager villager, ResourceLocation faction) {
         if (villager.getOffers().isEmpty()) {
-            return false;
+            return Optional.empty();
         }
         long now = player.level().getGameTime();
         VillagerMemory.Entry memory = villager.getData(ModAttachments.VILLAGER_MEMORY).of(player.getUUID());
         if (memory.refusedUntil > now) {
-            refuse(player, villager, "fealty.trade.refused_threats");
-            return true;
+            return Optional.of(refuse(player, villager, "refuse_threats", "fealty.trade.refused_threats"));
         }
         TierData tier = TierManager.data(RepManager.getTier(player, faction));
         if (tier.tradePolicy() == TradePolicy.REFUSE_UNLESS_THREATENED && !memory.threatPrice) {
-            refuse(player, villager, "fealty.trade.refused_hated");
-            return true;
+            return Optional.of(refuse(player, villager, "refuse_hated", "fealty.trade.refused_hated"));
         }
-        return false;
+        return Optional.empty();
     }
 
-    private static void refuse(ServerPlayer player, Villager villager, String key) {
+    private static Component refuse(ServerPlayer player, Villager villager, String context, String fallbackKey) {
         villager.setUnhappyCounter(40);
         villager.playSound(SoundEvents.VILLAGER_NO, 1.0F, villager.getVoicePitch());
-        player.displayClientMessage(Component.translatable(key, villager.getDisplayName()), true);
+        return speak(player, villager, context, Component.translatable(fallbackKey, villager.getDisplayName()));
+    }
+
+    /** Say a line from a context out loud (or the fallback text) and return it. */
+    public static Component speak(ServerPlayer player, Villager villager, String context, Component fallback) {
+        villager.getLookControl().setLookAt(player);
+        Component line = DialogueLines.pick(context, SpeakerContext.of(villager, player), villager.getRandom(), player.getDisplayName())
+                .orElse(fallback);
+        Speech.say(villager, line);
+        return line;
     }
 
     // ---- Threats ----
 
-    public static void threaten(ServerPlayer player, Villager villager, ResourceLocation faction) {
+    /** Threaten a villager. @return what the villager says */
+    public static Component threaten(ServerPlayer player, Villager villager, ResourceLocation faction) {
         long now = player.level().getGameTime();
         VillagerMemory.Entry memory = villager.getData(ModAttachments.VILLAGER_MEMORY).of(player.getUUID());
         if (memory.refusedUntil > now) {
-            refuse(player, villager, "fealty.threat.too_scared");
-            return;
+            return refuse(player, villager, "threat_refuse", "fealty.threat.too_scared");
         }
         if (now - memory.lastThreat < FealtyConfig.THREAT_COOLDOWN.get()) {
-            refuse(player, villager, "fealty.threat.cooldown");
-            return;
+            return refuse(player, villager, "threat_refuse", "fealty.threat.cooldown");
         }
         if (NeoForge.EVENT_BUS.post(new ThreatEvent(player, villager, faction)).isCanceled()) {
-            return;
+            return Component.empty();
         }
         memory.lastThreat = now;
         memory.threats++;
+        Component reply;
         if (memory.threats >= FealtyConfig.THREATS_BEFORE_REFUSAL.get()) {
             memory.threats = 0;
             memory.threatPrice = false;
             memory.refusedUntil = now + FealtyConfig.REFUSAL_TICKS.get();
-            player.displayClientMessage(Component.translatable("fealty.threat.refuses", villager.getDisplayName()), false);
+            reply = speak(player, villager, "threat_refuse", Component.translatable("fealty.threat.refuses", villager.getDisplayName()));
         } else {
             memory.threatPrice = true;
-            player.displayClientMessage(Component.translatable("fealty.threat.cowers", villager.getDisplayName()), false);
+            reply = speak(player, villager, "threat_cower", Component.translatable("fealty.threat.cowers", villager.getDisplayName()));
         }
         villager.setUnhappyCounter(60);
         villager.playSound(SoundEvents.VILLAGER_HURT, 1.0F, villager.getVoicePitch());
@@ -169,57 +180,34 @@ public final class VillagerInteractions {
             CrimeService.commit(player, faction, RepSources.THREATEN, villager.blockPosition(), villager, false);
         }
         FealtyEvents.fire(player, FealtyEvents.THREATENED);
+        return reply;
     }
 
     // ---- Gifts ----
 
-    private static void gift(ServerPlayer player, Villager villager, ResourceLocation faction, ItemStack held) {
+    /** Give the held item to a villager. @return what the villager says */
+    public static Component gift(ServerPlayer player, Villager villager, ResourceLocation faction, ItemStack held) {
         long now = player.level().getGameTime();
         VillagerMemory.Entry memory = villager.getData(ModAttachments.VILLAGER_MEMORY).of(player.getUUID());
         if (now - memory.lastGift < FealtyConfig.GIFT_COOLDOWN.get()) {
-            player.displayClientMessage(Component.translatable("fealty.gift.cooldown", villager.getDisplayName()), true);
-            return;
+            return speak(player, villager, "gift_cooldown", Component.translatable("fealty.gift.cooldown", villager.getDisplayName()));
         }
         memory.lastGift = now;
         held.consume(1, player);
         RepManager.meet(player, faction);
         int before = RepManager.getRep(player, faction);
         int change = RepManager.applySource(player, faction, RepSources.GIFT);
+        Component reply;
         if (change == 0 && before < 0) {
-            player.displayClientMessage(Component.translatable("fealty.gift.not_enough", villager.getDisplayName()), true);
+            reply = speak(player, villager, "gift_refused", Component.translatable("fealty.gift.not_enough", villager.getDisplayName()));
         } else {
-            player.displayClientMessage(Component.translatable("fealty.gift.thanks", villager.getDisplayName()), true);
+            reply = speak(player, villager, "gift_thanks", Component.translatable("fealty.gift.thanks", villager.getDisplayName()));
         }
+        RepManager.data(player).addStat("gifts_given", 1);
         villager.playSound(SoundEvents.VILLAGER_YES, 1.0F, villager.getVoicePitch());
         ((ServerLevel) villager.level()).sendParticles(ParticleTypes.HAPPY_VILLAGER, villager.getX(), villager.getEyeY() + 0.3,
                 villager.getZ(), 6, 0.3, 0.3, 0.3, 0.0);
         FealtyEvents.fire(player, FealtyEvents.GIFT_GIVEN);
-    }
-
-    // ---- Talk ----
-
-    private static void talk(ServerPlayer player, Villager villager, ResourceLocation faction) {
-        RepManager.meet(player, faction);
-        RepTier tier = RepManager.getTier(player, faction);
-        String group = tier.id().getPath();
-        if (Factions.isVillage(faction)) {
-            Optional<VillageRecord> village = FealtyWorldData.get(player.server).village(faction);
-            if (village.isPresent() && village.get().lord().isLord(player.getUUID())) {
-                group = "lord";
-            } else if (village.isPresent() && village.get().isBroken()) {
-                group = "broken";
-            }
-        }
-        if (!DIALOGUE_GROUPS.contains(group)) {
-            // Tiers added by data packs borrow the lines of the nearest default tier.
-            int neutral = TierManager.neutral().rank();
-            group = tier.rank() < neutral ? "distrusted" : tier.rank() > neutral ? "trusted" : "neutral";
-        }
-        int line = villager.getRandom().nextInt(4);
-        Component text = Component.translatable("fealty.dialogue." + group + "." + line, player.getDisplayName());
-        player.sendSystemMessage(Component.translatable("fealty.dialogue.format", villager.getDisplayName(), text));
-        villager.getLookControl().setLookAt(player);
-        villager.playSound(tier.rank() >= TierManager.neutral().rank() ? SoundEvents.VILLAGER_AMBIENT : SoundEvents.VILLAGER_NO,
-                1.0F, villager.getVoicePitch());
+        return reply;
     }
 }
