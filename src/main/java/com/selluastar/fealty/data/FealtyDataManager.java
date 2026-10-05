@@ -52,13 +52,14 @@ public final class FealtyDataManager {
         loaded.forEach((id, def) -> {
             if (def.kind() == FactionDefinition.Kind.VILLAGE) {
                 if (def.structures().isEmpty()) {
-                    Fealty.LOGGER.warn("Fealty: village faction template {} has no 'structures' tag and will never match", id);
+                    Fealty.LOGGER.warn("Fealty: village faction template {} has no 'structures' and will never match", id);
                 }
                 templates.add(Map.entry(id, def));
             }
         });
         templates.sort(Comparator.comparingInt((Map.Entry<ResourceLocation, FactionDefinition> e) -> e.getValue().priority()).reversed());
         villageTemplates = List.copyOf(templates);
+        com.selluastar.fealty.village.VillageResolver.clearTemplateCache();
     }
 
     public static Map<ResourceLocation, FactionDefinition> factions() {

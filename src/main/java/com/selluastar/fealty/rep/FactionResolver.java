@@ -22,11 +22,16 @@ public final class FactionResolver {
         if (!(entity.level() instanceof ServerLevel level)) {
             return Optional.empty();
         }
-        if (entity.hasData(ModAttachments.FACTION)) {
-            return Optional.of(entity.getData(ModAttachments.FACTION));
-        }
         if (entity instanceof Villager villager) {
+            // Villagers re-check their bell and home; the stored faction is only a fallback.
             return Optional.of(VillageResolver.villageOf(villager).map(VillageRecord::id).orElse(Factions.WANDERERS));
+        }
+        if (entity.hasData(ModAttachments.FACTION)) {
+            ResourceLocation stored = entity.getData(ModAttachments.FACTION);
+            if (!Factions.isVillage(stored) || FealtyWorldData.get(level.getServer()).village(stored).isPresent()) {
+                return Optional.of(stored);
+            }
+            entity.removeData(ModAttachments.FACTION);
         }
         if (entity instanceof WanderingTrader) {
             return Optional.of(Factions.WANDERERS);
@@ -35,7 +40,10 @@ public final class FactionResolver {
             return Optional.of(Factions.BANDITS);
         }
         if (entity.getType().is(FealtyTags.Entities.GUARDS) || entity.getType().is(FealtyTags.Entities.VILLAGE_MEMBERS)) {
-            return VillageResolver.villageAt(level, entity.blockPosition()).map(VillageRecord::id);
+            // Guards join the village they are first seen in and stay its guards when they leave its bounds.
+            Optional<ResourceLocation> village = VillageResolver.villageAt(level, entity.blockPosition()).map(VillageRecord::id);
+            village.ifPresent(id -> entity.setData(ModAttachments.FACTION, id));
+            return village;
         }
         return Optional.empty();
     }

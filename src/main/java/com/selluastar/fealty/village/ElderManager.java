@@ -25,14 +25,12 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.storage.loot.LootTable;
 
 /**
@@ -42,6 +40,7 @@ import net.minecraft.world.level.storage.loot.LootTable;
 public final class ElderManager {
     public static final ResourceKey<LootTable> COFFER_LOOT = ResourceKey.create(Registries.LOOT_TABLE, Fealty.id("chests/village_coffer"));
     private static final Map<String, Integer> MISSING = new HashMap<>();
+    private static final Map<String, Long> COFFER_REPLACED = new HashMap<>();
 
     private ElderManager() {
     }
@@ -58,7 +57,10 @@ public final class ElderManager {
                     spawnElder(level, record, null);
                 }
             }
-            case ALIVE -> watchElder(level, record);
+            case ALIVE -> {
+                watchElder(level, record);
+                checkCoffer(level, record);
+            }
             case BROKEN -> {
             }
         }
@@ -118,69 +120,58 @@ public final class ElderManager {
         return true;
     }
 
-    /** An indoor spot near the bell, preferring roofed floor space close to the centre. */
+    /** An indoor spot in the village's main building, see {@link SitePlanner#elderHome}. */
     @Nullable
     static BlockPos findHome(ServerLevel level, VillageRecord record) {
-        BlockPos center = record.center();
-        RandomSource random = level.getRandom();
-        BlockPos best = null;
-        int bestScore = Integer.MIN_VALUE;
-        for (int i = 0; i < 600; i++) {
-            BlockPos pos = center.offset(random.nextInt(41) - 20, random.nextInt(13) - 6, random.nextInt(41) - 20);
-            if (!level.isLoaded(pos) || !record.contains(level.dimension(), pos) || !isStandable(level, pos)) {
-                continue;
-            }
-            int score = -(int) Math.sqrt(pos.distSqr(center));
-            if (isIndoors(level, pos)) {
-                score += 25;
-            }
-            if (score > bestScore) {
-                bestScore = score;
-                best = pos.immutable();
-            }
-        }
-        if (best == null && level.isLoaded(center)) {
-            best = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, center);
-        }
-        return best;
+        return SitePlanner.elderHome(level, record);
     }
 
-    static boolean isStandable(ServerLevel level, BlockPos pos) {
-        BlockState feet = level.getBlockState(pos);
-        BlockState head = level.getBlockState(pos.above());
-        BlockPos below = pos.below();
-        return feet.getCollisionShape(level, pos).isEmpty() && feet.getFluidState().isEmpty()
-                && head.getCollisionShape(level, pos.above()).isEmpty() && head.getFluidState().isEmpty()
-                && level.getBlockState(below).isFaceSturdy(level, below, Direction.UP);
-    }
-
-    private static boolean isIndoors(ServerLevel level, BlockPos pos) {
-        if (level.canSeeSky(pos)) {
+    /** Put the coffer beside the elder's home, against a wall where possible. */
+    static boolean placeCoffer(ServerLevel level, VillageRecord record, BlockPos home) {
+        Optional<BlockPos> spot = SitePlanner.beside(level, home, 3);
+        if (spot.isEmpty()) {
             return false;
         }
-        for (int dy = 2; dy <= 6; dy++) {
-            if (!level.getBlockState(pos.above(dy)).isAir()) {
-                return true;
-            }
+        BlockPos pos = spot.get();
+        Direction facing = Direction.getNearest(home.getX() - pos.getX(), 0, home.getZ() - pos.getZ());
+        if (facing.getAxis() == Direction.Axis.Y) {
+            facing = Direction.NORTH;
         }
-        return false;
+        BlockState state = ModBlocks.VILLAGE_COFFER.get().defaultBlockState().setValue(VillageCofferBlock.FACING, facing);
+        level.setBlock(pos, state, Block.UPDATE_ALL);
+        if (level.getBlockEntity(pos) instanceof VillageCofferBlockEntity coffer) {
+            coffer.setVillage(record.id());
+            coffer.setLootTable(COFFER_LOOT, level.getRandom().nextLong());
+        }
+        record.elder().setCoffer(pos);
+        FealtyWorldData.get(level.getServer()).setDirty();
+        return true;
     }
 
-    private static void placeCoffer(ServerLevel level, VillageRecord record, BlockPos home) {
-        for (Direction dir : Direction.Plane.HORIZONTAL) {
-            BlockPos pos = home.relative(dir);
-            if (!isStandable(level, pos)) {
-                continue;
-            }
-            BlockState state = ModBlocks.VILLAGE_COFFER.get().defaultBlockState().setValue(VillageCofferBlock.FACING, dir.getOpposite());
-            level.setBlock(pos, state, Block.UPDATE_ALL);
-            if (level.getBlockEntity(pos) instanceof VillageCofferBlockEntity coffer) {
-                coffer.setVillage(record.id());
-                coffer.setLootTable(COFFER_LOOT, level.getRandom().nextLong());
-            }
-            record.elder().setCoffer(pos);
+    /**
+     * A coffer that was broken or never placed is put back, at most once per Fealty day per village, so tribute
+     * always has somewhere to go.
+     */
+    private static void checkCoffer(ServerLevel level, VillageRecord record) {
+        if (!FealtyConfig.PLACE_COFFERS.get()) {
             return;
         }
+        BlockPos coffer = record.elder().coffer();
+        BlockPos home = record.elder().home();
+        if (home == null || !level.isLoaded(home)) {
+            return;
+        }
+        if (coffer != null && (!level.isLoaded(coffer) || level.getBlockState(coffer).is(ModBlocks.VILLAGE_COFFER.get()))) {
+            return;
+        }
+        long day = com.selluastar.fealty.rep.RepManager.day(level.getServer());
+        Long last = COFFER_REPLACED.get(record.id().toString());
+        if (last != null && last == day) {
+            return;
+        }
+        COFFER_REPLACED.put(record.id().toString(), day);
+        record.elder().setCoffer(null);
+        placeCoffer(level, record, home);
     }
 
     public static void onElderDeath(VillageElderEntity elder, DamageSource source) {

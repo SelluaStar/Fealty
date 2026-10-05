@@ -31,26 +31,35 @@ public final class VillageRecord {
             LordInfo.CODEC.optionalFieldOf("lord", new LordInfo()).forGetter(VillageRecord::lord),
             Codec.BOOL.optionalFieldOf("initialized", false).forGetter(VillageRecord::isInitialized),
             UUIDUtil.CODEC.optionalFieldOf("tyrant_for").forGetter(r -> Optional.ofNullable(r.tyrantFor)),
-            Codec.BOOL.optionalFieldOf("tyrant_spawned", false).forGetter(VillageRecord::isTyrantSpawned)
-    ).apply(i, (id, dim, center, bounds, template, structure, name, hasElder, elder, lord, init, tyrantFor, tyrantSpawned) -> {
+            Codec.BOOL.optionalFieldOf("tyrant_spawned", false).forGetter(VillageRecord::isTyrantSpawned),
+            Sites.CODEC.optionalFieldOf("sites", new Sites()).forGetter(VillageRecord::sites)
+    ).apply(i, (id, dim, center, bounds, template, structure, name, hasElder, elder, lord, init, tyrantFor, tyrantSpawned, sites) -> {
         VillageRecord r = new VillageRecord(id, dim, center, bounds, template, structure.orElse(null), name, hasElder);
         r.elder = elder;
         r.lord = lord;
         r.initialized = init;
         r.tyrantFor = tyrantFor.orElse(null);
         r.tyrantSpawned = tyrantSpawned;
+        r.sites = sites;
         return r;
     }));
 
+    /** Heraldic colours villages are given (tabards, journal markers), picked from the village id. */
+    private static final int[] COLORS = {
+            0xB71C1C, 0x1565C0, 0x2E7D32, 0xF9A825, 0x6A1B9A, 0xEF6C00, 0x00838F, 0x4E342E,
+            0xAD1457, 0x283593, 0x558B2F, 0x37474F
+    };
+
     private final ResourceLocation id;
     private final ResourceKey<Level> dimension;
-    private final BlockPos center;
+    private BlockPos center;
     private final BoundingBox bounds;
     private final ResourceLocation template;
     @Nullable
     private final ResourceLocation structure;
-    private final String name;
-    private final boolean hasElder;
+    private String name;
+    private boolean hasElder;
+    private Sites sites = new Sites();
     private ElderInfo elder = new ElderInfo();
     private LordInfo lord = new LordInfo();
     private boolean initialized;
@@ -82,6 +91,10 @@ public final class VillageRecord {
         return center;
     }
 
+    public void setCenter(BlockPos center) {
+        this.center = center.immutable();
+    }
+
     public BoundingBox bounds() {
         return bounds;
     }
@@ -103,9 +116,46 @@ public final class VillageRecord {
         return name;
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
+
     /** Whether this village is meant to have a trusting elder (its structure is a castle village). */
     public boolean hasElder() {
         return hasElder;
+    }
+
+    public void setHasElder(boolean hasElder) {
+        this.hasElder = hasElder;
+    }
+
+    /** Where the village keeps its things (mailbox, guard post) and how it was found. */
+    public Sites sites() {
+        return sites;
+    }
+
+    /** The village's heraldic colour, used for guard tabards and journal markers. */
+    public int color() {
+        return COLORS[Math.floorMod(id.hashCode(), COLORS.length)];
+    }
+
+    /** The chunk of the structure start for structure villages, parsed from the id. */
+    public java.util.Optional<net.minecraft.world.level.ChunkPos> startChunk() {
+        if (structure == null) {
+            return java.util.Optional.empty();
+        }
+        String path = id.getPath();
+        String last = path.substring(path.lastIndexOf('/') + 1);
+        int split = last.indexOf('_');
+        if (split <= 0) {
+            return java.util.Optional.empty();
+        }
+        try {
+            return java.util.Optional.of(new net.minecraft.world.level.ChunkPos(Integer.parseInt(last.substring(0, split)),
+                    Integer.parseInt(last.substring(split + 1))));
+        } catch (NumberFormatException e) {
+            return java.util.Optional.empty();
+        }
     }
 
     public ElderInfo elder() {
@@ -145,6 +195,80 @@ public final class VillageRecord {
 
     public boolean isBroken() {
         return elder.state == ElderState.BROKEN;
+    }
+
+    /**
+     * Places and flags that are worked out after a village is first found.
+     *
+     * @param refined whether the centre and elder flag have been re-checked with the village loaded
+     * @param manual  whether an operator created this village by command
+     */
+    public static final class Sites {
+        public static final Codec<Sites> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.BOOL.optionalFieldOf("refined", false).forGetter(s -> s.refined),
+                Codec.BOOL.optionalFieldOf("manual", false).forGetter(s -> s.manual),
+                BlockPos.CODEC.optionalFieldOf("mailbox").forGetter(s -> Optional.ofNullable(s.mailbox)),
+                BlockPos.CODEC.optionalFieldOf("guard_post").forGetter(s -> Optional.ofNullable(s.guardPost)),
+                Codec.LONG.optionalFieldOf("last_raid_day", -1L).forGetter(s -> s.lastRaidDay)
+        ).apply(i, (refined, manual, mailbox, post, lastRaid) -> {
+            Sites s = new Sites();
+            s.refined = refined;
+            s.manual = manual;
+            s.mailbox = mailbox.orElse(null);
+            s.guardPost = post.orElse(null);
+            s.lastRaidDay = lastRaid;
+            return s;
+        }));
+
+        private boolean refined;
+        private boolean manual;
+        @Nullable
+        private BlockPos mailbox;
+        @Nullable
+        private BlockPos guardPost;
+        private long lastRaidDay = -1L;
+
+        public boolean refined() {
+            return refined;
+        }
+
+        public void setRefined(boolean refined) {
+            this.refined = refined;
+        }
+
+        public boolean manual() {
+            return manual;
+        }
+
+        public void setManual(boolean manual) {
+            this.manual = manual;
+        }
+
+        @Nullable
+        public BlockPos mailbox() {
+            return mailbox;
+        }
+
+        public void setMailbox(@Nullable BlockPos mailbox) {
+            this.mailbox = mailbox;
+        }
+
+        @Nullable
+        public BlockPos guardPost() {
+            return guardPost;
+        }
+
+        public void setGuardPost(@Nullable BlockPos guardPost) {
+            this.guardPost = guardPost;
+        }
+
+        public long lastRaidDay() {
+            return lastRaidDay;
+        }
+
+        public void setLastRaidDay(long day) {
+            this.lastRaidDay = day;
+        }
     }
 
     public enum ElderState implements StringRepresentable {

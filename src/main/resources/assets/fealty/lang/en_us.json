@@ -472,5 +472,14 @@
   "fealty.banner.tier_rise": "%s thinks better of you",
   "fealty.banner.tier_fall": "%s thinks less of you",
   "fealty.quest.giver.elder": "The elder",
-  "fealty.quest.giver.someone": "Someone"
+  "fealty.quest.giver.someone": "Someone",
+  "fealty.command.scan_header": "Structures at %s:",
+  "fealty.command.scan_village": "You are in %s [%s]. Elder: %s",
+  "fealty.command.scan_none": "No village here. Add the structure to \"extra_village_structures\" in the server config, or use /rep village create.",
+  "fealty.command.yes": "yes",
+  "fealty.command.no": "no",
+  "fealty.command.already_village": "There is already a village here.",
+  "fealty.command.village_created": "Created the village %s [%s].",
+  "fealty.command.village_renamed": "The village is now called %s.",
+  "fealty.command.village_deleted": "Forgot the village %s."
 }

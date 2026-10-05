@@ -108,4 +108,12 @@ public final class FealtyWorldData extends SavedData {
         setDirty();
     }
 
+    public boolean removeVillage(ResourceLocation id) {
+        boolean removed = villages.remove(id) != null;
+        if (removed) {
+            setDirty();
+        }
+        return removed;
+    }
+
 }

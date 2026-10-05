@@ -7,6 +7,7 @@ import java.util.concurrent.CompletableFuture;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
@@ -49,6 +50,7 @@ import net.neoforged.neoforge.event.RegisterCommandsEvent;
 public final class RepCommand {
     private static final ResourceLocation HERE = ResourceLocation.withDefaultNamespace("here");
     private static final SimpleCommandExceptionType NO_VILLAGE = new SimpleCommandExceptionType(Component.translatable("fealty.command.no_village"));
+    private static final SimpleCommandExceptionType ALREADY_VILLAGE = new SimpleCommandExceptionType(Component.translatable("fealty.command.already_village"));
     private static final SimpleCommandExceptionType UNKNOWN_VILLAGE = new SimpleCommandExceptionType(Component.translatable("fealty.command.unknown_village"));
 
     private RepCommand() {
@@ -86,6 +88,18 @@ public final class RepCommand {
                 .then(Commands.literal("village")
                         .then(Commands.literal("info").executes(RepCommand::villageInfo))
                         .then(Commands.literal("list").executes(RepCommand::villageList))
+                        .then(Commands.literal("scan").executes(RepCommand::villageScan))
+                        .then(Commands.literal("create")
+                                .then(Commands.argument("radius", IntegerArgumentType.integer(8, 256))
+                                        .then(Commands.argument("name", StringArgumentType.greedyString())
+                                                .executes(RepCommand::villageCreate))))
+                        .then(Commands.literal("rename")
+                                .then(Commands.argument("village", ResourceLocationArgument.id()).suggests(RepCommand::suggestVillages)
+                                        .then(Commands.argument("name", StringArgumentType.greedyString())
+                                                .executes(RepCommand::villageRename))))
+                        .then(Commands.literal("delete")
+                                .then(Commands.argument("village", ResourceLocationArgument.id()).suggests(RepCommand::suggestVillages)
+                                        .executes(RepCommand::villageDelete)))
                         .then(Commands.literal("restore")
                                 .then(Commands.argument("village", ResourceLocationArgument.id()).suggests(RepCommand::suggestVillages)
                                         .executes(RepCommand::restore)))
@@ -214,6 +228,51 @@ public final class RepCommand {
             sendInfo(ctx.getSource(), record);
         }
         return villages.size();
+    }
+
+    private static int villageScan(CommandContext<CommandSourceStack> ctx) {
+        CommandSourceStack source = ctx.getSource();
+        BlockPos pos = BlockPos.containing(source.getPosition());
+        source.sendSuccess(() -> Component.translatable("fealty.command.scan_header", pos.toShortString()).withStyle(ChatFormatting.GOLD), false);
+        java.util.List<String> lines = VillageResolver.scan(source.getLevel(), pos);
+        for (String line : lines) {
+            source.sendSuccess(() -> Component.literal(" - " + line), false);
+        }
+        Optional<VillageRecord> here = VillageResolver.villageAt(source.getLevel(), pos);
+        source.sendSuccess(() -> here.map(r -> Component.translatable("fealty.command.scan_village", r.name(), r.id().toString(),
+                Component.translatable(r.hasElder() ? "fealty.command.yes" : "fealty.command.no")))
+                .orElse(Component.translatable("fealty.command.scan_none")), false);
+        return lines.size();
+    }
+
+    private static int villageCreate(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+        CommandSourceStack source = ctx.getSource();
+        BlockPos pos = BlockPos.containing(source.getPosition());
+        if (VillageResolver.villageAt(source.getLevel(), pos).isPresent()) {
+            throw ALREADY_VILLAGE.create();
+        }
+        String name = StringArgumentType.getString(ctx, "name");
+        VillageRecord record = VillageResolver.createManual(source.getLevel(), pos, name, IntegerArgumentType.getInteger(ctx, "radius"));
+        source.sendSuccess(() -> Component.translatable("fealty.command.village_created", record.name(), record.id().toString()), true);
+        return 1;
+    }
+
+    private static int villageRename(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+        VillageRecord record = village(ctx);
+        String name = StringArgumentType.getString(ctx, "name");
+        record.setName(name);
+        FealtyWorldData.get(ctx.getSource().getServer()).setDirty();
+        ctx.getSource().getServer().getPlayerList().getPlayers().forEach(com.selluastar.fealty.network.FealtyNetwork::syncAll);
+        ctx.getSource().sendSuccess(() -> Component.translatable("fealty.command.village_renamed", name), true);
+        return 1;
+    }
+
+    private static int villageDelete(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+        VillageRecord record = village(ctx);
+        FealtyWorldData.get(ctx.getSource().getServer()).removeVillage(record.id());
+        VillageResolver.clearCache();
+        ctx.getSource().sendSuccess(() -> Component.translatable("fealty.command.village_deleted", record.name()), true);
+        return 1;
     }
 
     private static int restore(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {

@@ -66,6 +66,7 @@ public final class VillageTracker {
     }
 
     private static void onEnter(ServerPlayer player, VillageRecord village) {
+        VillageResolver.refresh(player.serverLevel(), village);
         RepManager.meet(player, village.id());
         int rep = RepManager.getRep(player, village.id());
         RepTier tier = RepManager.tierOf(rep);

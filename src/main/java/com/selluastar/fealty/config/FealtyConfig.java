@@ -41,6 +41,12 @@ public final class FealtyConfig {
     public static final ModConfigSpec.BooleanValue SPAWN_ELDERS;
     public static final ModConfigSpec.BooleanValue PLACE_COFFERS;
     public static final ModConfigSpec.BooleanValue BELL_VILLAGES_HAVE_ELDERS;
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> EXTRA_VILLAGE_STRUCTURES;
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> EXCLUDED_VILLAGE_STRUCTURES;
+    public static final ModConfigSpec.BooleanValue ELDERS_ONLY_IN_TAGGED_VILLAGES;
+    public static final ModConfigSpec.BooleanValue DETECT_SETTLEMENTS;
+    public static final ModConfigSpec.IntValue SETTLEMENT_MIN_HOMES;
+    public static final ModConfigSpec.IntValue SETTLEMENT_RADIUS;
 
     // Quests
     public static final ModConfigSpec.IntValue QUEST_OFFERS;
@@ -130,6 +136,21 @@ public final class FealtyConfig {
         PLACE_COFFERS = b.comment("Place a village coffer next to the elder").define("place_coffers", true);
         BELL_VILLAGES_HAVE_ELDERS = b.comment("Whether villages found only by their bell also get an elder")
                 .define("bell_villages_have_elders", false);
+        EXTRA_VILLAGE_STRUCTURES = b.comment("More structures that count as villages, on top of the data pack templates.",
+                        "Entries are structure ids (\"mymod:castle_town\"), tags (\"#mymod:towns\") or globs (\"mymod:*\", \"*:*keep*\").")
+                .defineListAllowEmpty("extra_village_structures", List.of(), () -> "", o -> o instanceof String);
+        EXCLUDED_VILLAGE_STRUCTURES = b.comment("Structures that never count as villages, whatever the templates say. Same entry format.")
+                .defineListAllowEmpty("excluded_village_structures", List.of(), () -> "", o -> o instanceof String);
+        ELDERS_ONLY_IN_TAGGED_VILLAGES = b.comment("Only villages whose structure is in #fealty:elder_villages get an elder.",
+                        "Off by default, so every detected village (modded ones included) gets an elder.")
+                .define("elders_only_in_tagged_villages", false);
+        DETECT_SETTLEMENTS = b.comment("Treat a cluster of villager homes with villagers and a workstation as a village,",
+                        "even with no bell and no known structure (for mods that build villages without bells).")
+                .define("detect_settlements", true);
+        SETTLEMENT_MIN_HOMES = b.comment("Villager beds needed nearby to count as a settlement")
+                .defineInRange("settlement_min_homes", 3, 2, 32);
+        SETTLEMENT_RADIUS = b.comment("Radius of a village found as a settlement")
+                .defineInRange("settlement_radius", 40, 16, 160);
         b.pop();
 
         b.comment("Redemption quests").push("quests");
