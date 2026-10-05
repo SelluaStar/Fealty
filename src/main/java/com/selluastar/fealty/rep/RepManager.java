@@ -55,8 +55,11 @@ public final class RepManager {
 
     // ---- Reads ----
 
+    /** The player's record. Callers may change it, so the world data is marked for saving. */
     public static PlayerRepData data(ServerPlayer player) {
-        return FealtyWorldData.get(player.server).player(player.getUUID());
+        FealtyWorldData world = FealtyWorldData.get(player.server);
+        world.setDirty();
+        return world.player(player.getUUID());
     }
 
     public static int getRep(ServerPlayer player, ResourceLocation faction) {
