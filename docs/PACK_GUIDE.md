@@ -33,7 +33,9 @@ and `max_guards` (6), plus a sergeant at `sergeant_population` (12) villagers, a
 castle with no villagers. A fallen guard is replaced after `guard_respawn_days` (1). Set `fealty_guards = false`
 to rely on golems and guard mods alone.
 
-Anything in `#fealty:guards` also acts as a guard. The default tag holds Fealty's guard, iron golems and, if
+Anything in `#fealty:guards` also acts as a guard, and is part of its village's watch: it shows on the Village
+Hall's roster (with you, on duty, away or fallen), answers the Lord's Horn (follow, hold, guard, and walk home on
+Return), and can demand a fine (golems excepted; pay by using emeralds on any of the village's guards). The default tag holds Fealty's guard, iron golems and, if
 installed, Guard Villagers' `guardvillagers:guard`. Add your guard mod's entities to the tag. Fealty gives them its
 targeting goals when they spawn, so the guard mod needs no compile dependency. Guards attack Hated and wanted
 players, watch Distrusted ones, help Trusted ones, and escort Honored ones. A witnessed crime alerts guards within
@@ -83,12 +85,13 @@ FealtyEvents.quest(event => {
   - quests: `max_active_quests`, `elder_quests_at_once`, `favors` and `favor_chance`
   - mail: `village_mailboxes`, delivery delays
   - heat thresholds and bounty interval
-  - tribute and tax table; max lordships per player; horn summons
+  - tribute and tax table (`tribute_by_tax_level`, `tax_daily_rep`, `gift_chance_by_tax_level`); max lordships per
+    player; horn summons
   - bandits: `camp_exclusion_radius` (768), `bandit_raids`, `raid_range` (640), `raid_min_days` and
     `raid_max_days` (3 to 5)
   - outlaw Renown gates
 - Client config (`config/fealty-client.toml`): quest tracker mode, position and length, speech bubbles, the rep
-  feed, banners, quest markers and the retinue bar.
+  feed, banners, quest markers, the retinue bar, and the dialogue box's typing speed and `text_scale`.
 
 ## Lordship
 
@@ -97,7 +100,11 @@ Lords run the village from the Village Hall (ask the elder, or open it from the 
 
 - tribute gathered every day into the treasury, whether anyone is there or not (more villagers and higher taxes
   mean more), collected in person; a report by letter every `tribute_interval_days`
-- a tax setting: None and Light raise the lord's standing a little each day, Heavy and Crushing lower it
+- a tax setting: None and Light raise the lord's standing a little each day, Heavy and Crushing lower it. Tribute
+  per day scales with it (`tribute_by_tax_level`, default 0.1×, 0.4×, 1×, 2×, 3.5×)
+- gifts of love: a village that loves its lord may gather a big gift (one good thing in quantity, from
+  `fealty:gameplay/gift_of_love`) on any day, likelier the lighter the taxes (`gift_chance_by_tax_level`, default 15%,
+  10%, 5%, 1%, 0%), halved for a lord who is only Trusted and half again likelier for one the village adores
 - decrees: a weekly feast, and paying to replace a fallen guard at once
 - the Lord's Horn, usable anywhere: call guards (they arrive from out of sight), hold, guard an area, or send them
   home

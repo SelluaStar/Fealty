@@ -36,6 +36,7 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.animal.IronGolem;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -167,8 +168,9 @@ public final class GuardManager {
             player.sendSystemMessage(Component.translatable("fealty.guard.attack", speaker.getDisplayName()));
         } else {
             data.warnedAt().put(faction, now);
-            boolean fined = speaker instanceof VillageGuardEntity guard && FactionResolver.factionOf(guard).filter(faction::equals).isPresent()
-                    && Fines.issue(player, guard, faction, crime, change);
+            // Guards who can speak demand a fine (golems just stare the player down).
+            boolean fined = !(speaker instanceof IronGolem) && FactionResolver.factionOf(speaker).filter(faction::equals).isPresent()
+                    && Fines.issue(player, speaker, faction, crime, change);
             if (!fined) {
                 player.sendSystemMessage(Component.translatable("fealty.guard.warning", speaker.getDisplayName()));
             }
@@ -205,6 +207,21 @@ public final class GuardManager {
         }
         if (GREETED.size() > 1024) {
             GREETED.entrySet().removeIf(e -> now - e.getValue() > GREET_COOLDOWN);
+        }
+    }
+
+    /** Using emeralds on any of the village's guards pays a fine one of them demanded. */
+    @SubscribeEvent
+    public static void onPayFine(PlayerInteractEvent.EntityInteract event) {
+        if (!(event.getEntity() instanceof ServerPlayer player) || !event.getItemStack().is(Items.EMERALD)
+                || !(event.getTarget() instanceof Mob guard) || !isGuard(guard) || Fines.owed(player, guard).isEmpty()) {
+            return;
+        }
+        event.setCanceled(true);
+        event.setCancellationResult(InteractionResult.SUCCESS);
+        if (Fines.payGuard(player, guard)) {
+            guard.getLookControl().setLookAt(player);
+            Speech.say(guard, Component.translatable("fealty.guard.reply.fine_paid"));
         }
     }
 

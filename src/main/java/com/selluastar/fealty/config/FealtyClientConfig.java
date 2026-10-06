@@ -16,6 +16,7 @@ public final class FealtyClientConfig {
     public static final ModConfigSpec.BooleanValue SPEECH_BUBBLES;
     public static final ModConfigSpec.BooleanValue QUEST_MARKERS;
     public static final ModConfigSpec.IntValue TYPEWRITER_SPEED;
+    public static final ModConfigSpec.DoubleValue DIALOGUE_TEXT_SCALE;
 
     /** How much of the quest tracker is shown. The tracker key cycles through these. */
     public enum TrackerMode {
@@ -55,6 +56,8 @@ public final class FealtyClientConfig {
         b.push("dialogue");
         TYPEWRITER_SPEED = b.comment("Characters per tick revealed in the dialogue box. 0 shows text at once.")
                 .defineInRange("typewriter_speed", 2, 0, 20);
+        DIALOGUE_TEXT_SCALE = b.comment("Size of the text in the dialogue box (1.0 is the normal font size).")
+                .defineInRange("text_scale", 0.8, 0.5, 1.5);
         b.pop();
         SPEC = b.build();
     }

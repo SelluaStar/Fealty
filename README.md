@@ -52,8 +52,9 @@ guild, bandit followers, bounty hunters and the **Tyrant Lord**.
   Every few days a camp may raid a nearby village while you are there.
 
 ### Lordship
-Present the Royal Writ to a village that honours you. Run it from the **Village Hall**: set taxes (tribute against
-loyalty, with a live preview), collect the treasury, hold feasts, recruit guards. Blow the **Lord's Horn**
+Present the Royal Writ to a village that honours you. Run it from the **Village Hall**: set taxes (Crushing fills the
+treasury fast and costs you their love; light taxes bring less, but a village that adores you sometimes gathers a
+gift of love), collect the treasury, hold feasts, recruit guards. Golems and other mods' guards are on the roster too. Blow the **Lord's Horn**
 anywhere to call your guards to you; a bar at the top of the screen shows who follows you.
 
 ### For other mods

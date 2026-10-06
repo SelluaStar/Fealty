@@ -18,6 +18,10 @@ import com.selluastar.fealty.crime.Gossip;
 import com.selluastar.fealty.crime.Locks;
 import com.selluastar.fealty.data.FealtyDataManager;
 import com.selluastar.fealty.data.TierManager;
+import com.selluastar.fealty.dialogue.DialogueNode;
+import com.selluastar.fealty.dialogue.DialogueService;
+import com.selluastar.fealty.guard.Garrison;
+import com.selluastar.fealty.lordship.LordshipManager;
 import com.selluastar.fealty.mail.MailService;
 import com.selluastar.fealty.outlaw.BanditCamps;
 import com.selluastar.fealty.outlaw.ThievesGuild;
@@ -45,6 +49,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.Connection;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -59,7 +64,9 @@ import net.minecraft.world.item.trading.ItemCost;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.item.trading.MerchantOffers;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.BuiltinStructures;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -424,6 +431,53 @@ public final class FealtyGameTests {
         } finally {
             forget(helper, village);
         }
+        helper.succeed();
+    }
+
+    // ---- Dialogue, guards and the treasury ----
+
+    @GameTest(template = "empty")
+    public static void dialogueOptionsInOrder(GameTestHelper helper) {
+        DialogueNode node = new DialogueNode(Component.literal("Ann"), Component.empty(), Component.literal("Hello"), List.of(
+                DialogueNode.Option.of(DialogueService.BYE, Component.literal("Bye"), "door"),
+                DialogueNode.Option.of("trade", Component.literal("Trade"), "trade"),
+                DialogueNode.Option.of("q:abc:deliver", Component.literal("Here's your letter"), "mail"),
+                DialogueNode.Option.of("news", Component.literal("News?"), "talk")));
+        List<String> ids = DialogueService.ordered(node).options().stream().map(DialogueNode.Option::id).toList();
+        check(helper, ids.equals(List.of("q:abc:deliver", "trade", "news", DialogueService.BYE)),
+                "quest business first, goodbye last, the rest as offered; got " + ids);
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void otherGuardsOnTheRoster(GameTestHelper helper) {
+        Garrison garrison = new Garrison();
+        UUID golem = UUID.randomUUID();
+        UUID guard = UUID.randomUUID();
+        garrison.noteOther(golem, "golem", "", 10);
+        garrison.noteOther(guard, "guard", "Bert", 10);
+        check(helper, garrison.allTotal() == 2 && garrison.allAlive() == 2, "two other guards on the roster");
+        garrison.otherDied(guard, 11);
+        check(helper, garrison.allAlive() == 1, "a fallen guard is not counted as standing");
+        garrison.forgetOthers(12);
+        check(helper, garrison.allTotal() == 2, "the fallen stay on the roster a little while");
+        garrison.forgetOthers(13);
+        check(helper, garrison.allTotal() == 0, "the fallen and the long unseen are forgotten");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void giftsOfLoveNeedLightTaxes(GameTestHelper helper) {
+        check(helper, LordshipManager.giftChance(4, 100) == 0.0, "no gifts under crushing taxes");
+        check(helper, LordshipManager.giftChance(0, 95) > LordshipManager.giftChance(0, 70), "an adored lord gets more gifts");
+        check(helper, LordshipManager.giftChance(0, 70) > LordshipManager.giftChance(0, 30), "an honoured lord gets more than a trusted one");
+        check(helper, LordshipManager.giftChance(0, 70) > LordshipManager.giftChance(2, 70), "lighter taxes, likelier gifts");
+        check(helper, LordshipManager.giftChance(0, 0) == 0.0, "a village that does not love its lord gives no gifts");
+        check(helper, LordshipManager.tributePerDay(new VillageRecord(Fealty.id("test_tribute"), Level.OVERWORLD, BlockPos.ZERO,
+                        new BoundingBox(0, 0, 0, 1, 1, 1), Factions.VILLAGE_TEMPLATE, null, "Test", false), 4)
+                > 3 * LordshipManager.tributePerDay(new VillageRecord(Fealty.id("test_tribute"), Level.OVERWORLD, BlockPos.ZERO,
+                        new BoundingBox(0, 0, 0, 1, 1, 1), Factions.VILLAGE_TEMPLATE, null, "Test", false), 2),
+                "crushing taxes bring in more than three times what fair ones do");
         helper.succeed();
     }
 }

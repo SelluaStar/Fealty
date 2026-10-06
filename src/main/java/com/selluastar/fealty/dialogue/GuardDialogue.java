@@ -116,7 +116,7 @@ final class GuardDialogue {
             }
             case REFUSE_FINE -> {
                 Fines.refuse(player, guard);
-                DialogueService.end(player);
+                DialogueService.close(player);
                 return;
             }
             case FOLLOW -> {
@@ -183,8 +183,8 @@ final class GuardDialogue {
         }
         VillageRecord record = village.get();
         Garrison garrison = record.garrison();
-        int total = garrison.slots().size();
-        int alive = garrison.alive();
+        int total = garrison.allTotal();
+        int alive = garrison.allAlive();
         Component watch = total == 0 ? Component.translatable("fealty.guard.report.no_watch")
                 : alive < total ? Component.translatable("fealty.guard.report.fallen", alive, total, total - alive)
                 : Component.translatable("fealty.guard.report.full", alive);

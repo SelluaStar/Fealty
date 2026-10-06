@@ -309,6 +309,7 @@ Each marketeer stocks five offers picked by weight, and restocks daily.
 | `fealty:chests/hidden_hamlet` | The Keeper's lodge |
 | `fealty:chests/hamlet_cottage` | Hamlet cottages |
 | `fealty:gameplay/tribute` | Rolled per tribute measure |
+| `fealty:gameplay/gift_of_love` | Rolled per gift of love a village gathers for its lord |
 | `fealty:gameplay/pickpocket` | Pickpocketing |
 | `fealty:gameplay/honored_gift` | Gifts from villagers without a vanilla Hero of the Village table |
 | `fealty:quest_rewards/common`, `rare` | Quest rewards |

@@ -155,8 +155,7 @@ final class VillagerDialogue {
     /** Named chain villagers hand out their step; others ask their favor of the day, or have nothing. */
     private static void work(ServerPlayer player, Villager villager) {
         if (ChainManager.onTalk(player, villager)) {
-            DialogueService.end(player);
-            return;
+            return; // their quest board is open now, and keeps them by the player
         }
         Component name = villager.getDisplayName();
         Component subtitle = subtitle(player, villager);

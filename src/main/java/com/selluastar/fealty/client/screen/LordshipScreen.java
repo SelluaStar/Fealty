@@ -24,6 +24,8 @@ public class LordshipScreen extends Screen {
     private static final int WIDTH = 320;
     private static final int HEIGHT = 210;
     private static final String[] TAXES = {"none", "light", "fair", "heavy", "crushing"};
+    /** Gifts of love, in rose. */
+    private static final int LOVE = 0xFFC2185B;
 
     public enum Page {
         OVERVIEW, TAXES, TREASURY, GUARDS, DECREES
@@ -90,7 +92,7 @@ public class LordshipScreen extends Screen {
             }
             case TREASURY -> addRenderableWidget(new FealtyButton(left + WIDTH / 2 - 60, top + HEIGHT - 40, 120, 20,
                     Component.translatable("fealty.hall.collect"), b -> send("collect", 0)).icon("coin")
-                    .sound(SoundEvents.PLAYER_LEVELUP, 1.4F).enabled(data.near() && data.treasury() >= 1.0)
+                    .sound(SoundEvents.PLAYER_LEVELUP, 1.4F).enabled(data.near() && (data.treasury() >= 1.0 || data.gifts() > 0))
                     .tooltip(data.near() ? null : away));
             case GUARDS -> {
                 roster.setBounds(left + 14, top + 40, WIDTH - 28, HEIGHT - 80);
@@ -101,7 +103,8 @@ public class LordshipScreen extends Screen {
                             if (row != null) {
                                 send("recruit", data.roster().indexOf(row));
                             }
-                        }).icon("guard").enabled(data.near() && roster.selectedItem() != null && roster.selectedItem().state() == 2)
+                        }).icon("guard").enabled(data.near() && roster.selectedItem() != null && roster.selectedItem().state() == 2
+                                && isFealtyGuard(roster.selectedItem()))
                         .tooltip(data.near() ? Component.translatable("fealty.hall.recruit_hint") : away));
             }
             case DECREES -> addRenderableWidget(new FealtyButton(left + 20, top + 92, 130, 20, Component.translatable("fealty.hall.feast"),
@@ -176,8 +179,12 @@ public class LordshipScreen extends Screen {
             Ui.centered(g, font, Component.translatable("fealty.hall.tribute_short", String.format("%.1f", tribute)), cx, ty, Ui.INK, false);
             Component change = Component.literal((loyalty > 0 ? "+" : "") + loyalty);
             Ui.centered(g, font, change, cx, ty + 11, loyalty > 0 ? Ui.GREEN : loyalty < 0 ? Ui.RED : Ui.FADED, false);
+            float gift = data.giftChance().size() > level ? data.giftChance().get(level) : 0.0F;
+            Ui.centered(g, font, Component.translatable("fealty.hall.gift_short", Math.round(gift * 100)), cx, ty + 22,
+                    gift > 0 ? LOVE : Ui.FADED, false);
         }
-        Ui.scaled(g, font, Component.translatable("fealty.hall.tribute_legend"), x, ty + 24, 0.75F, Ui.FADED, false);
+        Ui.scaled(g, font, Component.translatable("fealty.hall.tribute_legend"), x, ty + 35, 0.75F, Ui.FADED, false);
+        ty += 11;
         Ui.divider(g, x, ty + 36, w);
         int level = data.taxLevel();
         float tribute = data.tribute().size() > level ? data.tribute().get(level) : 0.0F;
@@ -193,10 +200,19 @@ public class LordshipScreen extends Screen {
                 Ui.INK, false);
         float perDay = data.tribute().size() > data.taxLevel() ? data.tribute().get(data.taxLevel()) : 0.0F;
         g.drawString(font, Component.translatable("fealty.hall.treasury_rate", String.format("%.1f", perDay)), x + 30, y + 15, Ui.FADED, false);
-        Ui.wrapped(g, font, Component.translatable("fealty.hall.treasury_intro"), x, y + 40, w, Ui.FADED, 4);
+        if (data.gifts() > 0) {
+            Ui.icon(g, "heart", x + 30, y + 26, 10);
+            g.drawString(font, Component.translatable("fealty.hall.gifts_waiting", data.gifts()), x + 43, y + 27, LOVE, false);
+        }
+        Ui.wrapped(g, font, Component.translatable("fealty.hall.treasury_intro"), x, y + 42, w, Ui.FADED, 4);
         if (!data.near()) {
             Ui.wrapped(g, font, Component.translatable("fealty.hall.away"), x, top + HEIGHT - 58, w, Ui.RED, 2);
         }
+    }
+
+    /** Fealty's own guards hold a post in the watch; golems and other mods' guards do not (and cannot be recruited). */
+    private static boolean isFealtyGuard(OpenHallPayload.GuardRow row) {
+        return row.rank().equals("swordsman") || row.rank().equals("archer") || row.rank().equals("sergeant");
     }
 
     private void renderGuards(GuiGraphics g, int mouseX, int mouseY) {
@@ -210,15 +226,27 @@ public class LordshipScreen extends Screen {
             } else if (hovered) {
                 gg.fill(x, y, x + w, y + h - 1, 0x20B8A27C);
             }
-            Ui.icon(gg, row.rank().equals("archer") ? "arrow_up" : row.rank().equals("sergeant") ? "crown" : "sword", x + 2, y + 3, 12);
-            Component name = row.name().isEmpty() ? Component.translatable("fealty.hall.unnamed")
-                    : Component.translatable("entity.fealty.village_guard." + row.rank() + ".named", row.name());
+            boolean ours = isFealtyGuard(row);
+            String icon = !ours ? (row.rank().equals("golem") ? "shield" : "guard")
+                    : row.rank().equals("archer") ? "arrow_up" : row.rank().equals("sergeant") ? "crown" : "sword";
+            Ui.icon(gg, icon, x + 2, y + 3, 12);
+            Component name;
+            if (!ours) {
+                // Iron golems and other mods' guards (Guard Villagers, ...): their own name, else what they are.
+                Component kind = Component.translatable("fealty.hall.guard.kind." + row.rank());
+                name = row.name().isEmpty() ? kind : Component.translatable("fealty.hall.guard.named_other", row.name(), kind);
+            } else {
+                name = row.name().isEmpty() ? Component.translatable("fealty.hall.unnamed")
+                        : Component.translatable("entity.fealty.village_guard." + row.rank() + ".named", row.name());
+            }
             gg.drawString(font, Ui.fit(font, name, w - 130), x + 18, y + 5, Ui.INK, false);
             Component state = switch (row.state()) {
                 case 1 -> Component.translatable("fealty.hall.guard.with_you");
-                case 2 -> row.days() > 0 ? Component.translatable("fealty.hall.guard.fallen_days", row.days())
+                case 2 -> !ours ? Component.translatable("fealty.hall.guard.fallen")
+                        : row.days() > 0 ? Component.translatable("fealty.hall.guard.fallen_days", row.days())
                         : Component.translatable("fealty.hall.guard.fallen_soon");
                 case 3 -> Component.translatable("fealty.hall.guard.unfilled");
+                case 4 -> Component.translatable("fealty.hall.guard.away");
                 default -> Component.translatable("fealty.hall.guard.on_duty");
             };
             int color = row.state() == 2 ? Ui.RED : row.state() == 1 ? Ui.GREEN : Ui.FADED;

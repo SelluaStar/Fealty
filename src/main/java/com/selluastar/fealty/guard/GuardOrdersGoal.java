@@ -16,7 +16,9 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.ai.util.DefaultRandomPos;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * Carries out escort orders and a lord's orders: follow a player, hold a position, or keep watch over an area. A
@@ -26,6 +28,11 @@ import net.minecraft.world.entity.player.Player;
 public class GuardOrdersGoal extends Goal {
     /** Goal checks (one every other tick) without the leader in reach before orders lapse. */
     private static final int PATIENCE = 300;
+    /** A guard sent home is home this close to the village's post. */
+    private static final int HOME_REACHED = 24;
+    /** Further from home than this, and with nobody within {@link #UNSEEN_DISTANCE}, it makes the rest of the way at once. */
+    private static final int FAR_FROM_HOME = 64;
+    private static final double UNSEEN_DISTANCE = 32;
     private final PathfinderMob guard;
     private int repath;
     private int lordCheck;
@@ -52,11 +59,16 @@ public class GuardOrdersGoal extends Goal {
                 return false;
             }
             case RETURN -> {
-                // Fealty guards walk off on their own; other guards simply go back to their usual rounds.
-                if (!(guard instanceof VillageGuardEntity)) {
-                    orders.clear();
+                // Fealty guards walk off on their own; other guards walk back to the village's post.
+                if (guard instanceof VillageGuardEntity) {
+                    return false;
                 }
-                return false;
+                BlockPos home = orders.holdPos();
+                if (home == null || guard.blockPosition().distSqr(home) <= HOME_REACHED * HOME_REACHED) {
+                    orders.clear();
+                    return false;
+                }
+                return true;
             }
             default -> {
             }
@@ -124,6 +136,10 @@ public class GuardOrdersGoal extends Goal {
             return;
         }
         repath = 10;
+        if (orders.mode() == GuardOrders.Mode.RETURN) {
+            walkHome(orders);
+            return;
+        }
         if ((orders.mode() == GuardOrders.Mode.HOLD || orders.mode() == GuardOrders.Mode.GUARD) && orders.holdPos() != null) {
             BlockPos hold = orders.holdPos();
             guard.getNavigation().moveTo(hold.getX() + 0.5, hold.getY(), hold.getZ() + 0.5, 1.0);
@@ -141,6 +157,30 @@ public class GuardOrdersGoal extends Goal {
             guard.getNavigation().stop();
         } else {
             guard.getNavigation().moveTo(leader, distance > 100 ? 1.2 : 1.0);
+        }
+    }
+
+    /**
+     * A guard that is not Fealty's heads back to its village: it walks off toward home, and once it is well away
+     * from everyone it makes the rest of the way at once (the village may be far off, and out of the loaded world).
+     */
+    private void walkHome(GuardOrders orders) {
+        BlockPos home = orders.holdPos();
+        if (home == null) {
+            return;
+        }
+        if (guard.blockPosition().distSqr(home) > FAR_FROM_HOME * FAR_FROM_HOME
+                && guard.level().getNearestPlayer(guard, UNSEEN_DISTANCE) == null) {
+            guard.getNavigation().stop();
+            guard.teleportTo(home.getX() + 0.5, home.getY(), home.getZ() + 0.5);
+            orders.clear();
+            return;
+        }
+        if (guard.getNavigation().isDone()) {
+            Vec3 toward = DefaultRandomPos.getPosTowards(guard, 16, 7, Vec3.atBottomCenterOf(home), Math.PI / 2);
+            if (toward != null) {
+                guard.getNavigation().moveTo(toward.x, toward.y, toward.z, 1.0);
+            }
         }
     }
 

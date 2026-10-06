@@ -12,17 +12,22 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 
 /**
  * Server to client: open (or refresh) the Village Hall, where a lord runs their village. {@code near} says whether the
- * lord is in the village (collecting tribute, feasts and recruiting need them there). {@code tribute} and
- * {@code loyalty} give, for each tax level, the tribute gathered per day and the lord's daily change in standing.
+ * lord is in the village (collecting tribute, feasts and recruiting need them there). {@code tribute},
+ * {@code loyalty} and {@code giftChance} give, for each tax level, the tribute gathered per day, the lord's daily
+ * change in standing and the daily chance of a gift of love; {@code gifts} is how many gifts wait in the treasury.
  */
 public record OpenHallPayload(String village, String name, int color, String lord, int daysRuled, int population, int guardsAlive,
                               int guardsTotal, int standing, int taxLevel, double treasury, List<Float> tribute, List<Integer> loyalty,
-                              int feastCooldown, boolean near, List<GuardRow> roster, int recruitCost, int feastFood, int feastEmeralds)
+                              int feastCooldown, boolean near, List<GuardRow> roster, int recruitCost, int feastFood, int feastEmeralds,
+                              List<Float> giftChance, int gifts)
         implements CustomPacketPayload {
     public static final Type<OpenHallPayload> TYPE = new Type<>(Fealty.id("open_hall"));
     public static final StreamCodec<RegistryFriendlyByteBuf, OpenHallPayload> STREAM_CODEC = StreamCodec.of(OpenHallPayload::write, OpenHallPayload::read);
 
-    /** One post in the watch: the guard's rank and name, and whether they are on duty (0), away with the lord (1), fallen (2) or not yet filled (3). */
+    /**
+     * One guard on the roster: a Fealty guard's rank (or {@code golem} / {@code guard} for the village's other guards) and
+     * name, and whether they are on duty (0), with the lord (1), fallen (2), a post not yet filled (3) or not seen lately (4).
+     */
     public record GuardRow(String rank, String name, int state, int days) {
     }
 
@@ -54,6 +59,9 @@ public record OpenHallPayload(String village, String name, int color, String lor
         buf.writeVarInt(p.recruitCost());
         buf.writeVarInt(p.feastFood());
         buf.writeVarInt(p.feastEmeralds());
+        buf.writeVarInt(p.giftChance().size());
+        p.giftChance().forEach(buf::writeFloat);
+        buf.writeVarInt(p.gifts());
     }
 
     private static OpenHallPayload read(RegistryFriendlyByteBuf buf) {
@@ -82,8 +90,16 @@ public record OpenHallPayload(String village, String name, int color, String lor
         for (int i = Math.min(buf.readVarInt(), 64); i > 0; i--) {
             roster.add(new GuardRow(ByteBufCodecs.STRING_UTF8.decode(buf), ByteBufCodecs.STRING_UTF8.decode(buf), buf.readVarInt(), buf.readVarInt()));
         }
+        int recruitCost = buf.readVarInt();
+        int feastFood = buf.readVarInt();
+        int feastEmeralds = buf.readVarInt();
+        List<Float> giftChance = new ArrayList<>();
+        for (int i = Math.min(buf.readVarInt(), 16); i > 0; i--) {
+            giftChance.add(buf.readFloat());
+        }
+        int gifts = buf.readVarInt();
         return new OpenHallPayload(village, name, color, lord, days, population, alive, total, standing, tax, treasury, tribute, loyalty,
-                feast, near, roster, buf.readVarInt(), buf.readVarInt(), buf.readVarInt());
+                feast, near, roster, recruitCost, feastFood, feastEmeralds, giftChance, gifts);
     }
 
     @Override

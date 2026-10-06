@@ -12,6 +12,7 @@ import com.selluastar.fealty.network.QuestMarkersPayload;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
@@ -24,11 +25,18 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RenderLivingEvent;
 
-/** Draws speech bubbles and quest markers (! and ?) above NPCs' heads. */
+/**
+ * Draws speech bubbles and quest markers (! and ?) above NPCs' heads. The bubble faces the camera; in that frame +z
+ * points toward the viewer, so the paper and its border sit at negative z, behind the words.
+ */
 @EventBusSubscriber(modid = Fealty.MOD_ID, value = Dist.CLIENT)
 public final class BubbleRenderer {
-    private static final int MAX_WIDTH = 150;
+    private static final int MAX_WIDTH = 120;
     private static final double MAX_DISTANCE = 28.0;
+    private static final float SCALE = 0.02F;
+    /** How far behind the words the paper and the border are drawn (in bubble pixels). */
+    private static final float PAPER_Z = -0.5F;
+    private static final float BORDER_Z = -1.0F;
     private static final int FILL = 0xF4EAD0;
     private static final int BORDER = 0x3B2A1A;
     private static final int INK = 0x3B2A1A;
@@ -61,9 +69,10 @@ public final class BubbleRenderer {
         pose.pushPose();
         pose.translate(0.0, height, 0.0);
         pose.mulPose(minecraft.getEntityRenderDispatcher().cameraOrientation());
-        pose.scale(0.025F, -0.025F, 0.025F);
+        pose.scale(SCALE, -SCALE, SCALE);
         if (bubble != null) {
-            drawBubble(minecraft.font, pose, event.getMultiBufferSource(), event.getPackedLight(), bubble, event.getPartialTick());
+            // Full bright, so the bubble reads the same at night or in a dark house.
+            drawBubble(minecraft.font, pose, event.getMultiBufferSource(), LightTexture.FULL_BRIGHT, bubble, event.getPartialTick());
         } else {
             drawMarker(minecraft.font, pose, event.getMultiBufferSource(), marker, entity.tickCount + event.getPartialTick());
         }
@@ -89,14 +98,15 @@ public final class BubbleRenderer {
         VertexConsumer background = buffers.getBuffer(RenderType.textBackground());
         int border = argb(BORDER, alpha * 0.95F);
         int fill = argb(FILL, alpha * 0.92F);
-        quad(background, matrix, x0 - 1, y0 - 1, x0 + w + 1, y0 + h + 1, 0.03F, border, light);
-        quad(background, matrix, x0, y0, x0 + w, y0 + h, 0.02F, fill, light);
+        quad(background, matrix, x0 - 1, y0 - 1, x0 + w + 1, y0 + h + 1, BORDER_Z, border, light);
+        triangle(background, matrix, -5, y0 + h, 5, y0 + h, 0, y0 + h + 6, BORDER_Z, border, light);
+        quad(background, matrix, x0, y0, x0 + w, y0 + h, PAPER_Z, fill, light);
         // tail
-        triangle(background, matrix, -4, y0 + h, 4, y0 + h, 0, y0 + h + 5, 0.02F, fill, light);
+        triangle(background, matrix, -4, y0 + h, 4, y0 + h, 0, y0 + h + 5, PAPER_Z, fill, light);
         int color = argb(INK, Math.max(alpha, 0.1F));
         float y = y0 + 4;
         for (FormattedCharSequence line : lines) {
-            font.drawInBatch(line, -font.width(line) / 2.0F, y, color, false, matrix, buffers, Font.DisplayMode.NORMAL, 0, light);
+            font.drawInBatch(line, -font.width(line) / 2.0F, y, color, false, matrix, buffers, Font.DisplayMode.POLYGON_OFFSET, 0, light);
             y += 10;
         }
     }

@@ -62,6 +62,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.ProjectileImpactEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
@@ -135,7 +136,13 @@ public final class GarrisonManager {
 
     /** Called every few seconds while a player is in the village: count the villagers and fill empty posts. */
     public static void tickVillage(ServerLevel level, VillageRecord record) {
-        if (!FealtyConfig.FEALTY_GUARDS.get() || !record.dimension().equals(level.dimension())) {
+        if (!record.dimension().equals(level.dimension())) {
+            return;
+        }
+        if (noteOthers(level, record)) {
+            FealtyWorldData.get(level.getServer()).setDirty();
+        }
+        if (!FealtyConfig.FEALTY_GUARDS.get()) {
             return;
         }
         BlockPos post = post(level, record);
@@ -270,6 +277,42 @@ public final class GarrisonManager {
                         FealtyConfig.GUARD_RESPAWN_DAYS.get()));
     }
 
+    /**
+     * Keep the roster of the village's other guards (iron golems, Guard Villagers' guards, ...) up to date from those
+     * in and around the village now. @return whether it changed
+     */
+    private static boolean noteOthers(ServerLevel level, VillageRecord record) {
+        long day = RepManager.day(level.getServer());
+        Garrison garrison = record.garrison();
+        boolean changed = false;
+        for (Mob mob : level.getEntitiesOfClass(Mob.class, AABB.of(record.bounds()).inflate(16),
+                m -> !(m instanceof VillageGuardEntity) && isVillageGuard(m, record))) {
+            changed |= garrison.noteOther(mob.getUUID(), otherKind(mob), mob.hasCustomName() ? mob.getCustomName().getString() : "", day);
+        }
+        return garrison.forgetOthers(day) | changed;
+    }
+
+    /** {@code golem} for iron golems, {@code guard} for other mods' guards. */
+    public static String otherKind(Mob mob) {
+        return mob instanceof IronGolem ? "golem" : "guard";
+    }
+
+    /** One of the village's other guards fell: the lord hears of it, and the roster shows it. */
+    @SubscribeEvent
+    public static void onOtherGuardDied(LivingDeathEvent event) {
+        if (!(event.getEntity() instanceof Mob mob) || mob instanceof VillageGuardEntity || !(mob.level() instanceof ServerLevel level)
+                || !GuardManager.isGuard(mob)) {
+            return;
+        }
+        MinecraftServer server = level.getServer();
+        Optional<VillageRecord> record = FactionResolver.factionOf(mob).flatMap(id -> FealtyWorldData.get(server).village(id));
+        if (record.isPresent() && record.get().garrison().otherDied(mob.getUUID(), RepManager.day(server))) {
+            FealtyWorldData.get(server).setDirty();
+            tellLord(server, record.get(), "skull", Component.translatable("fealty.toast.guard_fell"),
+                    Component.translatable("fealty.toast.other_guard_fell.detail", mob.getDisplayName(), record.get().name()));
+        }
+    }
+
     private static void tellLord(MinecraftServer server, VillageRecord record, String icon, Component title, Component detail) {
         UUID lord = record.lord().uuid();
         ServerPlayer player = lord != null ? server.getPlayerList().getPlayer(lord) : null;
@@ -399,13 +442,16 @@ public final class GarrisonManager {
         syncRetinue(lord, true);
     }
 
-    /** The lord's guards go home: Fealty guards walk off and return to their posts, others make their own way. */
+    /** The lord's guards go home: Fealty guards walk off and return to their posts, others walk back to the village. */
     private static void dismiss(ServerPlayer lord, VillageRecord record) {
         List<Mob> retinue = retinue(lord, record);
         for (Mob guard : retinue) {
             GuardOrders orders = guard.getData(ModAttachments.GUARD_ORDERS);
             if (guard instanceof VillageGuardEntity) {
                 orders.set(GuardOrders.Mode.RETURN, lord.getUUID(), 0, null);
+            } else if (guard.level().dimension().equals(record.dimension())) {
+                // Other guards walk back to the village's post (and, once nobody sees them, make the rest of the way home).
+                orders.set(GuardOrders.Mode.RETURN, lord.getUUID(), 0, post(lord.serverLevel(), record));
             } else {
                 orders.clear();
             }
@@ -630,8 +676,8 @@ public final class GarrisonManager {
             }).size();
             int distance = record.dimension().equals(player.level().dimension())
                     ? (int) Math.sqrt(record.center().distSqr(player.blockPosition())) : -1;
-            villages.add(new OpenHornPayload.Village(record.id().toString(), record.name(), record.color(), record.garrison().alive(),
-                    record.garrison().slots().size(), following, distance));
+            villages.add(new OpenHornPayload.Village(record.id().toString(), record.name(), record.color(), record.garrison().allAlive(),
+                    record.garrison().allTotal(), following, distance));
         }
         String selected = hornVillage(player, horn).map(r -> r.id().toString()).orElse("");
         FealtyNetwork.send(player, new OpenHornPayload(villages, selected, LordsHornItem.order(horn).ordinal(),

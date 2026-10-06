@@ -41,10 +41,10 @@ import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 /**
- * Paying for what you did. A Fealty guard who catches a player at a minor or moderate crime demands a fine: paying
- * it (talk to the guard) wins back half of what the crime cost and calls off the watch; refusing, or walking away
- * until time runs out, turns the watch hostile. Elders let a player with a bad name, or with the watch or bounty
- * hunters after them, pay to clear it, a little each day.
+ * Paying for what you did. A guard who catches a player at a minor or moderate crime demands a fine: paying it (talk
+ * to a Fealty guard, or use emeralds on any of the village's guards) wins back half of what the crime cost and calls
+ * off the watch; refusing, or walking away until time runs out, turns the watch hostile. Elders let a player with a
+ * bad name, or with the watch or bounty hunters after them, pay to clear it, a little each day.
  */
 @EventBusSubscriber(modid = Fealty.MOD_ID)
 public final class Fines {
@@ -75,7 +75,7 @@ public final class Fines {
      *
      * @return whether a fine was demanded
      */
-    public static boolean issue(ServerPlayer player, VillageGuardEntity guard, ResourceLocation faction, ResourceLocation crime, int change) {
+    public static boolean issue(ServerPlayer player, Mob guard, ResourceLocation faction, ResourceLocation crime, int change) {
         if (!FealtyConfig.FINES.get() || change >= 0) {
             return false;
         }
@@ -86,7 +86,9 @@ public final class Fines {
         guard.getNavigation().moveTo(player, 1.0);
         guard.getLookControl().setLookAt(player);
         Speech.say(guard, Component.translatable("fealty.fine.demand", cost));
-        player.sendSystemMessage(Component.translatable("fealty.fine.issued", guard.getDisplayName(), cost, FealtyConfig.GUARD_FINE_SECONDS.get())
+        // Fealty's guards take it in conversation; golems and other mods' guards take emeralds handed to them.
+        String how = guard instanceof VillageGuardEntity ? "fealty.fine.issued" : "fealty.fine.issued_other";
+        player.sendSystemMessage(Component.translatable(how, guard.getDisplayName(), cost, FealtyConfig.GUARD_FINE_SECONDS.get())
                 .withStyle(ChatFormatting.GOLD));
         Feedback.sound(player, SoundEvents.VILLAGER_NO, 0.8F, 0.7F);
         return true;

@@ -1,7 +1,10 @@
 package com.selluastar.fealty.guard;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -17,23 +20,31 @@ import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.level.Level;
 
 /**
- * A village's Fealty guards. Each slot is a post in the watch; the guard standing in it is only its current holder.
+ * A village's guards. Each slot is a post in Fealty's watch; the guard standing in it is only its current holder. The
+ * village's other guards (iron golems, other mods' guards) are kept on the roster too, as last seen.
  * A guard who dies leaves the slot empty until a new one is sworn in, a set number of days later. A guard whose
  * slot has moved on (a new holder was sent to the lord, or sworn in after the old one was lost) leaves the world.
  */
 public final class Garrison {
     public static final Codec<Garrison> CODEC = RecordCodecBuilder.create(i -> i.group(
             Slot.CODEC.listOf().optionalFieldOf("slots", List.of()).forGetter(g -> g.slots),
-            Codec.INT.optionalFieldOf("population", -1).forGetter(g -> g.population)
-    ).apply(i, (slots, population) -> {
+            Codec.INT.optionalFieldOf("population", -1).forGetter(g -> g.population),
+            Other.CODEC.listOf().optionalFieldOf("others", List.of()).forGetter(g -> List.copyOf(g.others.values()))
+    ).apply(i, (slots, population, others) -> {
         Garrison g = new Garrison();
         g.slots.addAll(slots);
         g.population = population;
+        others.forEach(o -> g.others.put(o.entity, o));
         return g;
     }));
+    /** Other guards not seen for this many days are forgotten (they wandered off, or were taken away). */
+    private static final int FORGET_UNSEEN_DAYS = 3;
+    /** Fallen other guards stay on the roster this many days. */
+    private static final int FORGET_FALLEN_DAYS = 2;
 
     private final List<Slot> slots = new ArrayList<>();
     private int population = -1;
+    private final Map<UUID, Other> others = new LinkedHashMap<>();
 
     public List<Slot> slots() {
         return slots;
@@ -62,6 +73,61 @@ public final class Garrison {
         return alive;
     }
 
+    /** The village's guards that are not Fealty's: iron golems and other mods' guards, as last seen. */
+    public Collection<Other> others() {
+        return others.values();
+    }
+
+    public int othersAlive() {
+        int alive = 0;
+        for (Other other : others.values()) {
+            if (other.diedDay < 0) {
+                alive++;
+            }
+        }
+        return alive;
+    }
+
+    /** Every guard of the village standing, Fealty's and others. */
+    public int allAlive() {
+        return alive() + othersAlive();
+    }
+
+    /** Every place in the watch: Fealty's posts and the other guards on the roster. */
+    public int allTotal() {
+        return slots.size() + others.size();
+    }
+
+    /** One of the village's other guards was seen today. @return whether the roster changed */
+    public boolean noteOther(UUID entity, String kind, String name, long day) {
+        Other other = others.get(entity);
+        if (other == null) {
+            others.put(entity, new Other(entity, kind, name, day, -1L));
+            return true;
+        }
+        boolean changed = other.seenDay != day || !other.name.equals(name) || other.diedDay >= 0;
+        other.seenDay = day;
+        other.name = name;
+        other.kind = kind;
+        other.diedDay = -1;
+        return changed;
+    }
+
+    /** @return whether the guard was on the roster */
+    public boolean otherDied(UUID entity, long day) {
+        Other other = others.get(entity);
+        if (other == null) {
+            return false;
+        }
+        other.diedDay = day;
+        return true;
+    }
+
+    /** Forget the fallen after a while, and those not seen for days. @return whether the roster changed */
+    public boolean forgetOthers(long day) {
+        return others.values().removeIf(o -> o.diedDay >= 0 ? day - o.diedDay >= FORGET_FALLEN_DAYS : day - o.seenDay >= FORGET_UNSEEN_DAYS);
+    }
+
     public enum Rank implements StringRepresentable {
         SWORDSMAN("swordsman"),
         ARCHER("archer"),
@@ -82,6 +148,55 @@ public final class Garrison {
         public static Rank byId(int id) {
             Rank[] values = values();
             return values[Math.floorMod(id, values.length)];
+        }
+    }
+
+    /** A guard of the village that is not one of Fealty's: an iron golem, or another mod's guard. */
+    public static final class Other {
+        public static final Codec<Other> CODEC = RecordCodecBuilder.create(i -> i.group(
+                UUIDUtil.CODEC.fieldOf("entity").forGetter(o -> o.entity),
+                Codec.STRING.optionalFieldOf("kind", "guard").forGetter(o -> o.kind),
+                Codec.STRING.optionalFieldOf("name", "").forGetter(o -> o.name),
+                Codec.LONG.optionalFieldOf("seen_day", 0L).forGetter(o -> o.seenDay),
+                Codec.LONG.optionalFieldOf("died_day", -1L).forGetter(o -> o.diedDay)
+        ).apply(i, Other::new));
+
+        private final UUID entity;
+        private String kind;
+        private String name;
+        private long seenDay;
+        private long diedDay;
+
+        Other(UUID entity, String kind, String name, long seenDay, long diedDay) {
+            this.entity = entity;
+            this.kind = kind;
+            this.name = name;
+            this.seenDay = seenDay;
+            this.diedDay = diedDay;
+        }
+
+        public UUID entity() {
+            return entity;
+        }
+
+        /** {@code golem} or {@code guard}. */
+        public String kind() {
+            return kind;
+        }
+
+        /** Their name if they have one, else empty. */
+        public String name() {
+            return name;
+        }
+
+        /** The Fealty day they were last seen in or near the village. */
+        public long seenDay() {
+            return seenDay;
+        }
+
+        /** The Fealty day they fell, or -1. */
+        public long diedDay() {
+            return diedDay;
         }
     }
 

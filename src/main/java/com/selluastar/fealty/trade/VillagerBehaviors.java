@@ -13,6 +13,7 @@ import com.selluastar.fealty.api.RepTier;
 import com.selluastar.fealty.config.FealtyConfig;
 import com.selluastar.fealty.data.TierData;
 import com.selluastar.fealty.data.TierManager;
+import com.selluastar.fealty.dialogue.DialogueService;
 import com.selluastar.fealty.dialogue.Speech;
 import com.selluastar.fealty.entity.BlackMarketeerEntity;
 import com.selluastar.fealty.guard.GuardManager;
@@ -79,6 +80,9 @@ public final class VillagerBehaviors {
                 continue;
             }
             if (data.villagersHide()) {
+                if (DialogueService.listener(villager).isPresent()) {
+                    continue; // already talking to someone: they hear them out
+                }
                 // Same signal as a rung bell: villagers run home and hide.
                 villager.getBrain().setMemory(MemoryModuleType.HEARD_BELL_TIME, now);
             } else if (data.villagerGifts() && villager.hasLineOfSight(player) && villager.distanceToSqr(player) < 25) {

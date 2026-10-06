@@ -29,8 +29,12 @@ public final class QuestGivers {
         return Optional.empty();
     }
 
+    /** Open the giver's quest board. The giver stays put and faces the player while it is open. */
     public static void open(ServerPlayer player, Entity entity) {
-        forEntity(entity).ifPresent(giver -> com.selluastar.fealty.network.FealtyNetwork.send(player, giver.screen(player, entity)));
+        forEntity(entity).ifPresent(giver -> {
+            com.selluastar.fealty.dialogue.DialogueService.hold(player, entity);
+            com.selluastar.fealty.network.FealtyNetwork.send(player, giver.screen(player, entity));
+        });
     }
 
     /** The accepted quest for a giver, or the given offers. */

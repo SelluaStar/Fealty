@@ -84,6 +84,7 @@ public final class FealtyConfig {
     public static final ModConfigSpec.IntValue TRIBUTE_ROLLS_PER_10_VILLAGERS;
     public static final ModConfigSpec.ConfigValue<List<? extends Double>> TAX_TRIBUTE_MULTIPLIERS;
     public static final ModConfigSpec.ConfigValue<List<? extends Integer>> TAX_DAILY_REP;
+    public static final ModConfigSpec.ConfigValue<List<? extends Double>> GIFT_CHANCE_BY_TAX;
     public static final ModConfigSpec.IntValue MAX_COMMANDED_GUARDS;
 
     // Outlaw path
@@ -233,7 +234,11 @@ public final class FealtyConfig {
         TRIBUTE_ROLLS_PER_10_VILLAGERS = b.comment("Tribute loot rolls gathered each day per 10 villagers at the 'fair' tax level")
                 .defineInRange("tribute_rolls_per_10_villagers", 4, 0, 64);
         TAX_TRIBUTE_MULTIPLIERS = b.comment("Tribute multiplier for tax levels none, light, fair, heavy, crushing")
-                .defineList("tax_tribute_multipliers", List.of(0.0, 0.5, 1.0, 1.5, 2.0), () -> 1.0, o -> o instanceof Double d && d >= 0);
+                .defineList("tribute_by_tax_level", List.of(0.1, 0.4, 1.0, 2.0, 3.5), () -> 1.0, o -> o instanceof Double d && d >= 0);
+        GIFT_CHANCE_BY_TAX = b.comment("Daily chance of a gift of love from a village that loves its lord, for tax levels none, light, fair,",
+                        "heavy, crushing (halved for a lord who is only Trusted, and more likely for one the village adores)")
+                .defineList("gift_chance_by_tax_level", List.of(0.15, 0.10, 0.05, 0.01, 0.0), () -> 0.0,
+                        o -> o instanceof Double d && d >= 0 && d <= 1);
         TAX_DAILY_REP = b.comment("Daily rep change for the lord at tax levels none, light, fair, heavy, crushing")
                 .defineList("tax_daily_rep", List.of(2, 1, 0, -1, -3), () -> 0, o -> o instanceof Integer);
         MAX_COMMANDED_GUARDS = b.comment("Most guards a Lord's Horn can command at once").defineInRange("max_commanded_guards", 8, 1, 64);
@@ -284,6 +289,11 @@ public final class FealtyConfig {
     public static double taxTributeMultiplier(int level) {
         List<? extends Double> list = TAX_TRIBUTE_MULTIPLIERS.get();
         return level >= 0 && level < list.size() ? list.get(level) : 1.0;
+    }
+
+    public static double giftChance(int level) {
+        List<? extends Double> list = GIFT_CHANCE_BY_TAX.get();
+        return level >= 0 && level < list.size() ? list.get(level) : 0.0;
     }
 
     public static int taxDailyRep(int level) {

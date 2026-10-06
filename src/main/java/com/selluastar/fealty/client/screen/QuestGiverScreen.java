@@ -8,6 +8,8 @@ import com.selluastar.fealty.client.ClientRepCache;
 import com.selluastar.fealty.client.ui.FealtyButton;
 import com.selluastar.fealty.client.ui.ScrollList;
 import com.selluastar.fealty.client.ui.Ui;
+import com.selluastar.fealty.dialogue.DialogueService;
+import com.selluastar.fealty.network.DialogueChoicePayload;
 import com.selluastar.fealty.network.OpenQuestScreenPayload;
 import com.selluastar.fealty.network.OpenQuestScreenPayload.ActionEntry;
 import com.selluastar.fealty.network.OpenQuestScreenPayload.QuestEntry;
@@ -53,6 +55,13 @@ public class QuestGiverScreen extends Screen {
     @Override
     public boolean isPauseScreen() {
         return false;
+    }
+
+    /** The quest giver may go about its day again. */
+    @Override
+    public void removed() {
+        super.removed();
+        PacketDistributor.sendToServer(new DialogueChoicePayload(data.entityId(), DialogueService.LEAVE_BOARD));
     }
 
     @Override

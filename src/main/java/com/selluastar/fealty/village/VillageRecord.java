@@ -394,8 +394,9 @@ public final class VillageRecord {
                 Codec.INT.optionalFieldOf("pending_tribute", 0).forGetter(l -> l.pendingTribute),
                 Codec.DOUBLE.optionalFieldOf("treasury", 0.0).forGetter(l -> l.treasury),
                 Codec.LONG.optionalFieldOf("last_feast_day", -1000L).forGetter(l -> l.lastFeastDay),
-                Codec.LONG.optionalFieldOf("last_report_day", 0L).forGetter(l -> l.lastReportDay)
-        ).apply(i, (uuid, name, tax, tribute, taxDay, sworn, pending, treasury, feast, report) -> {
+                Codec.LONG.optionalFieldOf("last_report_day", 0L).forGetter(l -> l.lastReportDay),
+                Codec.INT.optionalFieldOf("gifts", 0).forGetter(l -> l.gifts)
+        ).apply(i, (uuid, name, tax, tribute, taxDay, sworn, pending, treasury, feast, report, gifts) -> {
             LordInfo l = new LordInfo();
             l.uuid = uuid.orElse(null);
             l.name = name;
@@ -407,6 +408,7 @@ public final class VillageRecord {
             l.treasury = treasury;
             l.lastFeastDay = feast;
             l.lastReportDay = report;
+            l.gifts = gifts;
             return l;
         }));
 
@@ -421,6 +423,7 @@ public final class VillageRecord {
         private double treasury;
         private long lastFeastDay = -1000L;
         private long lastReportDay;
+        private int gifts;
 
         @Nullable
         public UUID uuid() {
@@ -472,6 +475,15 @@ public final class VillageRecord {
             this.pendingTribute = Math.max(0, pendingTribute);
         }
 
+        /** Gifts of love the village has gathered for the lord, waiting in the treasury. */
+        public int gifts() {
+            return gifts;
+        }
+
+        public void setGifts(int gifts) {
+            this.gifts = Math.max(0, gifts);
+        }
+
         /** Tribute gathered for the lord and not yet collected, in loot rolls of the tribute table. */
         public double treasury() {
             return treasury;
@@ -508,6 +520,7 @@ public final class VillageRecord {
             this.taxLevel = 2;
             this.pendingTribute = 0;
             this.treasury = 0.0;
+            this.gifts = 0;
         }
 
         public void clear() {

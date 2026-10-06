@@ -2,6 +2,7 @@ package com.selluastar.fealty.entity;
 
 import org.jetbrains.annotations.Nullable;
 
+import com.selluastar.fealty.entity.goal.TalkToPlayerGoal;
 import com.selluastar.fealty.quest.QuestGiver;
 import com.selluastar.fealty.quest.QuestGivers;
 
@@ -54,6 +55,7 @@ public abstract class QuestGiverEntity extends PathfinderMob {
     @Override
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
+        goalSelector.addGoal(0, new TalkToPlayerGoal(this));
         goalSelector.addGoal(1, new PanicGoal(this, 0.75));
         goalSelector.addGoal(1, new AvoidEntityGoal<>(this, Monster.class, 8.0F, 0.6, 0.75));
         goalSelector.addGoal(2, new OpenDoorGoal(this, true));

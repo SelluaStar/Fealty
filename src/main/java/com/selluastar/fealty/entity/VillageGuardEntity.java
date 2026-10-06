@@ -6,6 +6,7 @@ import com.selluastar.fealty.dialogue.DialogueService;
 import com.selluastar.fealty.dialogue.Speech;
 import com.selluastar.fealty.entity.goal.DefendVillagersGoal;
 import com.selluastar.fealty.entity.goal.GuardBowGoal;
+import com.selluastar.fealty.entity.goal.TalkToPlayerGoal;
 import com.selluastar.fealty.guard.Garrison;
 import com.selluastar.fealty.guard.GarrisonManager;
 import com.selluastar.fealty.guard.GuardManager;
@@ -116,6 +117,7 @@ public class VillageGuardEntity extends PathfinderMob implements RangedAttackMob
     @Override
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
+        goalSelector.addGoal(0, new TalkToPlayerGoal(this));
         goalSelector.addGoal(1, new OpenDoorGoal(this, true));
         goalSelector.addGoal(4, new MoveTowardsRestrictionGoal(this, 0.9));
         goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.6));
