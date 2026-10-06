@@ -36,6 +36,10 @@ public final class FealtyConfig {
     public static final ModConfigSpec.IntValue GUARD_RESPAWN_DAYS;
     public static final ModConfigSpec.IntValue HORN_SUMMON_COUNT;
     public static final ModConfigSpec.IntValue HORN_ARRIVAL_SECONDS;
+    public static final ModConfigSpec.BooleanValue VILLAGE_MAILBOXES;
+    public static final ModConfigSpec.IntValue MAIL_BASE_DELAY;
+    public static final ModConfigSpec.IntValue MAIL_DELAY_PER_100;
+    public static final ModConfigSpec.IntValue MAIL_MAX_DELAY;
 
     // Threats and trade
     public static final ModConfigSpec.IntValue THREAT_COOLDOWN;
@@ -212,6 +216,14 @@ public final class FealtyConfig {
                 .defineInRange("horn_summon_count", 4, 0, 32);
         HORN_ARRIVAL_SECONDS = b.comment("Seconds before called guards arrive from the village")
                 .defineInRange("horn_arrival_seconds", 5, 0, 600);
+        b.pop();
+
+        b.comment("Mail: mailboxes, letters and parcels").push("mail");
+        VILLAGE_MAILBOXES = b.comment("Every village gets a mailbox when first visited (put back once a day if it goes missing)")
+                .define("village_mailboxes", true);
+        MAIL_BASE_DELAY = b.comment("Seconds every letter takes to arrive").defineInRange("base_delay_seconds", 30, 0, 86400);
+        MAIL_DELAY_PER_100 = b.comment("Extra seconds for every 100 blocks a letter travels").defineInRange("seconds_per_100_blocks", 6, 0, 3600);
+        MAIL_MAX_DELAY = b.comment("Longest a letter takes, in seconds").defineInRange("max_delay_seconds", 600, 0, 86400);
         b.pop();
 
         b.comment("Outlaw path: Renown gates, followers and wanted escalation").push("outlaw");

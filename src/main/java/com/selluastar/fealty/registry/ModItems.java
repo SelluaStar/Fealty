@@ -62,6 +62,7 @@ public final class ModItems {
     public static final DeferredItem<BlockItem> VILLAGE_COFFER = ITEMS.registerSimpleBlockItem(ModBlocks.VILLAGE_COFFER);
     public static final DeferredItem<BlockItem> RUBBLE = ITEMS.registerSimpleBlockItem(ModBlocks.RUBBLE);
     public static final DeferredItem<BlockItem> BANDIT_STANDARD = ITEMS.registerSimpleBlockItem(ModBlocks.BANDIT_STANDARD);
+    public static final DeferredItem<BlockItem> MAILBOX = ITEMS.registerSimpleBlockItem(ModBlocks.MAILBOX);
 
     // Spawn eggs
     public static final DeferredItem<DeferredSpawnEggItem> ELDER_SPAWN_EGG = ITEMS.register("village_elder_spawn_egg",

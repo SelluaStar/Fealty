@@ -2,6 +2,7 @@ package com.selluastar.fealty.registry;
 
 import com.selluastar.fealty.Fealty;
 import com.selluastar.fealty.block.BanditStandardBlock;
+import com.selluastar.fealty.block.MailboxBlock;
 import com.selluastar.fealty.block.RubbleBlock;
 import com.selluastar.fealty.block.VillageCofferBlock;
 
@@ -24,6 +25,10 @@ public final class ModBlocks {
     public static final DeferredBlock<BanditStandardBlock> BANDIT_STANDARD = BLOCKS.register("bandit_standard",
             () -> new BanditStandardBlock(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_RED).strength(2.0F)
                     .sound(SoundType.WOOD).noOcclusion().noCollission()));
+
+    public static final DeferredBlock<MailboxBlock> MAILBOX = BLOCKS.register("mailbox",
+            () -> new MailboxBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.0F, 6.0F)
+                    .sound(SoundType.WOOD).noOcclusion()));
 
     private ModBlocks() {
     }

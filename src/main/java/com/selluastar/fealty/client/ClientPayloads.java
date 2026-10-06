@@ -76,6 +76,19 @@ public final class ClientPayloads {
         Minecraft.getInstance().setScreen(new com.selluastar.fealty.client.screen.HornScreen(payload));
     }
 
+    public static void openMailbox(com.selluastar.fealty.network.OpenMailboxPayload payload) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.screen instanceof com.selluastar.fealty.client.screen.MailboxScreen screen && screen.pos().equals(payload.pos())) {
+            screen.refresh(payload);
+        } else {
+            minecraft.setScreen(new com.selluastar.fealty.client.screen.MailboxScreen(payload));
+        }
+    }
+
+    public static void mailStatus(com.selluastar.fealty.network.MailStatusPayload payload) {
+        com.selluastar.fealty.client.hud.MailLayer.setUnread(payload.unread());
+    }
+
     public static void openQuestScreen(OpenQuestScreenPayload payload) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.screen instanceof QuestGiverScreen screen && screen.entityId() == payload.entityId()) {

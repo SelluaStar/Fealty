@@ -10,6 +10,7 @@ import com.selluastar.fealty.Fealty;
 import com.selluastar.fealty.api.RepTier;
 import com.selluastar.fealty.guard.GarrisonManager;
 import com.selluastar.fealty.lordship.LordshipManager;
+import com.selluastar.fealty.mail.MailService;
 import com.selluastar.fealty.outlaw.TyrantEvent;
 import com.selluastar.fealty.rep.RepManager;
 import com.selluastar.fealty.trade.VillagerBehaviors;
@@ -64,6 +65,7 @@ public final class VillageTracker {
             ElderManager.tickVillage(level, record);
             LordshipManager.tickVillage(level, record);
             GarrisonManager.tickVillage(level, record);
+            MailService.tickVillage(level, record);
         }
     }
 

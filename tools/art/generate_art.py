@@ -848,6 +848,60 @@ def standard_textures():
     return pole.img, cloth_p.img
 
 
+def mailbox_textures():
+    """The mailbox: a painted box on a wooden post, with a door on the front and a red flag."""
+    rand = random.Random(77)
+    PAINT, PAINT_DARK, BRASS = hexc("#2F4A6D"), hexc("#22364F"), hexc("#C8A050")
+    WOOD, WOOD_DARK = hexc("#8B6A42"), hexc("#5E4528")
+
+    def painted(seed):
+        img = Image.new("RGBA", (16, 16))
+        px = img.load()
+        r = random.Random(seed)
+        for y in range(16):
+            for x in range(16):
+                c = PAINT_DARK if y in (0, 15) or x in (0, 15) else PAINT
+                px[x, y] = shade(c, 1.0 + r.uniform(-0.05, 0.05))
+        return img, px
+
+    side, sp = painted(1)
+    for x, y in ((3, 6), (12, 6), (3, 10), (12, 10)):
+        sp[x, y] = shade(PAINT, 1.35)  # rivets
+    front, fp = painted(2)
+    # the door: an outline in the middle of the face, a brass handle and the letter slot
+    for x in range(4, 12):
+        fp[x, 6] = shade(PAINT_DARK, 0.85)
+        fp[x, 10] = shade(PAINT_DARK, 0.85)
+    for y in range(6, 11):
+        fp[4, y] = shade(PAINT_DARK, 0.85)
+        fp[11, y] = shade(PAINT_DARK, 0.85)
+    for x in range(6, 10):
+        fp[x, 7] = hexc("#141414")
+    fp[10, 8] = BRASS
+    fp[10, 9] = shade(BRASS, 0.8)
+    top, tp = painted(3)
+    for x in range(16):
+        tp[x, 7] = shade(PAINT, 1.15)
+        tp[x, 8] = shade(PAINT, 1.1)
+    post = Image.new("RGBA", (16, 16))
+    pp = post.load()
+    for y in range(16):
+        for x in range(16):
+            grain = 0.9 if (x * 3 + y // 4) % 5 == 0 else 1.0
+            pp[x, y] = shade(WOOD_DARK if x % 8 in (0, 7) else WOOD, grain * (1.0 + rand.uniform(-0.05, 0.05)))
+    flag = Image.new("RGBA", (16, 16))
+    gp = flag.load()
+    for y in range(16):
+        for x in range(16):
+            edge = x in (0, 15) or y in (0, 15)
+            gp[x, y] = shade(hexc("#B71C1C"), (0.75 if edge else 1.0) * (1.0 + rand.uniform(-0.04, 0.04)))
+    save(side, "block", "mailbox_side.png")
+    save(front, "block", "mailbox_front.png")
+    save(top, "block", "mailbox_top.png")
+    save(post, "block", "mailbox_post.png")
+    save(flag, "block", "mailbox_flag.png")
+
+
 # ------------------------------------------------------------------------------------------------ GUIs
 
 def parchment(w, h, seed, border="#5D4037"):
@@ -981,6 +1035,7 @@ def main():
     save(front, "block", "village_coffer_front.png")
     save(top, "block", "village_coffer_top.png")
     save(rubble_texture(), "block", "rubble.png")
+    mailbox_textures()
     pole, banner = standard_textures()
     save(pole, "block", "bandit_standard_pole.png")
     save(banner, "block", "bandit_standard_cloth.png")
@@ -1013,5 +1068,7 @@ if __name__ == "__main__":
     import sys
     if sys.argv[1:] == ["guards"]:
         guard_textures()  # just the guards, leaving the other textures as they are
+    elif sys.argv[1:] == ["mailbox"]:
+        mailbox_textures()
     else:
         main()

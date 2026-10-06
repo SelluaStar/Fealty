@@ -465,7 +465,8 @@ public final class QuestManager {
     public static boolean hasLettersFor(ServerPlayer player, VillageRecord village) {
         for (ItemStack stack : player.getInventory().items) {
             LetterInfo info = stack.get(ModDataComponents.LETTER.get());
-            if (info != null && info.to().equals(village.id()) && info.owner().equals(player.getUUID())) {
+            if (info != null && info.to().equals(village.id()) && info.owner().equals(player.getUUID())
+                    && CourierObjective.goesToElder(player, info)) {
                 return true;
             }
         }
@@ -477,7 +478,8 @@ public final class QuestManager {
         boolean delivered = false;
         for (ItemStack stack : player.getInventory().items) {
             LetterInfo info = stack.get(ModDataComponents.LETTER.get());
-            if (info == null || !info.to().equals(village.id()) || !info.owner().equals(player.getUUID())) {
+            if (info == null || !info.to().equals(village.id()) || !info.owner().equals(player.getUUID())
+                    || !CourierObjective.goesToElder(player, info)) {
                 continue;
             }
             Optional<QuestContext> ctx = byInstance(player, info.quest());

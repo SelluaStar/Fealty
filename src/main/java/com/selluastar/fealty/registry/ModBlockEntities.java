@@ -4,6 +4,7 @@ import java.util.function.Supplier;
 
 import com.selluastar.fealty.Fealty;
 import com.selluastar.fealty.block.BanditStandardBlockEntity;
+import com.selluastar.fealty.block.MailboxBlockEntity;
 import com.selluastar.fealty.block.VillageCofferBlockEntity;
 
 import net.minecraft.core.registries.Registries;
@@ -17,6 +18,9 @@ public final class ModBlockEntities {
             () -> BlockEntityType.Builder.of(VillageCofferBlockEntity::new, ModBlocks.VILLAGE_COFFER.get()).build(null));
     public static final Supplier<BlockEntityType<BanditStandardBlockEntity>> BANDIT_STANDARD = BLOCK_ENTITIES.register("bandit_standard",
             () -> BlockEntityType.Builder.of(BanditStandardBlockEntity::new, ModBlocks.BANDIT_STANDARD.get()).build(null));
+
+    public static final Supplier<BlockEntityType<MailboxBlockEntity>> MAILBOX = BLOCK_ENTITIES.register("mailbox",
+            () -> BlockEntityType.Builder.of(MailboxBlockEntity::new, ModBlocks.MAILBOX.get()).build(null));
 
     private ModBlockEntities() {
     }
