@@ -391,8 +391,11 @@ public final class VillageRecord {
                 Codec.LONG.optionalFieldOf("last_tribute_day", 0L).forGetter(l -> l.lastTributeDay),
                 Codec.LONG.optionalFieldOf("last_tax_day", 0L).forGetter(l -> l.lastTaxDay),
                 Codec.LONG.optionalFieldOf("sworn_day", 0L).forGetter(l -> l.swornDay),
-                Codec.INT.optionalFieldOf("pending_tribute", 0).forGetter(l -> l.pendingTribute)
-        ).apply(i, (uuid, name, tax, tribute, taxDay, sworn, pending) -> {
+                Codec.INT.optionalFieldOf("pending_tribute", 0).forGetter(l -> l.pendingTribute),
+                Codec.DOUBLE.optionalFieldOf("treasury", 0.0).forGetter(l -> l.treasury),
+                Codec.LONG.optionalFieldOf("last_feast_day", -1000L).forGetter(l -> l.lastFeastDay),
+                Codec.LONG.optionalFieldOf("last_report_day", 0L).forGetter(l -> l.lastReportDay)
+        ).apply(i, (uuid, name, tax, tribute, taxDay, sworn, pending, treasury, feast, report) -> {
             LordInfo l = new LordInfo();
             l.uuid = uuid.orElse(null);
             l.name = name;
@@ -401,6 +404,9 @@ public final class VillageRecord {
             l.lastTaxDay = taxDay;
             l.swornDay = sworn;
             l.pendingTribute = pending;
+            l.treasury = treasury;
+            l.lastFeastDay = feast;
+            l.lastReportDay = report;
             return l;
         }));
 
@@ -412,6 +418,9 @@ public final class VillageRecord {
         private long lastTaxDay;
         private long swornDay;
         private int pendingTribute;
+        private double treasury;
+        private long lastFeastDay = -1000L;
+        private long lastReportDay;
 
         @Nullable
         public UUID uuid() {
@@ -463,14 +472,42 @@ public final class VillageRecord {
             this.pendingTribute = Math.max(0, pendingTribute);
         }
 
+        /** Tribute gathered for the lord and not yet collected, in loot rolls of the tribute table. */
+        public double treasury() {
+            return treasury;
+        }
+
+        public void setTreasury(double treasury) {
+            this.treasury = Math.max(0.0, treasury);
+        }
+
+        public long lastFeastDay() {
+            return lastFeastDay;
+        }
+
+        public void setLastFeastDay(long day) {
+            this.lastFeastDay = day;
+        }
+
+        /** The day the lord was last sent a tribute report. */
+        public long lastReportDay() {
+            return lastReportDay;
+        }
+
+        public void setLastReportDay(long day) {
+            this.lastReportDay = day;
+        }
+
         public void swear(UUID lord, String lordName, long day) {
             this.uuid = lord;
             this.name = lordName;
             this.swornDay = day;
             this.lastTributeDay = day;
             this.lastTaxDay = day;
+            this.lastReportDay = day;
             this.taxLevel = 2;
             this.pendingTribute = 0;
+            this.treasury = 0.0;
         }
 
         public void clear() {

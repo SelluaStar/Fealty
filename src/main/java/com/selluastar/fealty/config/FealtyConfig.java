@@ -204,8 +204,9 @@ public final class FealtyConfig {
 
         b.comment("Village lordship").push("lordship");
         MAX_LORDSHIPS = b.comment("How many villages one player may rule at once").defineInRange("max_lordships", 2, 1, 100);
-        TRIBUTE_INTERVAL_DAYS = b.comment("In-game days between tribute payments").defineInRange("tribute_interval_days", 3, 1, 100);
-        TRIBUTE_ROLLS_PER_10_VILLAGERS = b.comment("Tribute loot rolls per 10 villagers at the 'fair' tax level")
+        TRIBUTE_INTERVAL_DAYS = b.comment("Days between tribute reports sent to the lord by letter (tribute itself is gathered daily)")
+                .defineInRange("tribute_interval_days", 3, 1, 100);
+        TRIBUTE_ROLLS_PER_10_VILLAGERS = b.comment("Tribute loot rolls gathered each day per 10 villagers at the 'fair' tax level")
                 .defineInRange("tribute_rolls_per_10_villagers", 4, 0, 64);
         TAX_TRIBUTE_MULTIPLIERS = b.comment("Tribute multiplier for tax levels none, light, fair, heavy, crushing")
                 .defineList("tax_tribute_multipliers", List.of(0.0, 0.5, 1.0, 1.5, 2.0), () -> 1.0, o -> o instanceof Double d && d >= 0);

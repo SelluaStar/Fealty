@@ -22,6 +22,7 @@ public final class ModRepSources {
         register(RepSources.CURE_VILLAGER, RepSource.action(5));
         register(RepSources.TAX, RepSource.action(0));
         register(RepSources.FAVOR, RepSource.redemption(2));
+        register(RepSources.FEAST, RepSource.action(3));
         // Crimes: need a witness and alert guards.
         register(RepSources.BREAK_BLOCK, RepSource.crime(-5));
         register(RepSources.STEAL, RepSource.crime(-15));

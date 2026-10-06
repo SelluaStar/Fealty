@@ -178,6 +178,11 @@ public final class Garrison {
             this.missing = 0;
         }
 
+        /** A lord paid for a new guard: the post is filled at the next upkeep instead of after the waiting days. */
+        public void readyNow() {
+            this.diedDay = -1;
+        }
+
         /** The holder died: the post stays empty for a while, then someone new takes it. */
         public void died(long day) {
             vacate();

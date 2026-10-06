@@ -106,6 +106,10 @@ public final class RepCommand {
                         .then(Commands.literal("lord")
                                 .then(Commands.argument("village", ResourceLocationArgument.id()).suggests(RepCommand::suggestVillages)
                                         .then(Commands.literal("clear").executes(RepCommand::clearLord))
+                                        .then(Commands.literal("tax")
+                                                .then(Commands.argument("level", IntegerArgumentType.integer(0, 4)).executes(RepCommand::lordTax)))
+                                        .then(Commands.literal("treasury")
+                                                .then(Commands.argument("rolls", IntegerArgumentType.integer(0, 10000)).executes(RepCommand::lordTreasury)))
                                         .then(Commands.argument("player", EntityArgument.player()).executes(RepCommand::setLord)))))
                 .then(Commands.literal("quest")
                         .then(Commands.literal("complete")
@@ -294,6 +298,23 @@ public final class RepCommand {
         VillageRecord record = village(ctx);
         LordshipManager.clearLord(ctx.getSource().getServer(), record, null);
         ctx.getSource().sendSuccess(() -> Component.translatable("fealty.command.lord_cleared", record.name()), true);
+        return 1;
+    }
+
+    private static int lordTax(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+        VillageRecord record = village(ctx);
+        record.lord().setTaxLevel(IntegerArgumentType.getInteger(ctx, "level"));
+        FealtyWorldData.get(ctx.getSource().getServer()).setDirty();
+        ctx.getSource().sendSuccess(() -> Component.translatable("fealty.lord.tax_set", record.name(),
+                LordshipManager.taxName(record.lord().taxLevel())), true);
+        return 1;
+    }
+
+    private static int lordTreasury(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+        VillageRecord record = village(ctx);
+        record.lord().setTreasury(IntegerArgumentType.getInteger(ctx, "rolls"));
+        FealtyWorldData.get(ctx.getSource().getServer()).setDirty();
+        ctx.getSource().sendSuccess(() -> Component.translatable("fealty.command.treasury_set", record.name(), (int) record.lord().treasury()), true);
         return 1;
     }
 

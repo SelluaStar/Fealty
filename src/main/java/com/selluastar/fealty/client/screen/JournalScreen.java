@@ -65,7 +65,7 @@ public class JournalScreen extends Screen {
         if (questList.selected() < 0 && !questList.items().isEmpty()) {
             questList.select(0);
         }
-        standingList.setBounds(left + 12, top + 52, WIDTH - 24, HEIGHT - 64);
+        standingList.setBounds(left + 12, top + 52, WIDTH - 24, HEIGHT - 64 - (page == Page.LORDSHIPS ? 26 : 0));
         List<Standing> standings = page == Page.LORDSHIPS
                 ? ClientRepCache.sortedStandings().stream().filter(Standing::lord).toList()
                 : ClientRepCache.sortedStandings();
@@ -73,6 +73,18 @@ public class JournalScreen extends Screen {
 
         trackButton = null;
         abandonButton = null;
+        if (page == Page.LORDSHIPS && !standings.isEmpty()) {
+            if (standingList.selected() < 0) {
+                standingList.select(0);
+            }
+            addRenderableWidget(new FealtyButton(left + WIDTH - 132, top + HEIGHT - 32, 120, 20, Component.translatable("fealty.journal.open_hall"), b -> {
+                Standing standing = standingList.selectedItem();
+                if (standing != null) {
+                    net.neoforged.neoforge.network.PacketDistributor.sendToServer(
+                            new com.selluastar.fealty.network.HallActionPayload(standing.faction().toString(), "open", 0));
+                }
+            }).icon("crown").pageSound().tooltip(Component.translatable("fealty.journal.open_hall_hint")));
+        }
         if (page == Page.QUESTS) {
             trackButton = addRenderableWidget(new FealtyButton(left + WIDTH - 92, top + HEIGHT - 28, 80, 18,
                     Component.empty(), b -> toggleTrack()).icon("pin").pageSound());
@@ -238,6 +250,9 @@ public class JournalScreen extends Screen {
             return;
         }
         standingList.render(g, mouseX, mouseY, (gg, standing, index, x, y, w, h, hovered, selected) -> {
+            if (lordships && selected) {
+                gg.fill(x, y, x + w, y + h - 1, 0x40B8A27C);
+            }
             RepTier tier = ClientRepCache.tierFor(standing.rep());
             Ui.icon(gg, standing.lord() ? "crown" : standing.village() ? "house" : "shield", x + 2, y + 4, 14);
             Component name = standing.lord() ? Component.translatable("fealty.ledger.lord_of", standing.name()) : standing.name();

@@ -89,6 +89,15 @@ public final class ClientPayloads {
         com.selluastar.fealty.client.hud.MailLayer.setUnread(payload.unread());
     }
 
+    public static void openHall(com.selluastar.fealty.network.OpenHallPayload payload) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.screen instanceof com.selluastar.fealty.client.screen.LordshipScreen screen && screen.village().equals(payload.village())) {
+            screen.refresh(payload);
+        } else {
+            minecraft.setScreen(new com.selluastar.fealty.client.screen.LordshipScreen(payload));
+        }
+    }
+
     public static void openQuestScreen(OpenQuestScreenPayload payload) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.screen instanceof QuestGiverScreen screen && screen.entityId() == payload.entityId()) {

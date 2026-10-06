@@ -13,13 +13,19 @@ import com.selluastar.fealty.api.RepSources;
 import com.selluastar.fealty.api.RepTier;
 import com.selluastar.fealty.api.event.LordshipEvent;
 import com.selluastar.fealty.api.event.TierChangedEvent;
-import com.selluastar.fealty.block.VillageCofferBlockEntity;
 import com.selluastar.fealty.config.FealtyConfig;
 import com.selluastar.fealty.data.TierManager;
+import com.selluastar.fealty.dialogue.Speech;
+import com.selluastar.fealty.guard.Garrison;
+import com.selluastar.fealty.guard.GarrisonManager;
+import com.selluastar.fealty.guard.GuardOrders;
 import com.selluastar.fealty.network.FealtyNetwork;
+import com.selluastar.fealty.mail.MailService;
+import com.selluastar.fealty.network.Feedback;
+import com.selluastar.fealty.network.OpenHallPayload;
 import com.selluastar.fealty.network.OpenQuestScreenPayload.ActionEntry;
+import com.selluastar.fealty.registry.ModAttachments;
 import com.selluastar.fealty.registry.ModItems;
-import com.selluastar.fealty.rep.FactionResolver;
 import com.selluastar.fealty.rep.Factions;
 import com.selluastar.fealty.rep.FealtyWorldData;
 import com.selluastar.fealty.rep.RepManager;
@@ -28,15 +34,21 @@ import com.selluastar.fealty.util.Maps;
 import com.selluastar.fealty.village.VillageRecord;
 
 import net.minecraft.ChatFormatting;
-import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
@@ -78,13 +90,7 @@ public final class LordshipManager {
 
     public static void elderActions(ServerPlayer player, VillageRecord village, List<ActionEntry> actions) {
         if (village.lord().isLord(player.getUUID())) {
-            int tax = village.lord().taxLevel();
-            actions.add(ActionEntry.disabled("tax_info", Component.translatable("fealty.lord.tax_label", taxName(tax)),
-                    Component.translatable("fealty.lord.tax_hint", FealtyConfig.taxTributeMultiplier(tax), FealtyConfig.taxDailyRep(tax))));
-            actions.add(tax < 4 ? ActionEntry.of("tax_up", Component.translatable("fealty.lord.tax_up"))
-                    : ActionEntry.disabled("tax_up", Component.translatable("fealty.lord.tax_up"), Component.translatable("fealty.lord.tax_max")));
-            actions.add(tax > 0 ? ActionEntry.of("tax_down", Component.translatable("fealty.lord.tax_down"))
-                    : ActionEntry.disabled("tax_down", Component.translatable("fealty.lord.tax_down"), Component.translatable("fealty.lord.tax_min")));
+            actions.add(ActionEntry.of(HALL, Component.translatable("fealty.lord.hall")));
             if (!Inventories.has(player, ModItems.LORDS_HORN.get())) {
                 actions.add(ActionEntry.of("horn", Component.translatable("fealty.lord.new_horn")));
             }
@@ -98,8 +104,9 @@ public final class LordshipManager {
     public static void handleElderAction(ServerPlayer player, VillageRecord village, String action) {
         switch (action) {
             case "swear" -> trySwear(player, village);
-            case "tax_up" -> adjustTax(player, village, 1);
-            case "tax_down" -> adjustTax(player, village, -1);
+            case HALL -> openHall(player, village);
+            case "tax_up" -> adjustTax(player, village, village.lord().taxLevel() + 1);
+            case "tax_down" -> adjustTax(player, village, village.lord().taxLevel() - 1);
             case "horn" -> {
                 if (village.lord().isLord(player.getUUID()) && !Inventories.has(player, ModItems.LORDS_HORN.get())) {
                     Maps.give(player, new ItemStack(ModItems.LORDS_HORN.get()));
@@ -200,13 +207,17 @@ public final class LordshipManager {
         }
     }
 
-    private static void adjustTax(ServerPlayer player, VillageRecord village, int delta) {
+    private static void adjustTax(ServerPlayer player, VillageRecord village, int level) {
         if (!village.lord().isLord(player.getUUID())) {
             return;
         }
-        village.lord().setTaxLevel(village.lord().taxLevel() + delta);
+        int before = village.lord().taxLevel();
+        village.lord().setTaxLevel(level);
         FealtyWorldData.get(player.server).setDirty();
-        player.sendSystemMessage(Component.translatable("fealty.lord.tax_set", village.name(), taxName(village.lord().taxLevel())));
+        if (village.lord().taxLevel() != before) {
+            player.sendSystemMessage(Component.translatable("fealty.lord.tax_set", village.name(), taxName(village.lord().taxLevel())));
+            Feedback.sound(player, SoundEvents.UI_CARTOGRAPHY_TABLE_TAKE_RESULT, 0.8F, 1.0F);
+        }
     }
 
     /** A lord who falls below Trusted is renounced. */
@@ -224,6 +235,18 @@ public final class LordshipManager {
 
     // ---- Daily: taxes and tribute ----
 
+    /** Tribute gathered in a day at a tax level, in rolls of the tribute table (more villagers, more tribute). */
+    public static double tributePerDay(VillageRecord village, int taxLevel) {
+        int population = village.garrison().population();
+        double tens = population < 0 ? 1.0 : Math.max(0.3, population / 10.0);
+        return tens * FealtyConfig.TRIBUTE_ROLLS_PER_10_VILLAGERS.get() * FealtyConfig.taxTributeMultiplier(taxLevel);
+    }
+
+    /** The most tribute a treasury holds: a week's worth. */
+    private static double treasuryCap(VillageRecord village) {
+        return Math.max(8.0, tributePerDay(village, 4) * 7.0);
+    }
+
     public static void onNewDay(MinecraftServer server, long day) {
         FealtyWorldData data = FealtyWorldData.get(server);
         for (VillageRecord village : new ArrayList<>(data.villages())) {
@@ -232,12 +255,13 @@ public final class LordshipManager {
                 continue;
             }
             VillageRecord.LordInfo info = village.lord();
+            ServerPlayer online = server.getPlayerList().getPlayer(lord);
+            // The lord's standing drifts with the taxes.
             int dailyRep = FealtyConfig.taxDailyRep(info.taxLevel());
             long days = Math.max(0, day - info.lastTaxDay());
             info.setLastTaxDay(day);
             if (dailyRep != 0 && days > 0) {
                 int amount = (int) Math.max(-1000, Math.min(1000, dailyRep * days));
-                ServerPlayer online = server.getPlayerList().getPlayer(lord);
                 if (online != null) {
                     RepManager.change(online, village.id(), amount, RepSources.TAX, true);
                 } else {
@@ -248,60 +272,242 @@ public final class LordshipManager {
                     }
                 }
             }
+            // Tribute is gathered every day, whether or not anyone is there, and waits in the treasury.
+            long tributeDays = Math.max(0, Math.min(7, day - info.lastTributeDay()));
+            info.setLastTributeDay(day);
+            double gathered = tributePerDay(village, info.taxLevel()) * tributeDays;
+            if (info.pendingTribute() > 0) {
+                // (tribute periods owed under 0.1)
+                gathered += info.pendingTribute() * FealtyConfig.TRIBUTE_ROLLS_PER_10_VILLAGERS.get();
+                info.setPendingTribute(0);
+            }
+            if (gathered > 0) {
+                info.setTreasury(Math.min(treasuryCap(village), info.treasury() + gathered));
+                if (online != null) {
+                    Feedback.toast(online, "coin", Component.translatable("fealty.toast.tribute", village.name()),
+                            Component.translatable("fealty.toast.tribute.detail", (int) Math.floor(info.treasury())));
+                }
+            }
+            // A report by letter every few days, while tribute waits.
             int interval = FealtyConfig.TRIBUTE_INTERVAL_DAYS.get();
-            long owed = (day - info.lastTributeDay()) / interval;
-            if (owed > 0) {
-                info.setLastTributeDay(info.lastTributeDay() + owed * interval);
-                info.setPendingTribute(info.pendingTribute() + (int) Math.min(owed, 30));
+            if (day - info.lastReportDay() >= interval && info.treasury() >= 1.0) {
+                info.setLastReportDay(day);
+                MailService.fromVillage(server, lord, village, "tribute_report", List.of(), 20 * 20,
+                        (int) Math.floor(info.treasury()), taxName(info.taxLevel()));
             }
         }
         data.setDirty();
     }
 
-    /** While the village is loaded, pay any owed tribute into the coffer (or to the lord, if there is no coffer). */
+    /** While a player is in the village: nothing to pay out any more (tribute waits in the treasury). */
     public static void tickVillage(ServerLevel level, VillageRecord village) {
+    }
+
+    // ---- The Village Hall ----
+
+    public static final String HALL = "hall";
+    private static final int FEAST_COOLDOWN_DAYS = 7;
+    private static final int FEAST_FOOD = 16;
+    private static final int FEAST_EMERALDS = 8;
+    private static final int RECRUIT_COST = 10;
+
+    /** Whether the lord is in their village (collecting tribute, feasts and recruiting are done in person). */
+    private static boolean inVillage(ServerPlayer player, VillageRecord village) {
+        return village.contains(player.level().dimension(), player.blockPosition());
+    }
+
+    /** Open the Village Hall for the lord. */
+    public static void openHall(ServerPlayer player, VillageRecord village) {
+        if (!village.lord().isLord(player.getUUID())) {
+            return;
+        }
+        MinecraftServer server = player.server;
+        long day = RepManager.day(server);
         VillageRecord.LordInfo info = village.lord();
-        if (info.uuid() == null || info.pendingTribute() <= 0 || !village.dimension().equals(level.dimension())) {
+        List<Float> tribute = new ArrayList<>();
+        List<Integer> loyalty = new ArrayList<>();
+        for (int level = 0; level <= 4; level++) {
+            tribute.add((float) tributePerDay(village, level));
+            loyalty.add(FealtyConfig.taxDailyRep(level));
+        }
+        List<OpenHallPayload.GuardRow> roster = new ArrayList<>();
+        for (Garrison.Slot slot : village.garrison().slots()) {
+            int state;
+            int days = 0;
+            if (slot.isDead()) {
+                state = 2;
+                days = (int) Math.max(0, slot.diedDay() + FealtyConfig.GUARD_RESPAWN_DAYS.get() - day);
+            } else if (slot.entity() == null) {
+                state = 3;
+            } else {
+                state = isWithLord(player, slot) ? 1 : 0;
+            }
+            roster.add(new OpenHallPayload.GuardRow(slot.rank().getSerializedName(), slot.name(), state, days));
+        }
+        int feastCooldown = (int) Math.max(0, info.lastFeastDay() + FEAST_COOLDOWN_DAYS - day);
+        int population = Math.max(0, village.garrison().population());
+        FealtyNetwork.send(player, new OpenHallPayload(village.id().toString(), village.name(), village.color(), info.name(),
+                (int) Math.max(0, day - info.swornDay()), population, village.garrison().alive(), village.garrison().slots().size(),
+                RepManager.getRep(player, village.id()), info.taxLevel(), info.treasury(), tribute, loyalty, feastCooldown,
+                inVillage(player, village), roster, RECRUIT_COST, FEAST_FOOD, FEAST_EMERALDS));
+    }
+
+    private static boolean isWithLord(ServerPlayer player, Garrison.Slot slot) {
+        if (slot.entity() == null || !player.level().dimension().equals(slot.lastDimension())) {
+            return false;
+        }
+        Entity entity = player.serverLevel().getEntity(slot.entity());
+        if (!(entity instanceof Mob mob) || !mob.hasData(ModAttachments.GUARD_ORDERS)) {
+            return false;
+        }
+        GuardOrders orders = mob.getData(ModAttachments.GUARD_ORDERS);
+        return orders.isActive(player.level().getGameTime()) && player.getUUID().equals(orders.leader());
+    }
+
+    /** A lord's choice in the hall. */
+    public static void hallAction(ServerPlayer player, String villageId, String action, int argument) {
+        ResourceLocation id = ResourceLocation.tryParse(villageId);
+        Optional<VillageRecord> found = id == null ? Optional.empty() : FealtyWorldData.get(player.server).village(id);
+        if (found.isEmpty() || !found.get().lord().isLord(player.getUUID())) {
             return;
         }
-        double multiplier = FealtyConfig.taxTributeMultiplier(info.taxLevel());
-        int periods = info.pendingTribute();
-        info.setPendingTribute(0);
-        FealtyWorldData.get(level.getServer()).setDirty();
-        if (multiplier <= 0) {
+        VillageRecord village = found.get();
+        boolean near = inVillage(player, village);
+        switch (action) {
+            case "open" -> {
+            }
+            case "tax" -> adjustTax(player, village, argument);
+            case "collect" -> {
+                if (near) {
+                    collect(player, village);
+                }
+            }
+            case "feast" -> {
+                if (near) {
+                    feast(player, village);
+                }
+            }
+            case "recruit" -> {
+                if (near) {
+                    recruit(player, village, argument);
+                }
+            }
+            default -> {
+            }
+        }
+        openHall(player, village);
+    }
+
+    /** The lord takes the tribute waiting in the treasury. */
+    private static void collect(ServerPlayer player, VillageRecord village) {
+        VillageRecord.LordInfo info = village.lord();
+        int rolls = (int) Math.floor(info.treasury());
+        if (rolls <= 0) {
+            player.displayClientMessage(Component.translatable("fealty.hall.treasury_empty"), true);
             return;
         }
-        List<Villager> villagers = level.getEntitiesOfClass(Villager.class, AABB.of(village.bounds()),
-                v -> v.isAlive() && village.id().equals(FactionResolver.factionOf(v).orElse(null)));
-        int rolls = (int) Math.round(villagers.size() / 10.0 * FealtyConfig.TRIBUTE_ROLLS_PER_10_VILLAGERS.get() * multiplier) * periods;
-        rolls = Math.max(periods, Math.min(rolls, 200));
-        BlockPos coffer = village.elder().coffer();
-        Vec3 origin = coffer != null ? Vec3.atCenterOf(coffer) : Vec3.atCenterOf(village.center());
+        info.setTreasury(info.treasury() - rolls);
+        FealtyWorldData.get(player.server).setDirty();
+        ServerLevel level = player.serverLevel();
         LootTable table = level.getServer().reloadableRegistries().getLootTable(TRIBUTE);
-        List<ItemStack> tribute = new ArrayList<>();
+        Vec3 origin = player.position();
+        int items = 0;
         for (int i = 0; i < rolls; i++) {
             LootParams params = new LootParams.Builder(level).withParameter(LootContextParams.ORIGIN, origin).create(LootContextParamSets.CHEST);
-            tribute.addAll(table.getRandomItems(params));
+            for (ItemStack stack : table.getRandomItems(params)) {
+                items += stack.getCount();
+                Maps.give(player, stack);
+            }
         }
-        if (tribute.isEmpty()) {
+        player.sendSystemMessage(Component.translatable("fealty.lord.tribute", village.name(), rolls).withStyle(ChatFormatting.GOLD));
+        Feedback.toast(player, "coin", Component.translatable("fealty.toast.tribute_collected"),
+                Component.translatable("fealty.toast.tribute_collected.detail", items, village.name()));
+        Feedback.sound(player, SoundEvents.PLAYER_LEVELUP, 0.6F, 1.4F);
+        FealtyEvents.fire(player, FealtyEvents.TRIBUTE_COLLECTED);
+    }
+
+    /** Hold a feast: the village loves its lord a little more, and everyone who comes is welcome. */
+    private static void feast(ServerPlayer player, VillageRecord village) {
+        long day = RepManager.day(player.server);
+        VillageRecord.LordInfo info = village.lord();
+        if (day - info.lastFeastDay() < FEAST_COOLDOWN_DAYS) {
+            player.displayClientMessage(Component.translatable("fealty.hall.feast_cooldown"), true);
             return;
         }
-        ServerPlayer lord = level.getServer().getPlayerList().getPlayer(info.uuid());
-        List<ItemStack> leftovers = tribute;
-        if (coffer != null && level.isLoaded(coffer) && level.getBlockEntity(coffer) instanceof VillageCofferBlockEntity box) {
-            leftovers = box.deposit(tribute);
+        int food = 0;
+        for (ItemStack stack : player.getInventory().items) {
+            if (stack.has(DataComponents.FOOD)) {
+                food += stack.getCount();
+            }
         }
-        if (!leftovers.isEmpty() && lord != null && village.contains(lord.level().dimension(), lord.blockPosition())) {
-            leftovers.forEach(stack -> Maps.give(lord, stack));
-            leftovers = List.of();
+        if (!player.isCreative() && (food < FEAST_FOOD || player.getInventory().countItem(Items.EMERALD) < FEAST_EMERALDS)) {
+            player.displayClientMessage(Component.translatable("fealty.hall.feast_cost", FEAST_FOOD, FEAST_EMERALDS).withStyle(ChatFormatting.RED), true);
+            return;
         }
-        if (!leftovers.isEmpty()) {
-            // Nowhere to put it: keep the debt for next time.
-            info.setPendingTribute(1);
+        if (!player.isCreative()) {
+            int foodLeft = FEAST_FOOD;
+            int emeraldsLeft = FEAST_EMERALDS;
+            for (ItemStack stack : player.getInventory().items) {
+                if (foodLeft > 0 && stack.has(DataComponents.FOOD)) {
+                    int taken = Math.min(foodLeft, stack.getCount());
+                    stack.shrink(taken);
+                    foodLeft -= taken;
+                } else if (emeraldsLeft > 0 && stack.is(Items.EMERALD)) {
+                    int taken = Math.min(emeraldsLeft, stack.getCount());
+                    stack.shrink(taken);
+                    emeraldsLeft -= taken;
+                }
+            }
         }
-        if (lord != null) {
-            lord.sendSystemMessage(Component.translatable("fealty.lord.tribute", village.name(), rolls).withStyle(ChatFormatting.GOLD));
-            FealtyEvents.fire(lord, FealtyEvents.TRIBUTE_COLLECTED);
+        info.setLastFeastDay(day);
+        FealtyWorldData.get(player.server).setDirty();
+        RepManager.change(player, village.id(), 5, RepSources.FEAST, true);
+        ServerLevel level = player.serverLevel();
+        for (ServerPlayer guest : level.players()) {
+            if (guest != player && village.contains(guest.level().dimension(), guest.blockPosition())) {
+                RepManager.meet(guest, village.id());
+                RepManager.applySource(guest, village.id(), RepSources.FEAST);
+                guest.sendSystemMessage(Component.translatable("fealty.hall.feast_guest", player.getDisplayName(), village.name())
+                        .withStyle(ChatFormatting.GOLD));
+            }
         }
+        for (Villager villager : level.getEntitiesOfClass(Villager.class, AABB.of(village.bounds()), Villager::isAlive)) {
+            level.sendParticles(ParticleTypes.HAPPY_VILLAGER, villager.getX(), villager.getEyeY() + 0.4, villager.getZ(), 5, 0.3, 0.3, 0.3, 0.0);
+            if (villager.getRandom().nextInt(3) == 0) {
+                Speech.say(villager, Component.translatable("fealty.hall.feast_cheer." + villager.getRandom().nextInt(4), player.getDisplayName()));
+            }
+        }
+        broadcast(player.server, village, Component.translatable("fealty.hall.feast_announce", player.getDisplayName(), village.name())
+                .withStyle(ChatFormatting.GOLD));
+        Feedback.banner(player, Component.translatable("fealty.banner.feast"), Component.translatable("fealty.banner.feast.detail", village.name()),
+                village.color(), "crown");
+        Feedback.sound(player, SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, 0.7F, 1.2F);
+    }
+
+    /** Pay to swear in a new guard now, in place of one who fell. */
+    private static void recruit(ServerPlayer player, VillageRecord village, int index) {
+        Optional<Garrison.Slot> slot = village.garrison().slot(index);
+        if (slot.isEmpty() || !slot.get().isDead()) {
+            return;
+        }
+        if (!player.isCreative() && player.getInventory().countItem(Items.EMERALD) < RECRUIT_COST) {
+            player.displayClientMessage(Component.translatable("fealty.hall.recruit_cost", RECRUIT_COST).withStyle(ChatFormatting.RED), true);
+            return;
+        }
+        if (!player.isCreative()) {
+            int left = RECRUIT_COST;
+            for (ItemStack stack : player.getInventory().items) {
+                if (left > 0 && stack.is(Items.EMERALD)) {
+                    int taken = Math.min(left, stack.getCount());
+                    stack.shrink(taken);
+                    left -= taken;
+                }
+            }
+        }
+        slot.get().readyNow();
+        FealtyWorldData.get(player.server).setDirty();
+        GarrisonManager.tickVillage(player.serverLevel(), village);
+        player.displayClientMessage(Component.translatable("fealty.hall.recruited"), true);
+        Feedback.sound(player, SoundEvents.ARMOR_EQUIP_IRON.value(), 1.0F, 1.0F);
     }
 }

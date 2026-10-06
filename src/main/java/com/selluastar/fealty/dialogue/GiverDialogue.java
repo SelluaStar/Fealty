@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
 
 import com.selluastar.fealty.api.RepTier;
 import com.selluastar.fealty.entity.VillageElderEntity;
+import com.selluastar.fealty.lordship.LordshipManager;
 import com.selluastar.fealty.network.OpenQuestScreenPayload;
 import com.selluastar.fealty.quest.QuestGiver;
 import com.selluastar.fealty.quest.QuestGivers;
@@ -86,7 +87,14 @@ final class GiverDialogue {
                 DialogueService.refresh(player, npc);
             }
         } else if (option.startsWith(ACTION)) {
-            giver.handleAction(player, npc, option.substring(ACTION.length()), "");
+            String action = option.substring(ACTION.length());
+            if (LordshipManager.HALL.equals(action)) {
+                // The Village Hall opens in place of the dialogue box.
+                DialogueService.end(player);
+                giver.handleAction(player, npc, action, "");
+                return;
+            }
+            giver.handleAction(player, npc, action, "");
             if (npc.isAlive()) {
                 DialogueService.refresh(player, npc);
             }
@@ -104,7 +112,7 @@ final class GiverDialogue {
         if (action.contains("rumour")) {
             return "scroll";
         }
-        if (action.contains("swear") || action.contains("lord")) {
+        if (action.contains("swear") || action.contains("lord") || action.equals("hall")) {
             return "crown";
         }
         if (action.contains("tax")) {
