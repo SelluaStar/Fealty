@@ -11,6 +11,7 @@ import com.selluastar.fealty.Fealty;
 import com.selluastar.fealty.advancement.FealtyEvents;
 import com.selluastar.fealty.api.FealtyTags;
 import com.selluastar.fealty.api.RepSources;
+import com.selluastar.fealty.api.event.LockpickEvent;
 import com.selluastar.fealty.block.VillageCofferBlockEntity;
 import com.selluastar.fealty.config.FealtyConfig;
 import com.selluastar.fealty.data.TierManager;
@@ -44,6 +45,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
@@ -192,6 +194,10 @@ public final class Locks {
             FealtyNetwork.send(player, LockpickResultPayload.close());
             return;
         }
+        if (NeoForge.EVENT_BUS.post(new LockpickEvent.Attempt(player, pos, angle)).isCanceled()) {
+            FealtyNetwork.send(player, new LockpickResultPayload(0F, usesLeft(pick), spare(player), 0));
+            return;
+        }
         float width = session.coffer ? SWEET_SPOT_COFFER : SWEET_SPOT_CHEST;
         float off = Math.abs(Mth.clamp(angle, 0F, 180F) - session.target);
         if (off <= width) {
@@ -204,6 +210,7 @@ public final class Locks {
             }
             level.playSound(null, pos, SoundEvents.IRON_TRAPDOOR_OPEN, SoundSource.BLOCKS, 0.6F, 1.5F);
             FealtyEvents.fire(player, FealtyEvents.LOCK_PICKED);
+            NeoForge.EVENT_BUS.post(new LockpickEvent.Opened(player, pos, session.coffer));
             FealtyNetwork.send(player, new LockpickResultPayload(1F, usesLeft(pick), spare(player), LockpickResultPayload.OPENED));
             return;
         }
@@ -226,6 +233,7 @@ public final class Locks {
         }
         if (broke) {
             SESSIONS.remove(player.getUUID());
+            NeoForge.EVENT_BUS.post(new LockpickEvent.Broke(player, pos));
         }
         int flags = (broke ? LockpickResultPayload.BROKE : 0) | (heard ? LockpickResultPayload.HEARD : 0);
         FealtyNetwork.send(player, new LockpickResultPayload(turn, usesLeft(LockpickItem.held(player)), spare(player), flags));

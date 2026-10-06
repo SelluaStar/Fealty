@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -84,4 +85,35 @@ public interface RepApi {
 
     /** Look up a tier by id, for example {@link RepTiers#TRUSTED}. */
     Optional<RepTier> getTier(ResourceLocation tierId);
+
+    // ---- War (since API 1.1.0) ----
+
+    /** Every pillager stronghold Fealty knows of. */
+    List<Stronghold> getStrongholds(MinecraftServer server);
+
+    /** The nearest known stronghold within {@code radius} blocks of a position, in that level. */
+    Optional<Stronghold> getNearestStronghold(ServerLevel level, BlockPos pos, double radius);
+
+    /** The raid a lord is leading, if any. */
+    Optional<Campaign> getCampaign(MinecraftServer server, UUID lord);
+
+    /** Whether a village is enjoying the peace a razed stronghold won it (no bandit raids, no pillager patrols). */
+    boolean isAtPeace(MinecraftServer server, ResourceLocation village);
+
+    /**
+     * Have a lord raise their village's warband against a stronghold, as if from the Village Hall (the lord must be in
+     * the village and pays as usual; {@code CampaignEvent.Declare} still fires).
+     *
+     * @return why it could not start, or empty if the raid began
+     */
+    Optional<Component> declareRaid(ServerPlayer lord, ResourceLocation village, UUID stronghold);
+
+    /** Whether an entity is a villager held captive in a pillager camp. */
+    boolean isCaptive(Entity entity);
+
+    /** Whether an entity marches in a lord's warband (their guards with orders, or militia). */
+    boolean isWarbandMember(Entity entity);
+
+    /** Whether an entity defends a pillager stronghold (a camp's garrison, or an outpost's illagers once a raid begins). */
+    boolean isStrongholdDefender(Entity entity);
 }

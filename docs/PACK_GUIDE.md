@@ -135,6 +135,26 @@ Bandit camps are generated far apart, and only one within `camp_exclusion_radius
 standards man a camp. A manned camp may raid villages within `raid_range` every few days while a player is there;
 `/rep village raid <village>` starts one for testing.
 
+## War: pillager camps and raids
+
+Pillager camps generate in plains, savanna, taiga, forest, meadow and snowy biomes
+(`#fealty:has_structure/pillager_camp`), kept 6 chunks from villages. Each has a palisade, tents, a watchtower, two
+cages with captives from the nearest village, and a War Banner that keeps its garrison (pillagers, vindicators and
+a banner-bearing captain).
+
+A lord raids them from the **War** tab of the Village Hall: send scouts (they find camps and outposts within
+`war_range`), pick one and raise the warband. The lord gets a War Map and the raid as a tracked quest; the guards
+nearby fall in, and near the stronghold the rest of the watch and a levy of militia (one per `levy_per_villagers`
+villagers, up to `max_levy`) catch up. A bar counts the defenders. Victory frees the captives (they turn up at
+home), razes the stronghold for `raze_days` (no garrison, no illager spawns), adds `war_spoils` to the treasury
+and gives the village `peace_days` without bandit raids or pillager patrols. Strongholds left standing raid the
+villages within `menace_range` every `menace_min_days` to `menace_max_days` days (`pillager_menace`). Elders also
+offer "Eyes on the Pillagers" (find a stronghold) and "The Cages" (free captives).
+
+Vanilla and modded pillager outposts are targets too (add yours to `#fealty:pillager_outposts`); their defenders
+are the mobs in `#fealty:stronghold_defenders` on the outpost's ground when the battle starts, so illager mods whose
+mobs are in `#minecraft:raiders` work as they are. Commands: `/rep war list|scout <village>|declare <village>|win|cancel|menace <village>`.
+
 ## Compatibility notes
 
 - **Oh The Biomes We've Gone:** its six village kinds (Skyris, Salem, Red Rock, Pumpkin Patch, Forgotten, Swamp)

@@ -220,14 +220,24 @@ public final class VillageRecord {
                 Codec.BOOL.optionalFieldOf("manual", false).forGetter(s -> s.manual),
                 BlockPos.CODEC.optionalFieldOf("mailbox").forGetter(s -> Optional.ofNullable(s.mailbox)),
                 BlockPos.CODEC.optionalFieldOf("guard_post").forGetter(s -> Optional.ofNullable(s.guardPost)),
-                Codec.LONG.optionalFieldOf("last_raid_day", -1L).forGetter(s -> s.lastRaidDay)
-        ).apply(i, (refined, manual, mailbox, post, lastRaid) -> {
+                Codec.LONG.optionalFieldOf("last_raid_day", -1L).forGetter(s -> s.lastRaidDay),
+                Codec.INT.optionalFieldOf("incoming_villagers", 0).forGetter(s -> s.incomingVillagers),
+                Codec.LONG.optionalFieldOf("peace_until", -1L).forGetter(s -> s.peaceUntil),
+                Codec.LONG.optionalFieldOf("last_campaign_day", -1000L).forGetter(s -> s.lastCampaignDay),
+                Codec.LONG.optionalFieldOf("last_menace_day", -1L).forGetter(s -> s.lastMenaceDay),
+                Codec.LONG.optionalFieldOf("last_scout_day", -1000L).forGetter(s -> s.lastScoutDay)
+        ).apply(i, (refined, manual, mailbox, post, lastRaid, incoming, peace, campaign, menace, scout) -> {
             Sites s = new Sites();
             s.refined = refined;
             s.manual = manual;
             s.mailbox = mailbox.orElse(null);
             s.guardPost = post.orElse(null);
             s.lastRaidDay = lastRaid;
+            s.incomingVillagers = incoming;
+            s.peaceUntil = peace;
+            s.lastCampaignDay = campaign;
+            s.lastMenaceDay = menace;
+            s.lastScoutDay = scout;
             return s;
         }));
 
@@ -238,6 +248,57 @@ public final class VillageRecord {
         @Nullable
         private BlockPos guardPost;
         private long lastRaidDay = -1L;
+        private int incomingVillagers;
+        private long peaceUntil = -1L;
+        private long lastCampaignDay = -1000L;
+        private long lastMenaceDay = -1L;
+        private long lastScoutDay = -1000L;
+
+        /** Villagers freed from a pillager camp who are on their way home, to arrive on the next village tick. */
+        public int incomingVillagers() {
+            return incomingVillagers;
+        }
+
+        public void setIncomingVillagers(int count) {
+            this.incomingVillagers = Math.max(0, count);
+        }
+
+        /** The Fealty day the peace won by razing a pillager stronghold ends, or -1. */
+        public long peaceUntil() {
+            return peaceUntil;
+        }
+
+        public void setPeaceUntil(long day) {
+            this.peaceUntil = day;
+        }
+
+        public boolean atPeace(long day) {
+            return peaceUntil >= 0 && day < peaceUntil;
+        }
+
+        public long lastCampaignDay() {
+            return lastCampaignDay;
+        }
+
+        public void setLastCampaignDay(long day) {
+            this.lastCampaignDay = day;
+        }
+
+        public long lastMenaceDay() {
+            return lastMenaceDay;
+        }
+
+        public void setLastMenaceDay(long day) {
+            this.lastMenaceDay = day;
+        }
+
+        public long lastScoutDay() {
+            return lastScoutDay;
+        }
+
+        public void setLastScoutDay(long day) {
+            this.lastScoutDay = day;
+        }
 
         public boolean refined() {
             return refined;

@@ -22,6 +22,7 @@ public class TabBar {
     private int selected;
     private int x;
     private int y;
+    private int maxWidth = Integer.MAX_VALUE;
 
     public TabBar(IntConsumer onSelect) {
         this.onSelect = onSelect;
@@ -41,6 +42,12 @@ public class TabBar {
         this.y = bottomY - HEIGHT + 4;
     }
 
+    /** When the tabs would run wider than this, only the selected one shows its label; the rest show their icon. */
+    public TabBar setMaxWidth(int maxWidth) {
+        this.maxWidth = maxWidth;
+        return this;
+    }
+
     public int selected() {
         return selected;
     }
@@ -53,28 +60,53 @@ public class TabBar {
         return font.width(tab.label()) + 30;
     }
 
+    private static final int ICON_ONLY = 24;
+
+    private int[] widths(Font font) {
+        int[] widths = new int[tabs.size()];
+        int total = 0;
+        for (int i = 0; i < widths.length; i++) {
+            widths[i] = tabWidth(font, tabs.get(i));
+            total += widths[i] + 2;
+        }
+        if (total > maxWidth) {
+            for (int i = 0; i < widths.length; i++) {
+                if (i != selected) {
+                    widths[i] = ICON_ONLY;
+                }
+            }
+        }
+        return widths;
+    }
+
     public void render(GuiGraphics g, int mouseX, int mouseY) {
         Font font = Minecraft.getInstance().font;
+        int[] widths = widths(font);
         int tx = x;
         for (int i = 0; i < tabs.size(); i++) {
             Tab tab = tabs.get(i);
-            int w = tabWidth(font, tab);
+            int w = widths[i];
             boolean active = i == selected;
             boolean hovered = mouseX >= tx && mouseX < tx + w && mouseY >= y && mouseY < y + HEIGHT;
             int ty = active ? y - 2 : y;
             Ui.sprite(g, active ? Ui.TAB_SELECTED : Ui.TAB, tx, ty, w, HEIGHT + (active ? 2 : 0));
             Ui.icon(g, tab.icon(), tx + 6, ty + 4, 12);
             int color = active ? Ui.INK : hovered ? Ui.GOLD_LIGHT : Ui.CREAM;
-            g.drawString(font, tab.label(), tx + 22, ty + 7, color, !active);
+            if (w > ICON_ONLY) {
+                g.drawString(font, tab.label(), tx + 22, ty + 7, color, !active);
+            } else if (hovered && Minecraft.getInstance().screen != null) {
+                Minecraft.getInstance().screen.setTooltipForNextRenderPass(tab.label());
+            }
             tx += w + 2;
         }
     }
 
     public boolean mouseClicked(double mouseX, double mouseY) {
         Font font = Minecraft.getInstance().font;
+        int[] widths = widths(font);
         int tx = x;
         for (int i = 0; i < tabs.size(); i++) {
-            int w = tabWidth(font, tabs.get(i));
+            int w = widths[i];
             if (mouseX >= tx && mouseX < tx + w && mouseY >= y - 2 && mouseY < y + HEIGHT) {
                 if (i != selected) {
                     selected = i;

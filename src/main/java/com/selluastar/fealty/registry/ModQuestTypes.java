@@ -7,9 +7,11 @@ import com.selluastar.fealty.quest.type.CourierObjective;
 import com.selluastar.fealty.quest.type.DefendRaidObjective;
 import com.selluastar.fealty.quest.type.ExploreObjective;
 import com.selluastar.fealty.quest.type.FetchObjective;
+import com.selluastar.fealty.quest.type.FreeCaptivesObjective;
 import com.selluastar.fealty.quest.type.HuntObjective;
 import com.selluastar.fealty.quest.type.KillObjective;
 import com.selluastar.fealty.quest.type.PickpocketObjective;
+import com.selluastar.fealty.quest.type.RaidStrongholdObjective;
 import com.selluastar.fealty.quest.type.RebuildObjective;
 import com.selluastar.fealty.quest.type.RestockObjective;
 import com.selluastar.fealty.quest.type.RestoreElderObjective;
@@ -30,6 +32,12 @@ public final class ModQuestTypes {
     /** Hold the village through a raid (starts a vanilla raid at the village). */
     public static final DeferredHolder<QuestType<?>, QuestType<DefendRaidObjective>> DEFEND_RAID =
             TYPES.register("defend_raid", () -> new QuestType<>(DefendRaidObjective.CODEC));
+    /** A lord's raid on a pillager stronghold (started from the Village Hall). */
+    public static final DeferredHolder<QuestType<?>, QuestType<RaidStrongholdObjective>> RAID_STRONGHOLD =
+            TYPES.register("raid_stronghold", () -> new QuestType<>(RaidStrongholdObjective.CODEC));
+    /** Free villagers held captive in a pillager camp. */
+    public static final DeferredHolder<QuestType<?>, QuestType<FreeCaptivesObjective>> FREE_CAPTIVES =
+            TYPES.register("free_captives", () -> new QuestType<>(FreeCaptivesObjective.CODEC));
     /** Clear the nearest bandit camp by defeating its captain. */
     public static final DeferredHolder<QuestType<?>, QuestType<ClearCampObjective>> CLEAR_CAMP =
             TYPES.register("clear_camp", () -> new QuestType<>(ClearCampObjective.CODEC));

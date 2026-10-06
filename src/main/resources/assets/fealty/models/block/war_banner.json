@@ -1,0 +1,8 @@
+{
+  "parent": "fealty:block/bandit_standard",
+  "textures": {
+    "particle": "fealty:block/war_banner_pole",
+    "pole": "fealty:block/war_banner_pole",
+    "cloth": "fealty:block/war_banner_cloth"
+  }
+}

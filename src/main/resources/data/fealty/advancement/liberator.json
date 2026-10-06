@@ -1,0 +1,26 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:emerald"
+    },
+    "title": {
+      "translate": "advancement.fealty.liberator"
+    },
+    "description": {
+      "translate": "advancement.fealty.liberator.desc"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "fealty:event",
+      "conditions": {
+        "event": "fealty:liberator"
+      }
+    }
+  },
+  "parent": "fealty:captive_freed"
+}

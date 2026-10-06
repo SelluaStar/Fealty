@@ -5,6 +5,8 @@ import com.selluastar.fealty.world.BanditCampPiece;
 import com.selluastar.fealty.world.BanditCampStructure;
 import com.selluastar.fealty.world.HiddenHamletPiece;
 import com.selluastar.fealty.world.HiddenHamletStructure;
+import com.selluastar.fealty.world.PillagerCampPiece;
+import com.selluastar.fealty.world.PillagerCampStructure;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.levelgen.structure.StructureType;
@@ -21,10 +23,16 @@ public final class ModStructures {
     public static final DeferredHolder<StructureType<?>, StructureType<HiddenHamletStructure>> HIDDEN_HAMLET =
             STRUCTURE_TYPES.register("hidden_hamlet", () -> (StructureType<HiddenHamletStructure>) () -> HiddenHamletStructure.CODEC);
 
+    public static final DeferredHolder<StructureType<?>, StructureType<PillagerCampStructure>> PILLAGER_CAMP =
+            STRUCTURE_TYPES.register("pillager_camp", () -> (StructureType<PillagerCampStructure>) () -> PillagerCampStructure.CODEC);
+
     public static final DeferredHolder<StructurePieceType, StructurePieceType> BANDIT_CAMP_PIECE =
             PIECES.register("bandit_camp", () -> (StructurePieceType.ContextlessType) BanditCampPiece::new);
     public static final DeferredHolder<StructurePieceType, StructurePieceType> HIDDEN_HAMLET_PIECE =
             PIECES.register("hidden_hamlet", () -> (StructurePieceType.ContextlessType) HiddenHamletPiece::new);
+
+    public static final DeferredHolder<StructurePieceType, StructurePieceType> PILLAGER_CAMP_PIECE =
+            PIECES.register("pillager_camp", () -> (StructurePieceType.ContextlessType) PillagerCampPiece::new);
 
     private ModStructures() {
     }

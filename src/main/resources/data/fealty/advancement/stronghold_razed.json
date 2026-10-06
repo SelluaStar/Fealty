@@ -1,0 +1,26 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:crossbow"
+    },
+    "title": {
+      "translate": "advancement.fealty.stronghold_razed"
+    },
+    "description": {
+      "translate": "advancement.fealty.stronghold_razed.desc"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "fealty:event",
+      "conditions": {
+        "event": "fealty:stronghold_razed"
+      }
+    }
+  },
+  "parent": "fealty:defender"
+}

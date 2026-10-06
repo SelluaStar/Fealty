@@ -28,13 +28,14 @@ public class LordshipScreen extends Screen {
     private static final int LOVE = 0xFFC2185B;
 
     public enum Page {
-        OVERVIEW, TAXES, TREASURY, GUARDS, DECREES
+        OVERVIEW, TAXES, TREASURY, GUARDS, DECREES, WAR
     }
 
     private OpenHallPayload data;
     private Page page = Page.OVERVIEW;
     private final TabBar tabs;
     private final ScrollList<OpenHallPayload.GuardRow> roster = new ScrollList<>(20);
+    private final ScrollList<OpenHallPayload.StrongholdRow> strongholds = new ScrollList<>(22);
     private int left;
     private int top;
 
@@ -49,7 +50,8 @@ public class LordshipScreen extends Screen {
                 .add(Component.translatable("fealty.hall.tab.taxes"), "tax")
                 .add(Component.translatable("fealty.hall.tab.treasury"), "coin")
                 .add(Component.translatable("fealty.hall.tab.guards"), "guard")
-                .add(Component.translatable("fealty.hall.tab.decrees"), "seal");
+                .add(Component.translatable("fealty.hall.tab.decrees"), "seal")
+                .add(Component.translatable("fealty.hall.tab.war"), "sword");
     }
 
     public String village() {
@@ -79,6 +81,7 @@ public class LordshipScreen extends Screen {
         left = (width - WIDTH) / 2;
         top = (height - HEIGHT) / 2 + 8;
         tabs.setPosition(left + 10, top);
+        tabs.setMaxWidth(WIDTH - 20);
         tabs.select(page.ordinal());
         Component away = Component.translatable("fealty.hall.away");
         switch (page) {
@@ -111,9 +114,44 @@ public class LordshipScreen extends Screen {
                     b -> send("feast", 0)).icon("gift").enabled(data.near() && data.feastCooldown() == 0)
                     .tooltip(!data.near() ? away : data.feastCooldown() > 0
                             ? Component.translatable("fealty.hall.feast_wait", data.feastCooldown()) : null));
+            case WAR -> initWar(away);
             default -> {
             }
         }
+    }
+
+    /** The War tab: strongholds on the left, scouts and the warband below. */
+    private void initWar(Component away) {
+        OpenHallPayload.War war = data.war();
+        int selected = strongholds.selected();
+        strongholds.setBounds(left + 14, top + 40, 178, HEIGHT - 92);
+        strongholds.setItems(war.rows());
+        if (selected >= 0 && selected < war.rows().size()) {
+            strongholds.select(selected);
+        }
+        boolean scouted = war.scouted();
+        addRenderableWidget(new FealtyButton(left + 14, top + HEIGHT - 32, 120, 20, Component.translatable("fealty.hall.war.scout", war.scoutCost()),
+                b -> send("scout", 0)).icon("pin").sound(SoundEvents.UI_CARTOGRAPHY_TABLE_TAKE_RESULT, 1.0F)
+                .enabled(data.near() && !scouted)
+                .tooltip(!data.near() ? away : scouted ? Component.translatable("fealty.hall.war.scouted") : Component.translatable("fealty.hall.war.scout_hint")));
+        if (war.phase() > 0) {
+            addRenderableWidget(new FealtyButton(left + WIDTH - 134, top + HEIGHT - 32, 120, 20, Component.translatable("fealty.hall.war.call_off"),
+                    b -> send("call_off", 0)).icon("cross").tooltip(Component.translatable("fealty.hall.war.call_off_hint")));
+            return;
+        }
+        OpenHallPayload.StrongholdRow row = strongholds.selectedItem();
+        Component why = !data.near() ? away
+                : row == null ? Component.translatable("fealty.hall.war.pick")
+                : row.razedDays() > 0 ? Component.translatable("fealty.hall.war.razed", row.razedDays())
+                : war.cooldown() > 0 ? Component.translatable("fealty.war.cooldown", war.cooldown())
+                : Component.translatable("fealty.hall.war.raise_hint", war.ready(), war.levy());
+        boolean ready = data.near() && row != null && row.razedDays() == 0 && war.cooldown() == 0;
+        addRenderableWidget(new FealtyButton(left + WIDTH - 134, top + HEIGHT - 32, 120, 20, Component.translatable("fealty.hall.war.raise", war.raidCost()),
+                b -> {
+                    if (strongholds.selected() >= 0) {
+                        send("declare", strongholds.selected());
+                    }
+                }).icon("sword").sound(SoundEvents.RAID_HORN.value(), 1.0F).enabled(ready).tooltip(why));
     }
 
     @Override
@@ -139,6 +177,7 @@ public class LordshipScreen extends Screen {
             case TREASURY -> renderTreasury(g, x, y, w);
             case GUARDS -> renderGuards(g, mouseX, mouseY);
             case DECREES -> renderDecrees(g, x, y, w);
+            case WAR -> renderWar(g, mouseX, mouseY);
         }
     }
 
@@ -263,6 +302,77 @@ public class LordshipScreen extends Screen {
         }
     }
 
+    private static final String[] COMPASS = {"n", "ne", "e", "se", "s", "sw", "w", "nw"};
+
+    private static Component compass(int bearing) {
+        return Component.translatable("fealty.compass." + COMPASS[Math.floorMod(Math.round(bearing / 45.0F), 8)]);
+    }
+
+    private void renderWar(GuiGraphics g, int mouseX, int mouseY) {
+        OpenHallPayload.War war = data.war();
+        if (war.rows().isEmpty()) {
+            Ui.wrapped(g, font, Component.translatable("fealty.hall.war.none"), left + 16, top + 40, 172, Ui.FADED, 0);
+        } else {
+            strongholds.render(g, mouseX, mouseY, (gg, row, index, x, y, w, h, hovered, selected) -> {
+                if (selected) {
+                    gg.fill(x, y, x + w, y + h - 1, 0x40B8A27C);
+                } else if (hovered) {
+                    gg.fill(x, y, x + w, y + h - 1, 0x20B8A27C);
+                }
+                if (row.target()) {
+                    gg.renderOutline(x, y, w, h - 1, Ui.GOLD);
+                }
+                Ui.icon(gg, row.kind() == 0 ? "skull" : "shield", x + 2, y + 4, 12);
+                int nameColor = row.razedDays() > 0 ? Ui.FADED : Ui.INK;
+                gg.drawString(font, Ui.fit(font, row.name(), w - 70), x + 18, y + 3, nameColor, false);
+                Component where = Component.translatable("fealty.hall.war.where", row.distance(), compass(row.bearing()));
+                Ui.scaled(gg, font, where, x + 18, y + 13, 0.7F, Ui.FADED, false);
+                Component state = row.razedDays() > 0 ? Component.translatable("fealty.hall.war.razed_short", row.razedDays())
+                        : row.captives() > 0 ? Component.translatable("fealty.hall.war.captives_short", row.captives()) : Component.empty();
+                gg.drawString(font, state, x + w - 4 - font.width(state), y + 7, row.razedDays() > 0 ? Ui.GREEN : Ui.RED, false);
+            });
+        }
+        int rx = left + 200;
+        int rw = WIDTH - 200 - 14;
+        int y = top + 40;
+        if (war.phase() > 0) {
+            Ui.icon(g, "sword", rx, y, 16);
+            g.drawString(font, Component.translatable(war.phase() == 2 ? "fealty.hall.war.fighting" : "fealty.hall.war.marching")
+                    .copy().withStyle(st -> st.withBold(true)), rx + 20, y + 4, Ui.RED, false);
+            Ui.wrapped(g, font, war.campaign(), rx, y + 22, rw, Ui.INK, 2);
+            if (war.distance() >= 0) {
+                Ui.wrapped(g, font, Component.translatable("fealty.hall.war.distance", war.distance()), rx, y + 44, rw, Ui.FADED, 2);
+            }
+        } else {
+            OpenHallPayload.StrongholdRow row = strongholds.selectedItem();
+            if (row == null) {
+                Ui.wrapped(g, font, Component.translatable("fealty.hall.war.intro"), rx, y, rw, Ui.FADED, 8);
+            } else {
+                Ui.wrapped(g, font, row.name().copy().withStyle(st -> st.withBold(true)), rx, y, rw, Ui.INK, 2);
+                Component kind = Component.translatable(row.kind() == 0 ? "fealty.hall.war.kind.camp" : "fealty.hall.war.kind.outpost");
+                Ui.wrapped(g, font, kind, rx, y + 22, rw, Ui.FADED, 2);
+                Ui.wrapped(g, font, Component.translatable("fealty.hall.war.where_long", row.distance(), compass(row.bearing())), rx, y + 44, rw,
+                        Ui.INK, 2);
+                if (row.captives() > 0) {
+                    Ui.wrapped(g, font, Component.translatable("fealty.hall.war.captives", row.captives()), rx, y + 66, rw, Ui.RED, 2);
+                }
+                if (row.razedDays() > 0) {
+                    Ui.wrapped(g, font, Component.translatable("fealty.hall.war.razed", row.razedDays()), rx, y + 88, rw, Ui.GREEN, 2);
+                }
+            }
+        }
+        int sy = top + HEIGHT - 48;
+        Component band = Component.translatable("fealty.hall.war.warband", war.ready(), war.levy());
+        Ui.scaled(g, font, band, left + 16, sy, 0.75F, Ui.FADED, false);
+        if (war.peaceDays() > 0) {
+            Component peace = Component.translatable("fealty.hall.war.peace", war.peaceDays());
+            Ui.scaled(g, font, peace, left + WIDTH - 16 - (int) (font.width(peace) * 0.75F), sy, 0.75F, Ui.GREEN, false);
+        } else if (war.cooldown() > 0) {
+            Component rest = Component.translatable("fealty.war.cooldown", war.cooldown());
+            Ui.scaled(g, font, rest, left + WIDTH - 16 - (int) (font.width(rest) * 0.75F), sy, 0.75F, Ui.FADED, false);
+        }
+    }
+
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (tabs.mouseClicked(mouseX, mouseY)) {
@@ -271,22 +381,28 @@ public class LordshipScreen extends Screen {
         if (page == Page.GUARDS && roster.mouseClicked(mouseX, mouseY, index -> rebuildWidgets())) {
             return true;
         }
+        if (page == Page.WAR && strongholds.mouseClicked(mouseX, mouseY, index -> rebuildWidgets())) {
+            return true;
+        }
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
-        return (page == Page.GUARDS && roster.mouseDragged(mouseY)) || super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+        return (page == Page.GUARDS && roster.mouseDragged(mouseY)) || (page == Page.WAR && strongholds.mouseDragged(mouseY))
+                || super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
     }
 
     @Override
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
         roster.mouseReleased();
+        strongholds.mouseReleased();
         return super.mouseReleased(mouseX, mouseY, button);
     }
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
-        return (page == Page.GUARDS && roster.mouseScrolled(mouseX, mouseY, scrollY)) || super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
+        return (page == Page.GUARDS && roster.mouseScrolled(mouseX, mouseY, scrollY))
+                || (page == Page.WAR && strongholds.mouseScrolled(mouseX, mouseY, scrollY)) || super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
     }
 }

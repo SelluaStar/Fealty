@@ -46,9 +46,13 @@ public class LordshipEvent extends Event {
     public enum Type {
         /** A player swore the village to them with a Royal Writ. */
         SWORN,
-        /** The lord fell below the required tier and the village renounced them. */
+        /** The lord stayed below Honored too long and the village renounced them. */
         LOST,
         /** Another player took the village from its lord. */
-        USURPED
+        USURPED,
+        /** The lord fell below Honored: the village will renounce them unless they win it back in time. */
+        UNREST,
+        /** The lord is Honored again and the unrest is over. */
+        CONTENT
     }
 }

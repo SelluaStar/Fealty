@@ -1,0 +1,19 @@
+{
+  "title": {
+    "translate": "quest.fealty.raid_stronghold"
+  },
+  "description": {
+    "translate": "quest.fealty.raid_stronghold.desc"
+  },
+  "pool": "fealty:none",
+  "difficulty": 5,
+  "reward": {
+    "rep": 15,
+    "renown": 5,
+    "experience": 120,
+    "loot_table": "fealty:quest_rewards/war_spoils"
+  },
+  "objective": {
+    "type": "fealty:raid_stronghold"
+  }
+}

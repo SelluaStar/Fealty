@@ -6,6 +6,7 @@ import com.selluastar.fealty.Fealty;
 import com.selluastar.fealty.block.BanditStandardBlockEntity;
 import com.selluastar.fealty.block.MailboxBlockEntity;
 import com.selluastar.fealty.block.VillageCofferBlockEntity;
+import com.selluastar.fealty.block.WarBannerBlockEntity;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -18,6 +19,9 @@ public final class ModBlockEntities {
             () -> BlockEntityType.Builder.of(VillageCofferBlockEntity::new, ModBlocks.VILLAGE_COFFER.get()).build(null));
     public static final Supplier<BlockEntityType<BanditStandardBlockEntity>> BANDIT_STANDARD = BLOCK_ENTITIES.register("bandit_standard",
             () -> BlockEntityType.Builder.of(BanditStandardBlockEntity::new, ModBlocks.BANDIT_STANDARD.get()).build(null));
+
+    public static final Supplier<BlockEntityType<WarBannerBlockEntity>> WAR_BANNER = BLOCK_ENTITIES.register("war_banner",
+            () -> BlockEntityType.Builder.of(WarBannerBlockEntity::new, ModBlocks.WAR_BANNER.get()).build(null));
 
     public static final Supplier<BlockEntityType<MailboxBlockEntity>> MAILBOX = BLOCK_ENTITIES.register("mailbox",
             () -> BlockEntityType.Builder.of(MailboxBlockEntity::new, ModBlocks.MAILBOX.get()).build(null));

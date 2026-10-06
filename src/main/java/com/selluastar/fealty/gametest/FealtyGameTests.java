@@ -10,6 +10,10 @@ import com.selluastar.fealty.Fealty;
 import com.selluastar.fealty.api.RepSources;
 import com.selluastar.fealty.api.RepTiers;
 import com.selluastar.fealty.api.Severity;
+import com.selluastar.fealty.api.Stronghold;
+import com.selluastar.fealty.api.event.BanditRaidEvent;
+import com.selluastar.fealty.api.event.CampaignEvent;
+import com.selluastar.fealty.api.event.StrongholdEvent;
 import com.selluastar.fealty.chain.ChainManager;
 import com.selluastar.fealty.config.FealtyConfig;
 import com.selluastar.fealty.crime.CrimeHandlers;
@@ -26,7 +30,9 @@ import com.selluastar.fealty.guard.GuardManager;
 import com.selluastar.fealty.lordship.LordshipManager;
 import com.selluastar.fealty.mail.MailService;
 import com.selluastar.fealty.outlaw.BanditCamps;
+import com.selluastar.fealty.outlaw.BanditRaids;
 import com.selluastar.fealty.outlaw.ThievesGuild;
+import com.selluastar.fealty.quest.QuestContext;
 import com.selluastar.fealty.quest.QuestLog;
 import com.selluastar.fealty.quest.QuestManager;
 import com.selluastar.fealty.quest.RepQuestDefinition;
@@ -46,6 +52,10 @@ import com.selluastar.fealty.village.VillageRecord;
 import com.selluastar.fealty.village.VillageLayout;
 import com.selluastar.fealty.village.VillageLayouts;
 import com.selluastar.fealty.village.VillageResolver;
+import com.selluastar.fealty.war.Campaigns;
+import com.selluastar.fealty.war.Captives;
+import com.selluastar.fealty.war.StrongholdNames;
+import com.selluastar.fealty.war.Strongholds;
 
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
@@ -63,6 +73,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.animal.IronGolem;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.item.ItemStack;
@@ -79,6 +90,7 @@ import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.pools.StructurePoolElement;
 import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
 import net.neoforged.neoforge.gametest.GameTestHolder;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 import io.netty.channel.embedded.EmbeddedChannel;
@@ -578,6 +590,135 @@ public final class FealtyGameTests {
             check(helper, !village.lord().isLord(player.getUUID()), "two days below Honored and the village renounces its lord");
         } finally {
             LordshipManager.clearLord(server, village, null);
+            forget(helper, village);
+        }
+        helper.succeed();
+    }
+
+    private static boolean warVeto;
+    private static boolean banditVeto;
+    private static boolean vetoListening;
+
+    /** Test-only listeners that veto raids while a flag is set (the event bus has no easy way to remove a lambda). */
+    private static void listenForVetoes() {
+        if (!vetoListening) {
+            vetoListening = true;
+            NeoForge.EVENT_BUS.addListener((CampaignEvent.Declare e) -> {
+                if (warVeto) {
+                    e.cancel(Component.literal("truce"));
+                }
+            });
+            NeoForge.EVENT_BUS.addListener((BanditRaidEvent.Start e) -> {
+                if (banditVeto) {
+                    e.setCanceled(true);
+                }
+            });
+        }
+    }
+
+    @GameTest(template = "empty")
+    public static void strongholdNamesAreStable(GameTestHelper helper) {
+        BlockPos a = new BlockPos(1200, 70, -340);
+        check(helper, StrongholdNames.stem(a).equals(StrongholdNames.stem(a)), "a stronghold's name should not change");
+        check(helper, !StrongholdNames.stem(a).isEmpty(), "a stronghold should have a name");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void levyGrowsWithTheVillage(GameTestHelper helper) {
+        VillageRecord village = testVillage(helper, BlockPos.ZERO, "Levyton");
+        try {
+            village.garrison().setPopulation(17);
+            check(helper, Campaigns.levySize(village) == 2, "17 villagers should give 2 militia, got " + Campaigns.levySize(village));
+            village.garrison().setPopulation(200);
+            check(helper, Campaigns.levySize(village) == FealtyConfig.MAX_LEVY.get(), "the levy is capped");
+        } finally {
+            forget(helper, village);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void lordsRaidAndRazeStrongholds(GameTestHelper helper) {
+        listenForVetoes();
+        ServerPlayer player = player(helper);
+        VillageRecord village = testVillage(helper, BlockPos.ZERO, "Warbridge");
+        MinecraftServer server = helper.getLevel().getServer();
+        Strongholds strongholds = Strongholds.get(server);
+        Strongholds.Entry target = strongholds.register(helper.getLevel(), village.center().offset(300, 0, 0), Stronghold.Kind.OUTPOST,
+                ResourceLocation.withDefaultNamespace("pillager_outpost"), 24, StrongholdEvent.Discovered.How.SCOUTED);
+        try {
+            village.garrison().setPopulation(16);
+            RepManager.meet(player, village.id());
+            RepManager.set(player, village.id(), 80, RepSources.COMMAND);
+            check(helper, Campaigns.declare(player, village, target, true).isPresent(), "only the lord may raise the warband");
+            LordshipManager.swear(player, village, true);
+
+            warVeto = true;
+            player.getInventory().add(new ItemStack(Items.EMERALD, 12));
+            check(helper, Campaigns.declare(player, village, target, true).isPresent(), "a vetoed raid should not begin");
+            check(helper, player.getInventory().countItem(Items.EMERALD) == 12, "a vetoed raid costs nothing");
+            warVeto = false;
+
+            check(helper, Campaigns.declare(player, village, target, false).isPresent(), "the warband is raised in the village");
+            Optional<Component> problem = Campaigns.declare(player, village, target, true);
+            check(helper, problem.isEmpty(), "the raid should begin: " + problem.map(Component::getString).orElse(""));
+            check(helper, player.getInventory().countItem(Items.EMERALD) == 0, "raising the warband costs its emeralds");
+            check(helper, Campaigns.of(server, player.getUUID()).isPresent(), "the lord should be leading a raid");
+            Optional<QuestContext> quest = QuestManager.context(player, Campaigns.GIVER, Campaigns.QUEST);
+            check(helper, quest.isPresent(), "the raid should be a tracked quest");
+            check(helper, quest.get().definition().objective().waypoint(quest.get()).map(w -> w.pos().equals(target.pos())).orElse(false),
+                    "the quest should point at the stronghold");
+
+            check(helper, Campaigns.forceWin(player), "the raid should be won");
+            long day = RepManager.day(server);
+            check(helper, target.isRazed(day), "a won raid razes the stronghold");
+            check(helper, village.sites().atPeace(day), "a won raid brings the village peace");
+            check(helper, Campaigns.of(server, player.getUUID()).isEmpty(), "the raid is over");
+            check(helper, Campaigns.quietAt(helper.getLevel(), target.pos(), MobSpawnType.NATURAL), "no illagers spawn on razed ground");
+            check(helper, !Campaigns.quietAt(helper.getLevel(), target.pos().offset(400, 0, 0), MobSpawnType.NATURAL),
+                    "illagers still spawn elsewhere");
+            check(helper, Campaigns.declare(player, village, target, true).isPresent(), "a razed stronghold cannot be raided again at once");
+        } finally {
+            warVeto = false;
+            Campaigns.callOff(player);
+            QuestManager.context(player, Campaigns.GIVER, Campaigns.QUEST).ifPresent(ctx -> QuestManager.failQuietly(ctx,
+                    com.selluastar.fealty.api.event.RepQuestEvent.Reason.ABANDONED));
+            strongholds.remove(target);
+            LordshipManager.clearLord(server, village, null);
+            forget(helper, village);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void freedCaptivesGoHome(GameTestHelper helper) {
+        ServerPlayer player = player(helper);
+        VillageRecord village = testVillage(helper, BlockPos.ZERO, "Homecoming");
+        Villager captive = helper.spawn(EntityType.VILLAGER, new BlockPos(1, 1, 1));
+        Captives.makeCaptive(captive, helper.absolutePos(new BlockPos(1, 1, 1)), village.id());
+        check(helper, Captives.isCaptive(captive), "the villager should be a captive");
+        RepManager.meet(player, village.id());
+        int before = RepManager.getRep(player, village.id());
+        Captives.free(helper.getLevel(), captive, player);
+        check(helper, !Captives.isCaptive(captive), "a freed captive is no longer held");
+        check(helper, RepManager.getRep(player, village.id()) > before, "freeing a captive wins their village's thanks");
+        helper.runAfterDelay(110, () -> {
+            check(helper, village.sites().incomingVillagers() == 1, "the freed villager should be on their way home");
+            forget(helper, village);
+            helper.succeed();
+        });
+    }
+
+    @GameTest(template = "empty")
+    public static void banditRaidsCanBeVetoed(GameTestHelper helper) {
+        listenForVetoes();
+        VillageRecord village = testVillage(helper, BlockPos.ZERO, "Sparedale");
+        try {
+            banditVeto = true;
+            check(helper, BanditRaids.start(helper.getLevel(), village, null) == 0, "a vetoed bandit raid should not start");
+        } finally {
+            banditVeto = false;
             forget(helper, village);
         }
         helper.succeed();

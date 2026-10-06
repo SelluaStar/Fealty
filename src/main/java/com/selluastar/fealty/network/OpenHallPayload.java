@@ -6,6 +6,8 @@ import java.util.List;
 import com.selluastar.fealty.Fealty;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -19,7 +21,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 public record OpenHallPayload(String village, String name, int color, String lord, int daysRuled, int population, int guardsAlive,
                               int guardsTotal, int standing, int taxLevel, double treasury, List<Float> tribute, List<Integer> loyalty,
                               int feastCooldown, boolean near, List<GuardRow> roster, int recruitCost, int feastFood, int feastEmeralds,
-                              List<Float> giftChance, int gifts)
+                              List<Float> giftChance, int gifts, War war)
         implements CustomPacketPayload {
     public static final Type<OpenHallPayload> TYPE = new Type<>(Fealty.id("open_hall"));
     public static final StreamCodec<RegistryFriendlyByteBuf, OpenHallPayload> STREAM_CODEC = StreamCodec.of(OpenHallPayload::write, OpenHallPayload::read);
@@ -29,6 +31,24 @@ public record OpenHallPayload(String village, String name, int color, String lor
      * name, and whether they are on duty (0), with the lord (1), fallen (2), a post not yet filled (3) or not seen lately (4).
      */
     public record GuardRow(String rank, String name, int state, int days) {
+    }
+
+    /**
+     * A pillager stronghold on the War tab: kind 0 for a camp, 1 for an outpost; distance and bearing (degrees from
+     * north, clockwise) from the village; captives known to be held; days left of a raze; and whether the lord's
+     * current raid is against it.
+     */
+    public record StrongholdRow(Component name, int kind, int distance, int bearing, int captives, int razedDays, boolean target) {
+    }
+
+    /**
+     * The War tab: known strongholds, the guards ready to march and the levy, what a raid and scouting cost, days
+     * before the village can raise a warband again, whether scouts went out today, the lord's raid (its target's
+     * name, or empty; phase 1 marching, 2 fighting; distance from the lord) and days of peace left.
+     */
+    public record War(List<StrongholdRow> rows, int ready, int levy, int raidCost, int scoutCost, int cooldown, boolean scouted,
+                      Component campaign, int phase, int distance, int peaceDays) {
+        public static final War NONE = new War(List.of(), 0, 0, 0, 0, 0, false, Component.empty(), 0, 0, 0);
     }
 
     private static void write(RegistryFriendlyByteBuf buf, OpenHallPayload p) {
@@ -62,6 +82,27 @@ public record OpenHallPayload(String village, String name, int color, String lor
         buf.writeVarInt(p.giftChance().size());
         p.giftChance().forEach(buf::writeFloat);
         buf.writeVarInt(p.gifts());
+        War war = p.war();
+        buf.writeVarInt(war.rows().size());
+        for (StrongholdRow row : war.rows()) {
+            ComponentSerialization.TRUSTED_STREAM_CODEC.encode(buf, row.name());
+            buf.writeVarInt(row.kind());
+            buf.writeVarInt(row.distance());
+            buf.writeVarInt(row.bearing());
+            buf.writeVarInt(row.captives());
+            buf.writeVarInt(row.razedDays());
+            buf.writeBoolean(row.target());
+        }
+        buf.writeVarInt(war.ready());
+        buf.writeVarInt(war.levy());
+        buf.writeVarInt(war.raidCost());
+        buf.writeVarInt(war.scoutCost());
+        buf.writeVarInt(war.cooldown());
+        buf.writeBoolean(war.scouted());
+        ComponentSerialization.TRUSTED_STREAM_CODEC.encode(buf, war.campaign());
+        buf.writeVarInt(war.phase());
+        buf.writeVarInt(war.distance());
+        buf.writeVarInt(war.peaceDays());
     }
 
     private static OpenHallPayload read(RegistryFriendlyByteBuf buf) {
@@ -98,8 +139,15 @@ public record OpenHallPayload(String village, String name, int color, String lor
             giftChance.add(buf.readFloat());
         }
         int gifts = buf.readVarInt();
+        List<StrongholdRow> rows = new ArrayList<>();
+        for (int i = Math.min(buf.readVarInt(), 64); i > 0; i--) {
+            rows.add(new StrongholdRow(ComponentSerialization.TRUSTED_STREAM_CODEC.decode(buf), buf.readVarInt(), buf.readVarInt(),
+                    buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readBoolean()));
+        }
+        War war = new War(rows, buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readBoolean(),
+                ComponentSerialization.TRUSTED_STREAM_CODEC.decode(buf), buf.readVarInt(), buf.readVarInt(), buf.readVarInt());
         return new OpenHallPayload(village, name, color, lord, days, population, alive, total, standing, tax, treasury, tribute, loyalty,
-                feast, near, roster, recruitCost, feastFood, feastEmeralds, giftChance, gifts);
+                feast, near, roster, recruitCost, feastFood, feastEmeralds, giftChance, gifts, war);
     }
 
     @Override

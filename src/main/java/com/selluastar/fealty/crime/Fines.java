@@ -8,6 +8,7 @@ import java.util.UUID;
 
 import com.selluastar.fealty.Fealty;
 import com.selluastar.fealty.api.RepSources;
+import com.selluastar.fealty.api.event.FineEvent;
 import com.selluastar.fealty.config.FealtyConfig;
 import com.selluastar.fealty.data.FealtyDataManager;
 import com.selluastar.fealty.data.SourceSettings;
@@ -35,6 +36,7 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.NeutralMob;
 import net.minecraft.world.item.Items;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
@@ -80,6 +82,11 @@ public final class Fines {
             return false;
         }
         int cost = Math.min(MAX_COST, Math.max(2, Math.round(-change * 0.5F)));
+        FineEvent.Issued issued = NeoForge.EVENT_BUS.post(new FineEvent.Issued(player, faction, guard, crime, cost));
+        if (issued.isCanceled()) {
+            return false;
+        }
+        cost = issued.getCost();
         int heat = FealtyDataManager.source(crime).heat();
         long deadline = player.level().getGameTime() + FealtyConfig.GUARD_FINE_SECONDS.get() * 20L;
         PENDING.put(player.getUUID(), new Pending(faction, guard.getUUID(), cost, -change / 2, heat, deadline));
@@ -120,6 +127,7 @@ public final class Fines {
         }
         PENDING.remove(player.getUUID());
         pardon(player, fine.get().faction(), fine.get().restore(), fine.get().heat(), false);
+        NeoForge.EVENT_BUS.post(new FineEvent.Paid(player, fine.get().faction(), guard, fine.get().cost(), false));
         Feedback.sound(player, SoundEvents.CHAIN_PLACE, 0.8F, 1.6F);
         return true;
     }
@@ -133,6 +141,7 @@ public final class Fines {
     }
 
     private static void turnHostile(ServerPlayer player, Pending fine) {
+        NeoForge.EVENT_BUS.post(new FineEvent.Refused(player, fine.faction()));
         ServerLevel level = player.serverLevel();
         PlayerRepData data = RepManager.data(player);
         data.aggroUntil().put(fine.faction(), level.getGameTime() + FealtyConfig.GUARD_AGGRO_TICKS.get());
@@ -216,6 +225,7 @@ public final class Fines {
         }
         PENDING.remove(player.getUUID());
         pardon(player, village.id(), quote.get().restore(), 0, quote.get().callsOffWatch());
+        NeoForge.EVENT_BUS.post(new FineEvent.Paid(player, village.id(), elder, quote.get().cost(), true));
         Speech.say(elder, Component.translatable("fealty.fine.elder_paid"));
         Feedback.sound(player, SoundEvents.CHAIN_PLACE, 0.8F, 1.6F);
     }

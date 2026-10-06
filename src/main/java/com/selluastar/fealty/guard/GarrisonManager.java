@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import com.selluastar.fealty.Fealty;
 import com.selluastar.fealty.advancement.FealtyEvents;
+import com.selluastar.fealty.api.event.GuardEvent;
 import com.selluastar.fealty.config.FealtyConfig;
 import com.selluastar.fealty.entity.VillageGuardEntity;
 import com.selluastar.fealty.item.LordsHornItem;
@@ -59,6 +60,7 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.ProjectileImpactEvent;
@@ -211,6 +213,7 @@ public final class GarrisonManager {
             VillageGuardEntity guard = spawn(level, record, i, slot, beat, beat, 4);
             if (guard != null) {
                 changed = true;
+                NeoForge.EVENT_BUS.post(new GuardEvent.Sworn(record.id(), guard, i, replacement));
                 if (replacement) {
                     tellLord(level.getServer(), record, "guard", Component.translatable("fealty.toast.guard_sworn"),
                             Component.translatable("fealty.toast.guard_sworn.detail", guard.getDisplayName(), record.name()));
@@ -303,6 +306,7 @@ public final class GarrisonManager {
         }
         slot.get().died(RepManager.day(server));
         FealtyWorldData.get(server).setDirty();
+        NeoForge.EVENT_BUS.post(new GuardEvent.Fell(record.get().id(), guard, source.getEntity()));
         tellLord(server, record.get(), "skull", Component.translatable("fealty.toast.guard_fell"),
                 Component.translatable("fealty.toast.guard_fell.detail", guard.getDisplayName(), record.get().name(),
                         FealtyConfig.GUARD_RESPAWN_DAYS.get()));
@@ -339,6 +343,7 @@ public final class GarrisonManager {
         Optional<VillageRecord> record = FactionResolver.factionOf(mob).flatMap(id -> FealtyWorldData.get(server).village(id));
         if (record.isPresent() && record.get().garrison().otherDied(mob.getUUID(), RepManager.day(server))) {
             FealtyWorldData.get(server).setDirty();
+            NeoForge.EVENT_BUS.post(new GuardEvent.Fell(record.get().id(), mob, event.getSource().getEntity()));
             tellLord(server, record.get(), "skull", Component.translatable("fealty.toast.guard_fell"),
                     Component.translatable("fealty.toast.other_guard_fell.detail", mob.getDisplayName(), record.get().name()));
         }
@@ -392,6 +397,9 @@ public final class GarrisonManager {
             player.displayClientMessage(Component.translatable("fealty.horn.no_village"), true);
             return;
         }
+        if (NeoForge.EVENT_BUS.post(new GuardEvent.Ordered(village.get().id(), player, order.id(), retinue(player, village.get()))).isCanceled()) {
+            return;
+        }
         ServerLevel level = player.serverLevel();
         level.playSound(null, player.blockPosition(), SoundEvents.GOAT_HORN_SOUND_VARIANTS.get(1).value(), SoundSource.PLAYERS, 6.0F, 1.0F);
         switch (order) {
@@ -404,10 +412,7 @@ public final class GarrisonManager {
 
     /** Guards near the lord fall in behind them; more of the watch are sent for, wherever the lord is. */
     private static void call(ServerPlayer lord, VillageRecord record) {
-        ServerLevel level = lord.serverLevel();
-        long now = level.getGameTime();
-        List<Mob> near = level.getEntitiesOfClass(Mob.class, lord.getBoundingBox().inflate(FALL_IN_RANGE), m -> isVillageGuard(m, record));
-        near.sort((a, b) -> Double.compare(a.distanceToSqr(lord), b.distanceToSqr(lord)));
+        List<Mob> near = guardsNear(lord, record, FALL_IN_RANGE);
         int commanded = 0;
         int ownGuards = 0;
         for (Mob guard : near) {
@@ -421,32 +426,8 @@ public final class GarrisonManager {
                 ownGuards++;
             }
         }
-        int sent = 0;
         int need = Math.min(FealtyConfig.HORN_SUMMON_COUNT.get() - ownGuards, FealtyConfig.MAX_COMMANDED_GUARDS.get() - commanded);
-        if (FealtyConfig.FEALTY_GUARDS.get() && need > 0) {
-            Garrison garrison = record.garrison();
-            int delay = FealtyConfig.HORN_ARRIVAL_SECONDS.get() * 20;
-            for (int i = 0; i < garrison.slots().size() && sent < need; i++) {
-                Garrison.Slot slot = garrison.slots().get(i);
-                if (slot.isDead() || isPending(record.id(), i)) {
-                    continue;
-                }
-                Entity holder = holder(lord.server, slot);
-                if (holder != null && near.contains(holder)) {
-                    continue;
-                }
-                if (holder != null) {
-                    holder.discard(); // sets off from the village, out of the lord's sight
-                }
-                slot.vacate();
-                ARRIVALS.computeIfAbsent(lord.getUUID(), k -> new ArrayList<>())
-                        .add(new Arrival(record.id(), i, slot.generation(), now + delay + sent * 10L, 0));
-                sent++;
-            }
-            if (sent > 0) {
-                FealtyWorldData.get(lord.server).setDirty();
-            }
-        }
+        int sent = dispatch(lord, record, need, near);
         if (commanded + sent == 0) {
             lord.displayClientMessage(Component.translatable("fealty.horn.none_answer", record.name()), true);
         } else if (sent > 0) {
@@ -455,6 +436,61 @@ public final class GarrisonManager {
             lord.displayClientMessage(Component.translatable("fealty.horn.ordered.follow", commanded), true);
         }
         syncRetinue(lord, true);
+    }
+
+    /**
+     * Send for up to {@code count} of the village's Fealty guards to join the lord wherever they are: they leave the
+     * village and turn up near the lord a few seconds later, out of sight. Guards in {@code near} are already there.
+     *
+     * @return how many set out
+     */
+    public static int dispatch(ServerPlayer lord, VillageRecord record, int count, List<Mob> near) {
+        if (!FealtyConfig.FEALTY_GUARDS.get() || count <= 0) {
+            return 0;
+        }
+        long now = lord.level().getGameTime();
+        Garrison garrison = record.garrison();
+        int delay = FealtyConfig.HORN_ARRIVAL_SECONDS.get() * 20;
+        int sent = 0;
+        for (int i = 0; i < garrison.slots().size() && sent < count; i++) {
+            Garrison.Slot slot = garrison.slots().get(i);
+            if (slot.isDead() || isPending(record.id(), i)) {
+                continue;
+            }
+            Entity holder = holder(lord.server, slot);
+            if (holder != null && near.contains(holder)) {
+                continue;
+            }
+            if (holder != null) {
+                holder.discard(); // sets off from the village, out of the lord's sight
+            }
+            slot.vacate();
+            ARRIVALS.computeIfAbsent(lord.getUUID(), k -> new ArrayList<>())
+                    .add(new Arrival(record.id(), i, slot.generation(), now + delay + sent * 10L, 0));
+            sent++;
+        }
+        if (sent > 0) {
+            FealtyWorldData.get(lord.server).setDirty();
+        }
+        return sent;
+    }
+
+    /** The village's guards within reach of the lord, nearest first (whether or not they have orders). */
+    public static List<Mob> guardsNear(ServerPlayer lord, VillageRecord record, double range) {
+        List<Mob> near = lord.serverLevel().getEntitiesOfClass(Mob.class, lord.getBoundingBox().inflate(range), m -> isVillageGuard(m, record));
+        near.sort((a, b) -> Double.compare(a.distanceToSqr(lord), b.distanceToSqr(lord)));
+        return near;
+    }
+
+    /** Order a guard (or any mob a mod lends the lord) to follow the lord. */
+    public static void orderFollow(Mob guard, ServerPlayer lord) {
+        guard.getData(ModAttachments.GUARD_ORDERS).set(GuardOrders.Mode.FOLLOW, lord.getUUID(), 0, null);
+        guard.setTarget(null);
+    }
+
+    /** Send the lord's guards of a village home (the end of a raid). */
+    public static void sendHome(ServerPlayer lord, VillageRecord record) {
+        dismiss(lord, record);
     }
 
     /** The lord's guards hold where they stand, or keep watch over the area around the lord. */
@@ -497,7 +533,7 @@ public final class GarrisonManager {
     }
 
     /** The guards of a village under this lord's orders near them. */
-    private static List<Mob> retinue(ServerPlayer lord, VillageRecord record) {
+    public static List<Mob> retinue(ServerPlayer lord, VillageRecord record) {
         long now = lord.level().getGameTime();
         return lord.serverLevel().getEntitiesOfClass(Mob.class, lord.getBoundingBox().inflate(FALL_IN_RANGE), m -> {
             if (!isVillageGuard(m, record) || !m.hasData(ModAttachments.GUARD_ORDERS)) {
@@ -597,7 +633,7 @@ public final class GarrisonManager {
 
     /** 18 to 28 blocks from the lord, on safe ground, out of their sight if possible, and with a path to them. */
     @Nullable
-    private static BlockPos arrivalSpot(ServerLevel level, ServerPlayer lord) {
+    public static BlockPos arrivalSpot(ServerLevel level, ServerPlayer lord) {
         RandomSource random = level.getRandom();
         Vec3 look = lord.getLookAngle();
         BlockPos fallback = null;

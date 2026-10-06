@@ -42,6 +42,11 @@ public final class FealtyEvents {
     public static final ResourceLocation TYRANT_RISEN = Fealty.id("tyrant_risen");
     public static final ResourceLocation TYRANT_SLAIN = Fealty.id("tyrant_slain");
     public static final ResourceLocation CAMP_CLEARED = Fealty.id("camp_cleared");
+    public static final ResourceLocation WAR_DECLARED = Fealty.id("war_declared");
+    public static final ResourceLocation WARLORD = Fealty.id("warlord");
+    public static final ResourceLocation STRONGHOLD_RAZED = Fealty.id("stronghold_razed");
+    public static final ResourceLocation CAPTIVE_FREED = Fealty.id("captive_freed");
+    public static final ResourceLocation LIBERATOR = Fealty.id("liberator");
 
     private FealtyEvents() {
     }

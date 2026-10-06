@@ -15,6 +15,8 @@ import dev.latvian.mods.kubejs.script.BindingRegistry;
  * FealtyEvents.repChange(event => { if (event.reason == 'fealty:trade') event.amount *= 2 })
  * FealtyEvents.tierChanged(event => event.player.tell(`Now ${event.newTier.id()}`))
  * FealtyEvents.crimeWitnessed(event => { if (event.crime == 'fealty:steal') event.cancel() })
+ * FealtyEvents.campaign(event => { if (event.status == 'declare' && truce) event.forbid('The truce holds') })
+ * FealtyEvents.captive(event => { if (event.status == 'freed') event.rescuer?.tell('They are safe') })
  * }</pre>
  */
 public class FealtyKubePlugin implements KubeJSPlugin {
@@ -28,6 +30,16 @@ public class FealtyKubePlugin implements KubeJSPlugin {
     public static final EventHandler QUEST = GROUP.server("quest", () -> FealtyKubeEvents.Quest.class);
     public static final EventHandler LORDSHIP = GROUP.server("lordship", () -> FealtyKubeEvents.Lordship.class);
     public static final EventHandler WANTED = GROUP.server("wanted", () -> FealtyKubeEvents.Wanted.class);
+    public static final EventHandler CAMPAIGN = GROUP.server("campaign", () -> FealtyKubeWarEvents.Campaign.class).hasResult();
+    public static final EventHandler STRONGHOLD = GROUP.server("stronghold", () -> FealtyKubeWarEvents.StrongholdChange.class);
+    public static final EventHandler CAPTIVE = GROUP.server("captive", () -> FealtyKubeWarEvents.Captive.class).hasResult();
+    public static final EventHandler MENACE_RAID = GROUP.server("menaceRaid", () -> FealtyKubeWarEvents.Menace.class).hasResult();
+    public static final EventHandler BANDIT_RAID = GROUP.server("banditRaid", () -> FealtyKubeWarEvents.BanditRaid.class).hasResult();
+    public static final EventHandler GUARD = GROUP.server("guard", () -> FealtyKubeWarEvents.Guard.class).hasResult();
+    public static final EventHandler FINE = GROUP.server("fine", () -> FealtyKubeWarEvents.Fine.class).hasResult();
+    public static final EventHandler LOCKPICK = GROUP.server("lockpick", () -> FealtyKubeWarEvents.Lockpick.class).hasResult();
+    public static final EventHandler MAIL = GROUP.server("mail", () -> FealtyKubeWarEvents.Mail.class).hasResult();
+    public static final EventHandler VILLAGE = GROUP.server("village", () -> FealtyKubeWarEvents.Village.class);
 
     @Override
     public void registerEvents(EventGroupRegistry registry) {

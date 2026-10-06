@@ -82,6 +82,7 @@ public final class VillageTracker {
             LordshipManager.tickVillage(level, record);
             GarrisonManager.tickVillage(level, record);
             MailService.tickVillage(level, record);
+            com.selluastar.fealty.war.Captives.tickVillage(level, record);
         }
     }
 

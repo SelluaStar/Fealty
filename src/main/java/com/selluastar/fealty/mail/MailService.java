@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import com.mojang.authlib.GameProfile;
 import com.selluastar.fealty.Fealty;
 import com.selluastar.fealty.api.RepSources;
+import com.selluastar.fealty.api.event.MailEvent;
 import com.selluastar.fealty.api.event.TierChangedEvent;
 import com.selluastar.fealty.api.event.WantedLevelEvent;
 import com.selluastar.fealty.block.MailboxBlock;
@@ -53,6 +54,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
@@ -180,6 +182,11 @@ public final class MailService {
         if (subject.isBlank() && body.isBlank() && items.isEmpty()) {
             return Optional.of(Component.translatable("fealty.mail.problem.empty"));
         }
+        UUID toPlayer = recipient instanceof ToPlayer(GameProfile profile) ? profile.getId() : null;
+        ResourceLocation toVillage = recipient instanceof ToVillage(VillageRecord village) ? village.id() : null;
+        if (NeoForge.EVENT_BUS.post(new MailEvent.Sent(sender.server, Component.literal(subject), sender, toPlayer, toVillage, items)).isCanceled()) {
+            return Optional.of(Component.translatable("fealty.mail.problem.refused"));
+        }
         Inventory inventory = sender.getInventory();
         if (!sender.isCreative()) {
             if (inventory.countItem(Items.PAPER) < 1) {
@@ -295,6 +302,7 @@ public final class MailService {
 
     private static void announce(ServerPlayer player, Letter letter) {
         letter.setAnnounced(true);
+        NeoForge.EVENT_BUS.post(new MailEvent.Delivered(player.server, letter.subject(), player.getUUID(), letter.fromVillage()));
         Feedback.toast(player, "mail", Component.translatable("fealty.toast.mail"), Component.translatable("fealty.toast.mail.from", letter.from()));
         Feedback.sound(player, SoundEvents.BOOK_PAGE_TURN, 0.8F, 0.8F);
         syncStatus(player);

@@ -62,13 +62,21 @@ treasury fast and costs you their love; light taxes bring less, but a village th
 gift of love), collect the treasury, hold feasts, recruit guards. Golems and other mods' guards are on the roster too. Blow the **Lord's Horn**
 anywhere to call your guards to you; a bar at the top of the screen shows who follows you.
 
+### War
+Pillager camps (palisades, watchtowers and cages of captive villagers) dot the land, and pillager outposts count
+too. From the Village Hall's **War** tab a lord sends scouts, picks a stronghold and raises the warband: a war map
+and a tracked quest lead the way, the guards fall in behind, and the rest of the watch and a levy of militia catch
+up near the camp. Raze it to free the captives, fill the treasury and win the village days of peace. Leave it
+standing and its raiders come for the villages nearby.
+
 ### For other mods
 - **Data-driven:** tiers, factions, rep actions, crimes, quests, quest chains, dialogue, village trades and black
   market stock are all data pack JSON. The loot condition `fealty:rep_tier` and advancement triggers let anything
   gate on reputation.
 - **Integrations (all optional):** Jade tooltips, FTB Quests task and reward types, KubeJS events, JEI village
   trades.
-- **Public API** in a separate jar for other mods (guards, bosses, quests): see [docs/API.md](docs/API.md).
+- **Public API** in a separate jar for other mods (guards, bosses, quests), with events for raids, strongholds,
+  captives, guards, fines, lockpicks, mail and villages (also forwarded to KubeJS): see [docs/API.md](docs/API.md).
 
 ## Getting started
 

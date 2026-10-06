@@ -16,6 +16,8 @@ public final class FealtyTags {
         public static final TagKey<EntityType<?>> VILLAGE_MEMBERS = TagKey.create(Registries.ENTITY_TYPE, FealtyApi.id("village_members"));
         /** Members of the bandit faction. */
         public static final TagKey<EntityType<?>> BANDITS = TagKey.create(Registries.ENTITY_TYPE, FealtyApi.id("bandits"));
+        /** Mobs that defend a pillager stronghold against a lord's warband (default: {@code #minecraft:raiders}). */
+        public static final TagKey<EntityType<?>> STRONGHOLD_DEFENDERS = TagKey.create(Registries.ENTITY_TYPE, FealtyApi.id("stronghold_defenders"));
 
         private Entities() {
         }
@@ -50,6 +52,10 @@ public final class FealtyTags {
         public static final TagKey<Structure> HIDDEN_HAMLETS = TagKey.create(Registries.STRUCTURE, FealtyApi.id("hidden_hamlets"));
         /** Bandit camps, used by defend quests and the outlaw path. */
         public static final TagKey<Structure> BANDIT_CAMPS = TagKey.create(Registries.STRUCTURE, FealtyApi.id("bandit_camps"));
+        /** Pillager outposts (vanilla's, and any in {@code #c:pillager_outposts}): explore quests and war targets. */
+        public static final TagKey<Structure> PILLAGER_OUTPOSTS = TagKey.create(Registries.STRUCTURE, FealtyApi.id("pillager_outposts"));
+        /** Pillager camps and outposts a lord can raid (Fealty's camps plus {@code #fealty:pillager_outposts}). */
+        public static final TagKey<Structure> PILLAGER_STRONGHOLDS = TagKey.create(Registries.STRUCTURE, FealtyApi.id("pillager_strongholds"));
 
         private Structures() {
         }

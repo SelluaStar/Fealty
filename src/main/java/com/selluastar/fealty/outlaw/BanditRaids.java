@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import com.selluastar.fealty.Fealty;
 import com.selluastar.fealty.advancement.FealtyEvents;
 import com.selluastar.fealty.api.RepSources;
+import com.selluastar.fealty.api.event.BanditRaidEvent;
 import com.selluastar.fealty.block.BanditStandardBlockEntity;
 import com.selluastar.fealty.block.VillageCofferBlockEntity;
 import com.selluastar.fealty.config.FealtyConfig;
@@ -61,6 +62,7 @@ import net.minecraft.world.level.block.BellBlock;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
@@ -153,7 +155,7 @@ public final class BanditRaids {
             int spread = Math.max(1, FealtyConfig.RAID_MAX_DAYS.get() - min + 1);
             long gap = min + Math.floorMod(record.id().hashCode() + record.sites().lastRaidDay(), spread);
             ServerLevel level = player.serverLevel();
-            if (day - record.sites().lastRaidDay() < gap || !level.dimension().equals(record.dimension())
+            if (day - record.sites().lastRaidDay() < gap || record.sites().atPeace(day) || !level.dimension().equals(record.dimension())
                     || level.getRandom().nextInt(RAID_CHANCE) != 0) {
                 continue;
             }
@@ -177,6 +179,11 @@ public final class BanditRaids {
         int villagers = level.getEntitiesOfClass(AbstractVillager.class, new AABB(village.center()).inflate(48),
                 v -> !(v instanceof WanderingTrader)).size();
         int size = 3 + Math.min(3, villagers / 6) + (day >= 20 ? 1 : 0);
+        BanditRaidEvent.Start start = NeoForge.EVENT_BUS.post(new BanditRaidEvent.Start(level, village.id(), camp, size));
+        if (start.isCanceled()) {
+            return 0;
+        }
+        size = start.getSize();
         BlockPos center = village.center();
         double toward = camp != null ? Math.atan2(camp.getZ() - center.getZ(), camp.getX() - center.getX()) : random.nextDouble() * Math.PI * 2;
         Raid raid = new Raid(village, camp, level.getGameTime());
@@ -318,6 +325,17 @@ public final class BanditRaids {
 
     private static void won(MinecraftServer server, Raid raid, VillageRecord village) {
         raid.bar.removeAllPlayers();
+        List<ServerPlayer> defenders = new ArrayList<>();
+        for (UUID id : raid.defenders) {
+            ServerPlayer player = server.getPlayerList().getPlayer(id);
+            if (player != null) {
+                defenders.add(player);
+            }
+        }
+        ServerLevel level = server.getLevel(raid.dimension);
+        if (level != null) {
+            NeoForge.EVENT_BUS.post(new BanditRaidEvent.Won(level, village.id(), defenders));
+        }
         for (UUID id : raid.defenders) {
             ServerPlayer player = server.getPlayerList().getPlayer(id);
             if (player == null) {
@@ -347,6 +365,7 @@ public final class BanditRaids {
                 raider.discard();
             }
         }
+        NeoForge.EVENT_BUS.post(new BanditRaidEvent.Withdrew(level, village.id(), taken));
         if (!taken.isEmpty() && raid.camp != null) {
             stash(level, raid.camp, taken);
         }

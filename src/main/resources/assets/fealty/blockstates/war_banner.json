@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "razed=false": {
+      "model": "fealty:block/war_banner"
+    },
+    "razed=true": {
+      "model": "fealty:block/war_banner_razed"
+    }
+  }
+}

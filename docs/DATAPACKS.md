@@ -157,6 +157,10 @@ Good deeds (`rep_actions/`):
 | `feast` | +3 for the lord's feast |
 | `fine` | what a paid fine wins back (amount comes from the fine; `daily_cap` limits it) |
 | `liberation` | +25 for freeing a village from the Tyrant Lord |
+| `raid_stronghold` | +8 for fighting in a lord's raid that razes a pillager stronghold |
+| `free_captive` | +4 with the captive's home village for freeing them |
+| `failed_campaign` | −5 for the lord when a raid is lost |
+| `neglect` | standing that fades while a player stays away (amounts are server config) |
 
 Crimes (`crimes/`):
 
@@ -207,7 +211,7 @@ Crimes (`crimes/`):
   - `fealty:favor`: small favors any villager may offer once a day. `professions` limits who offers it
     (`minecraft:nitwit` and `minecraft:none` work; empty means anyone). Favors pay `favor` rep, capped daily.
   - `fealty:restore`: offered when a Broken village is near.
-  - `fealty:none`: used only by chains.
+  - `fealty:none`: never offered; used by chains and by the lord's raid (`fealty:war/raid_stronghold`).
 - `tiers`: maps tiers to weights. Elders offer up to 3 quests a day, weighted by your tier, and don't repeat one
   until the pool cycles. Give Hated weights only to hard, costly quests.
 - `time_limit`: in ticks. `fail_rep` is applied when the quest fails or is abandoned; otherwise abandoning costs
@@ -232,6 +236,13 @@ Objective types:
 | `fealty:steal` | `items`, `unseen` | Thieves guild |
 | `fealty:pickpocket` | `count` | Thieves guild |
 | `fealty:vault_raid` | `count` | Thieves guild: empty coffers unseen |
+
+Objective types for the war (see also `fealty:explore` with `"structure": "#fealty:pillager_strongholds"`):
+
+- `fealty:raid_stronghold`: the lord's raid, started from the Village Hall. No fields; the quest
+  `fealty:war/raid_stronghold` sets its reward (default 15 rep, 5 Renown, `quest_rewards/war_spoils`).
+- `fealty:free_captives` `{ "count": 2, "search_radius": 50 }`: free captives held in the nearest pillager camp
+  (comes with a map).
 
 ## quest_chains/
 
@@ -337,6 +348,8 @@ Each marketeer stocks five offers picked by weight, and restocks daily.
 |---|---|
 | `fealty:chests/village_coffer` | Village coffers |
 | `fealty:chests/bandit_camp` | Bandit camp chests |
+| `fealty:chests/pillager_camp` | Pillager camp barrels and chests |
+| `fealty:quest_rewards/war_spoils` | The lord's reward for a won raid |
 | `fealty:chests/hidden_hamlet` | The Keeper's lodge |
 | `fealty:chests/hamlet_cottage` | Hamlet cottages |
 | `fealty:gameplay/tribute` | Rolled per tribute measure |
@@ -362,6 +375,10 @@ Each marketeer stocks five offers picked by weight, and restocks daily.
 | `#fealty:elder_villages` (structure) | Villages that get an elder |
 | `#fealty:hidden_hamlets` (structure) | Where the chain's map leads |
 | `#fealty:bandit_camps` (structure) | Bandit camps |
+| `#fealty:pillager_camps` (structure) | Fealty's pillager camps |
+| `#fealty:pillager_outposts` (structure) | Pillager outposts (vanilla's and `#c:pillager_outposts`) |
+| `#fealty:pillager_strongholds` (structure) | Everything a lord can raid (the two above) |
+| `#fealty:stronghold_defenders` (entity type) | Mobs that defend a stronghold (default `#minecraft:raiders`) |
 
 ## Loot condition and advancement triggers
 

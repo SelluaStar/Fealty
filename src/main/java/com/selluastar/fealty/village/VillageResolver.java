@@ -296,6 +296,7 @@ public final class VillageResolver {
         VillageRecord record = new VillageRecord(id, level.dimension(), center, box, templateId, structureId, name, false);
         record.setHasElder(elderFlag(level, record));
         data.addVillage(record);
+        discovered(level, record);
         Fealty.LOGGER.debug("Fealty: found village {} ({}) from structure {}", name, id, structureId);
         return record;
     }
@@ -325,6 +326,7 @@ public final class VillageResolver {
         record.setHasElder(elderFlag(level, record));
         record.sites().setRefined(true);
         data.addVillage(record);
+        discovered(level, record);
         return Optional.of(record);
     }
 
@@ -362,6 +364,7 @@ public final class VillageResolver {
         record.setHasElder(elderFlag(level, record));
         record.sites().setRefined(true);
         data.addVillage(record);
+        discovered(level, record);
         Fealty.LOGGER.debug("Fealty: found settlement {} at {}", name, center);
         return Optional.of(record);
     }
@@ -377,6 +380,12 @@ public final class VillageResolver {
         }
         int n = points.size();
         return new BlockPos((int) (x / n), (int) (y / n), (int) (z / n));
+    }
+
+    /** Tell other mods a village was found. */
+    private static void discovered(ServerLevel level, VillageRecord record) {
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new com.selluastar.fealty.api.event.VillageEvent(level.getServer(), record.id(),
+                com.selluastar.fealty.api.event.VillageEvent.Type.DISCOVERED));
     }
 
     // ---- Refinement and commands ----
@@ -428,6 +437,7 @@ public final class VillageResolver {
         record.sites().setRefined(true);
         record.setHasElder(elderFlag(level, record));
         FealtyWorldData.get(level.getServer()).addVillage(record);
+        discovered(level, record);
         NEGATIVE_CACHE.clear();
         return record;
     }

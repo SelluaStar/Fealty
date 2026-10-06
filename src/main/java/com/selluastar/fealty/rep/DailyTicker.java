@@ -44,6 +44,8 @@ public final class DailyTicker {
             neglect(server, day, advanced);
         }
         LordshipManager.onNewDay(server, day);
+        com.selluastar.fealty.war.Strongholds.get(server).tickDay(server, day);
+        com.selluastar.fealty.war.Campaigns.tickDay(server, day);
         Gossip.spread(server);
         if (FealtyConfig.NEGATIVE_REP_DECAY.get()) {
             int heal = FealtyConfig.NEGATIVE_REP_DECAY_PER_DAY.get();

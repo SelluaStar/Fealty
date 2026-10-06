@@ -13,6 +13,12 @@ public final class RepSources {
     public static final ResourceLocation COURIER = FealtyApi.id("courier");
     public static final ResourceLocation LIBERATION = FealtyApi.id("liberation");
     public static final ResourceLocation TAX = FealtyApi.id("tax");
+    /** Fighting in a lord's raid that razed a pillager stronghold. */
+    public static final ResourceLocation RAID_STRONGHOLD = FealtyApi.id("raid_stronghold");
+    /** Freeing a villager held in a pillager camp (with the village they were taken from). */
+    public static final ResourceLocation FREE_CAPTIVE = FealtyApi.id("free_captive");
+    /** A lord's raid that was lost (the lord fell, or the time ran out). */
+    public static final ResourceLocation FAILED_CAMPAIGN = FealtyApi.id("failed_campaign");
     /** Standing that fades while a player stays away from a village. */
     public static final ResourceLocation NEGLECT = FealtyApi.id("neglect");
     /** Small favors done for ordinary villagers. */

@@ -23,6 +23,21 @@ public final class FealtyConfig {
     public static final ModConfigSpec.IntValue NEGLECT_FLOOR;
     public static final ModConfigSpec.IntValue GUARDS_FORGIVE_AT;
     public static final ModConfigSpec.IntValue LORD_GRACE_DAYS;
+    public static final ModConfigSpec.IntValue WAR_RANGE;
+    public static final ModConfigSpec.IntValue WARBAND_SIZE;
+    public static final ModConfigSpec.IntValue LEVY_PER_VILLAGERS;
+    public static final ModConfigSpec.IntValue MAX_LEVY;
+    public static final ModConfigSpec.IntValue RAID_COST_EMERALDS;
+    public static final ModConfigSpec.IntValue SCOUT_COST_EMERALDS;
+    public static final ModConfigSpec.IntValue CAMPAIGN_COOLDOWN_DAYS;
+    public static final ModConfigSpec.IntValue CAMPAIGN_DAYS;
+    public static final ModConfigSpec.IntValue RAZE_DAYS;
+    public static final ModConfigSpec.IntValue PEACE_DAYS;
+    public static final ModConfigSpec.IntValue WAR_SPOILS;
+    public static final ModConfigSpec.BooleanValue PILLAGER_MENACE;
+    public static final ModConfigSpec.IntValue MENACE_RANGE;
+    public static final ModConfigSpec.IntValue MENACE_MIN_DAYS;
+    public static final ModConfigSpec.IntValue MENACE_MAX_DAYS;
     public static final ModConfigSpec.BooleanValue DISABLE_VANILLA_GOSSIP;
     public static final ModConfigSpec.BooleanValue SHOW_REP_CHANGES;
     public static final ModConfigSpec.BooleanValue GIVE_LEDGER;
@@ -243,6 +258,28 @@ public final class FealtyConfig {
                 .define("favors", true);
         FAVOR_CHANCE = b.comment("Chance a villager has a favor to ask on a given day")
                 .defineInRange("favor_chance", 0.5, 0.0, 1.0);
+        b.pop();
+
+        b.comment("War: pillager camps and the lord's raids on them").push("war");
+        WAR_RANGE = b.comment("How far from the village (blocks) a lord's warband will march, and its scouts search")
+                .defineInRange("war_range", 1200, 100, 10000);
+        WARBAND_SIZE = b.comment("Most of the village's guards that march with the lord").defineInRange("warband_size", 6, 1, 32);
+        LEVY_PER_VILLAGERS = b.comment("One villager is called up as militia for every this many villagers")
+                .defineInRange("levy_per_villagers", 8, 1, 1000);
+        MAX_LEVY = b.comment("Most militia called up for one raid").defineInRange("max_levy", 4, 0, 32);
+        RAID_COST_EMERALDS = b.comment("Emeralds to raise the warband (arms and food)").defineInRange("raid_cost_emeralds", 12, 0, 640);
+        SCOUT_COST_EMERALDS = b.comment("Emeralds to send scouts out (once a day per village)").defineInRange("scout_cost_emeralds", 8, 0, 640);
+        CAMPAIGN_COOLDOWN_DAYS = b.comment("Days a village rests between raids").defineInRange("campaign_cooldown_days", 3, 0, 1000);
+        CAMPAIGN_DAYS = b.comment("Days a lord has to win a raid once it is declared").defineInRange("campaign_days", 3, 1, 1000);
+        RAZE_DAYS = b.comment("Days a razed stronghold stays empty").defineInRange("raze_days", 10, 0, 10000);
+        PEACE_DAYS = b.comment("Days of peace (no bandit raids, no pillager patrols) a victory wins the village")
+                .defineInRange("peace_days", 7, 0, 10000);
+        WAR_SPOILS = b.comment("Rolls of the tribute table a victory adds to the village treasury").defineInRange("war_spoils", 2, 0, 100);
+        PILLAGER_MENACE = b.comment("Pillager camps and outposts left standing send raids against villages near them")
+                .define("pillager_menace", true);
+        MENACE_RANGE = b.comment("How far (blocks) a stronghold's menace reaches").defineInRange("menace_range", 600, 50, 10000);
+        MENACE_MIN_DAYS = b.comment("Fewest days between a stronghold's raids on one village").defineInRange("menace_min_days", 5, 1, 1000);
+        MENACE_MAX_DAYS = b.comment("Most days between a stronghold's raids on one village").defineInRange("menace_max_days", 8, 1, 1000);
         b.pop();
 
         b.comment("Village lordship").push("lordship");

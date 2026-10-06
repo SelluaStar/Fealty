@@ -5,6 +5,7 @@ import com.selluastar.fealty.block.BanditStandardBlock;
 import com.selluastar.fealty.block.MailboxBlock;
 import com.selluastar.fealty.block.RubbleBlock;
 import com.selluastar.fealty.block.VillageCofferBlock;
+import com.selluastar.fealty.block.WarBannerBlock;
 
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -24,6 +25,10 @@ public final class ModBlocks {
                     .sound(SoundType.GRAVEL)));
     public static final DeferredBlock<BanditStandardBlock> BANDIT_STANDARD = BLOCKS.register("bandit_standard",
             () -> new BanditStandardBlock(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_RED).strength(2.0F)
+                    .sound(SoundType.WOOD).noOcclusion().noCollission()));
+
+    public static final DeferredBlock<WarBannerBlock> WAR_BANNER = BLOCKS.register("war_banner",
+            () -> new WarBannerBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOL).strength(25.0F, 1200.0F)
                     .sound(SoundType.WOOD).noOcclusion().noCollission()));
 
     public static final DeferredBlock<MailboxBlock> MAILBOX = BLOCKS.register("mailbox",

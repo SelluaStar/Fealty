@@ -255,6 +255,7 @@ public final class LordshipManager {
             if (info.lowSince() >= 0) {
                 info.setLowSince(-1L);
                 FealtyWorldData.get(server).setDirty();
+                NeoForge.EVENT_BUS.post(new LordshipEvent(server, village.id(), LordshipEvent.Type.CONTENT, Optional.of(lord), Optional.empty()));
                 if (online != null) {
                     online.sendSystemMessage(Component.translatable("fealty.lord.loved_again", village.name()).withStyle(ChatFormatting.GREEN));
                 }
@@ -265,6 +266,7 @@ public final class LordshipManager {
         if (info.lowSince() < 0) {
             info.setLowSince(day);
             FealtyWorldData.get(server).setDirty();
+            NeoForge.EVENT_BUS.post(new LordshipEvent(server, village.id(), LordshipEvent.Type.UNREST, Optional.of(lord), Optional.empty()));
             if (grace > 0) {
                 MailService.fromVillage(server, lord, village, "lord_unrest", List.of(), 20 * 20, grace);
                 if (online != null) {
@@ -301,7 +303,7 @@ public final class LordshipManager {
     }
 
     /** The most tribute a treasury holds: a week's worth. */
-    private static double treasuryCap(VillageRecord village) {
+    public static double treasuryCap(VillageRecord village) {
         return Math.max(8.0, tributePerDay(village, 4) * 7.0);
     }
 
@@ -386,7 +388,7 @@ public final class LordshipManager {
     private static final int RECRUIT_COST = 10;
 
     /** Whether the lord is in their village (collecting tribute, feasts and recruiting are done in person). */
-    private static boolean inVillage(ServerPlayer player, VillageRecord village) {
+    public static boolean inVillage(ServerPlayer player, VillageRecord village) {
         return village.contains(player.level().dimension(), player.blockPosition());
     }
 
@@ -438,7 +440,8 @@ public final class LordshipManager {
         FealtyNetwork.send(player, new OpenHallPayload(village.id().toString(), village.name(), village.color(), info.name(),
                 (int) Math.max(0, day - info.swornDay()), population, village.garrison().allAlive(), village.garrison().allTotal(),
                 standing, info.taxLevel(), info.treasury(), tribute, loyalty, feastCooldown,
-                inVillage(player, village), roster, RECRUIT_COST, FEAST_FOOD, FEAST_EMERALDS, gifts, info.gifts()));
+                inVillage(player, village), roster, RECRUIT_COST, FEAST_FOOD, FEAST_EMERALDS, gifts, info.gifts(),
+                com.selluastar.fealty.war.WarTable.build(player, village)));
     }
 
     private static boolean isWithLord(ServerPlayer player, Garrison.Slot slot) {
@@ -485,6 +488,13 @@ public final class LordshipManager {
                     recruit(player, village, argument);
                 }
             }
+            case "scout" -> {
+                if (near) {
+                    com.selluastar.fealty.war.WarTable.scout(player, village);
+                }
+            }
+            case "declare" -> com.selluastar.fealty.war.WarTable.declare(player, village, argument, near);
+            case "call_off" -> com.selluastar.fealty.war.Campaigns.callOff(player);
             default -> {
             }
         }

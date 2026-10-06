@@ -89,6 +89,7 @@ public final class RepCommand {
                                         .executes(RepCommand::getHeat)
                                         .then(Commands.argument("value", IntegerArgumentType.integer(0))
                                                 .executes(RepCommand::setHeat)))))
+                .then(com.selluastar.fealty.war.WarCommand.build(RepCommand::suggestVillages))
                 .then(Commands.literal("village")
                         .then(Commands.literal("info").executes(RepCommand::villageInfo))
                         .then(Commands.literal("list").executes(RepCommand::villageList))

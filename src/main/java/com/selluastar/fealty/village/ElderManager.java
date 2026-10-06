@@ -110,6 +110,8 @@ public final class ElderManager {
         }
         elder.setUuid(entity.getUUID());
         elder.setState(VillageRecord.ElderState.ALIVE);
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new com.selluastar.fealty.api.event.VillageEvent(level.getServer(), record.id(),
+                com.selluastar.fealty.api.event.VillageEvent.Type.ELDER_ARRIVED));
         elder.setHome(home);
         elder.setName(name);
         if (FealtyConfig.PLACE_COFFERS.get() && elder.coffer() == null) {
@@ -209,6 +211,8 @@ public final class ElderManager {
         }
         VillageRecord village = record.get();
         village.elder().setState(VillageRecord.ElderState.BROKEN);
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new com.selluastar.fealty.api.event.VillageEvent(elder.getServer(), village.id(),
+                com.selluastar.fealty.api.event.VillageEvent.Type.ELDER_FELL));
         village.elder().setUuid(null);
         village.elder().setBrokenSince(elder.level().getGameTime());
         data.setDirty();
@@ -230,6 +234,10 @@ public final class ElderManager {
      * @return whether the elder was placed right away
      */
     public static boolean restore(MinecraftServer server, VillageRecord record, Optional<Villager> successor) {
+        if (record.isBroken()) {
+            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new com.selluastar.fealty.api.event.VillageEvent(server, record.id(),
+                    com.selluastar.fealty.api.event.VillageEvent.Type.ELDER_RESTORED));
+        }
         record.elder().setState(VillageRecord.ElderState.NONE);
         record.elder().setUuid(null);
         FealtyWorldData.get(server).setDirty();

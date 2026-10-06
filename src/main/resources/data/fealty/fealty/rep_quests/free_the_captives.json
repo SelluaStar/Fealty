@@ -1,0 +1,24 @@
+{
+  "title": {
+    "translate": "quest.fealty.free_the_captives"
+  },
+  "description": {
+    "translate": "quest.fealty.free_the_captives.desc"
+  },
+  "tiers": {
+    "fealty:neutral": 5,
+    "fealty:trusted": 7,
+    "fealty:honored": 6
+  },
+  "difficulty": 4,
+  "reward": {
+    "rep": 12,
+    "experience": 80,
+    "loot_table": "fealty:quest_rewards/rare"
+  },
+  "time_limit": 96000,
+  "objective": {
+    "type": "fealty:free_captives",
+    "count": 2
+  }
+}

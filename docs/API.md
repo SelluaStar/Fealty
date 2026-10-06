@@ -39,6 +39,11 @@ if (FealtyApi.isAvailable()) {
 | `getFactionOf(entity)`, `getFactionAt(level, pos)` | Which faction an entity or place belongs to |
 | `getLord(server, village)` | A village's sworn lord |
 | `getTiers()`, `getTier(id)` | The data-driven tier table |
+| `getStrongholds(server)`, `getNearestStronghold(level, pos, radius)` | Known pillager camps and outposts |
+| `getCampaign(server, lord)` | The raid a lord is leading (village, stronghold, phase) |
+| `declareRaid(lord, village, stronghold)` | Start a raid as if from the Village Hall; returns the problem if it cannot |
+| `isAtPeace(server, village)` | Whether a victory's peace protects the village |
+| `isCaptive`, `isWarbandMember`, `isStrongholdDefender` | What part an entity plays in the war |
 
 Faction ids: villages are `village:<dim namespace>/<dim path>/<x>_<z>`. Static factions are `fealty:wanderers`,
 `fealty:bandits` and `fealty:thieves_guild`, plus any a data pack adds.
@@ -56,6 +61,51 @@ Faction ids: villages are `village:<dim namespace>/<dim path>/<x>_<z>`. Static f
 | `RepQuestEvent.Start/Complete/Fail` | A trusting villager quest starts, completes or fails | React |
 | `LordshipEvent` | A village is sworn, lost or usurped | React |
 | `WantedLevelEvent` | Wanted level changes (1 = bounty hunters, 2 = Tyrant Lord) | React |
+| `LordshipEvent` (UNREST, CONTENT) | A lord falls below Honored (the grace starts) / is Honored again | React |
+
+### War: pillager strongholds and the lord's raids (API 1.1.0)
+
+A `Stronghold` record describes a target: `id`, `dimension`, `pos`, `kind` (`CAMP` for Fealty's pillager camps,
+`OUTPOST` for pillager outposts), `structure`, `name`, `razed`, `captives`.
+
+| Event | Fires when | You can |
+|---|---|---|
+| `StrongholdEvent.Discovered` | A camp or outpost becomes known (`getHow()`: GENERATED, APPROACHED, SCOUTED) | React |
+| `CampaignEvent.Declare` | A lord is about to raise the warband, before paying | `cancel(reason)`, `setCost` |
+| `CampaignEvent.Started` | A raid on a stronghold has begun | React |
+| `CampaignEvent.Muster` | The warband forms (stage VILLAGE, then FIELD near the stronghold) | `addMember(mob)` (it follows the lord and counts), `setLevySize` |
+| `CampaignEvent.BattleStarted` | The fight at the stronghold begins | `addDefender(entity)` |
+| `CampaignEvent.Won` | The last defender falls | `setPeaceDays`, `setRazeDays`, `setSpoils` |
+| `CampaignEvent.Ended` | A raid ends without victory (`Reason`: LORD_DIED, WARBAND_FELL, TIMED_OUT, CALLED_OFF, LORDSHIP_LOST) | React |
+| `StrongholdEvent.Razed` / `.Reoccupied` | A stronghold is razed / the pillagers return | React |
+| `CaptiveEvent.Taken` / `.Freed` | A captive is put in a camp's cage / freed (`getRescuer()` empty when a raid did it) | Cancel `Taken` |
+| `MenaceRaidEvent` | A stronghold is about to send a (vanilla) raid against a village | Cancel, `setOmenLevel` |
+
+### Other systems
+
+| Event | Fires when | You can |
+|---|---|---|
+| `BanditRaidEvent.Start` / `.Won` / `.Withdrew` | A bandit raid sets out / is beaten / makes off with plunder | Cancel or `setSize` the start |
+| `GuardEvent.Sworn` / `.Fell` / `.Ordered` | A Fealty guard takes a place in the watch / a village guard dies / the lord blows the horn | Cancel an order |
+| `FineEvent.Issued` / `.Paid` / `.Refused` | A guard demands a fine / a fine is paid (to a guard or the elder) / refused | Cancel or `setCost` when issued |
+| `LockpickEvent.Attempt` / `.Opened` / `.Broke` | A try at a lock / it opens / the pick snaps | Cancel an attempt |
+| `MailEvent.Sent` / `.Delivered` | A player posts a letter / a letter arrives | Cancel sending |
+| `VillageEvent` | A village is discovered; its elder arrives, falls or is restored; peace starts or ends; freed villagers return | React |
+
+A mod that lends its own soldiers to a lord's raid, and one that forbids raids during a truce:
+
+```java
+NeoForge.EVENT_BUS.addListener((CampaignEvent.Muster e) -> {
+    if (e.getStage() == CampaignEvent.Muster.Stage.FIELD) {
+        e.getLord().ifPresent(lord -> myRecruits.near(lord).forEach(e::addMember));
+    }
+});
+NeoForge.EVENT_BUS.addListener((CampaignEvent.Declare e) -> {
+    if (Truces.active(e.getVillage())) {
+        e.cancel(Component.literal("The truce with the illagers holds until the full moon."));
+    }
+});
+```
 
 Example for a guards mod with no compile dependency on Fealty internals:
 

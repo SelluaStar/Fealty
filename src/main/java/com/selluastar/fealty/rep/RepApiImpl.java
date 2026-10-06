@@ -4,15 +4,23 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.selluastar.fealty.api.Campaign;
 import com.selluastar.fealty.api.RepApi;
 import com.selluastar.fealty.api.RepTier;
+import com.selluastar.fealty.api.Stronghold;
 import com.selluastar.fealty.data.TierManager;
+import com.selluastar.fealty.lordship.LordshipManager;
 import com.selluastar.fealty.outlaw.HeatManager;
 import com.selluastar.fealty.trade.PricingService;
 import com.selluastar.fealty.village.VillageRecord;
 import com.selluastar.fealty.village.VillageResolver;
+import com.selluastar.fealty.war.Campaigns;
+import com.selluastar.fealty.war.Captives;
+import com.selluastar.fealty.war.Strongholds;
+import com.selluastar.fealty.war.WarDefenders;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -101,4 +109,53 @@ public final class RepApiImpl implements RepApi {
     public Optional<RepTier> getTier(ResourceLocation tierId) {
         return TierManager.byId(tierId);
     }
+
+    @Override
+    public List<Stronghold> getStrongholds(MinecraftServer server) {
+        long day = RepManager.day(server);
+        return Strongholds.get(server).all().stream().map(e -> e.view(day)).toList();
+    }
+
+    @Override
+    public Optional<Stronghold> getNearestStronghold(ServerLevel level, BlockPos pos, double radius) {
+        long day = RepManager.day(level.getServer());
+        return Strongholds.get(level.getServer()).near(level.dimension(), pos, radius).stream().findFirst().map(e -> e.view(day));
+    }
+
+    @Override
+    public Optional<Campaign> getCampaign(MinecraftServer server, UUID lord) {
+        return Campaigns.of(server, lord);
+    }
+
+    @Override
+    public boolean isAtPeace(MinecraftServer server, ResourceLocation village) {
+        long day = RepManager.day(server);
+        return FealtyWorldData.get(server).village(village).map(v -> v.sites().atPeace(day)).orElse(false);
+    }
+
+    @Override
+    public Optional<Component> declareRaid(ServerPlayer lord, ResourceLocation village, UUID stronghold) {
+        Optional<VillageRecord> record = FealtyWorldData.get(lord.server).village(village);
+        Optional<Strongholds.Entry> target = Strongholds.get(lord.server).get(stronghold);
+        if (record.isEmpty() || target.isEmpty()) {
+            return Optional.of(Component.translatable("fealty.war.target_gone"));
+        }
+        return Campaigns.declare(lord, record.get(), target.get(), LordshipManager.inVillage(lord, record.get()));
+    }
+
+    @Override
+    public boolean isCaptive(Entity entity) {
+        return Captives.isCaptive(entity);
+    }
+
+    @Override
+    public boolean isWarbandMember(Entity entity) {
+        return Campaigns.isWarbandMember(entity);
+    }
+
+    @Override
+    public boolean isStrongholdDefender(Entity entity) {
+        return WarDefenders.isDefender(entity);
+    }
 }
+

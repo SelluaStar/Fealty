@@ -849,6 +849,46 @@ def standard_textures():
     return pole.img, cloth_p.img
 
 
+def war_banner_textures():
+    """The pillager War Banner: a dark oak pole and an ominous cloth, and the same cloth torn and burnt once razed."""
+    pole = Painter(16, 16, 61)
+    for y in range(16):
+        for x in range(16):
+            pole.set(x, y, shade(hexc("#3B2A1A"), 0.9 + 0.2 * pole.rand.random() if x % 4 else 0.75))
+
+    def cloth(seed, torn):
+        p = Painter(16, 32, seed)
+        white, grey, black, cyan = hexc("#E6E3DA"), hexc("#8E8E8E"), hexc("#1D1D21"), hexc("#169C9C")
+        for y in range(32):
+            for x in range(16):
+                c = white
+                if x in (0, 15) or y >= 30:
+                    c = grey
+                if 13 <= y <= 15:
+                    c = black  # the bar across the middle
+                if abs(x - 7.5) + abs(y - 9) <= 4.5 and 13 > y:
+                    c = cyan  # the diamond
+                if abs(x - 7.5) <= 2.5 and 18 <= y <= 21:
+                    c = black  # the mouth
+                if 22 <= y <= 24 and 3 <= x <= 12:
+                    c = grey
+                p.set(x, y, shade(c, 1.0 + p.rand.uniform(-0.05, 0.05)))
+        for x in range(1, 15, 3):
+            p.set(x, 29, (0, 0, 0, 0))
+            p.set(x, 28, (0, 0, 0, 0))
+        if torn:
+            for y in range(32):
+                for x in range(16):
+                    r = p.rand.random()
+                    if y > 18 and r < (y - 18) / 16:
+                        p.set(x, y, (0, 0, 0, 0))  # ragged, half gone
+                    elif r < 0.18:
+                        p.set(x, y, shade(hexc("#2A2420"), 0.8 + 0.3 * p.rand.random()))  # scorched
+        return p.img
+
+    return pole.img, cloth(62, False), cloth(63, True)
+
+
 def mailbox_textures():
     """The mailbox: a painted box on a wooden post, with a door on the front and a red flag."""
     rand = random.Random(77)
@@ -1173,6 +1213,10 @@ def main():
     pole, banner = standard_textures()
     save(pole, "block", "bandit_standard_pole.png")
     save(banner, "block", "bandit_standard_cloth.png")
+    war_pole, war_cloth, war_torn = war_banner_textures()
+    save(war_pole, "block", "war_banner_pole.png")
+    save(war_cloth, "block", "war_banner_cloth.png")
+    save(war_torn, "block", "war_banner_torn.png")
     # GUIs and logo
     save(ledger_gui(), "gui", "ledger.png")
     save(quest_book_gui(), "gui", "quest_book.png")
@@ -1206,5 +1250,10 @@ if __name__ == "__main__":
         mailbox_textures()
     elif sys.argv[1:] == ["lockpick"]:
         lockpick_gui()
+    elif sys.argv[1:] == ["war"]:
+        war_pole, war_cloth, war_torn = war_banner_textures()
+        save(war_pole, "block", "war_banner_pole.png")
+        save(war_cloth, "block", "war_banner_cloth.png")
+        save(war_torn, "block", "war_banner_torn.png")
     else:
         main()
