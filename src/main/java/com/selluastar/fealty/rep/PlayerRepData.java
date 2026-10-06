@@ -32,8 +32,10 @@ public final class PlayerRepData {
             Codec.STRING.optionalFieldOf("name", "").forGetter(d -> d.name),
             UUIDUtil.STRING_CODEC.listOf().optionalFieldOf("untracked_quests", List.of()).forGetter(d -> List.copyOf(d.untracked)),
             Codec.unboundedMap(Codec.STRING, Codec.INT).optionalFieldOf("stats", Map.of()).forGetter(d -> d.stats),
-            Codec.unboundedMap(ResourceLocation.CODEC, Codec.INT).optionalFieldOf("gossip", Map.of()).forGetter(d -> d.gossip)
-    ).apply(i, (rep, renown, heat, wanted, tallies, quests, chains, aggro, warned, nextBounty, flags, name, untracked, stats, gossip) -> {
+            Codec.unboundedMap(ResourceLocation.CODEC, Codec.INT).optionalFieldOf("gossip", Map.of()).forGetter(d -> d.gossip),
+            Codec.unboundedMap(ResourceLocation.CODEC, Codec.LONG).optionalFieldOf("visited", Map.of()).forGetter(d -> d.visited)
+    ).apply(i, (rep, renown, heat, wanted, tallies, quests, chains, aggro, warned, nextBounty, flags, name, untracked, stats, gossip,
+                visited) -> {
         PlayerRepData d = new PlayerRepData();
         d.rep.putAll(rep);
         d.renown = renown;
@@ -50,6 +52,7 @@ public final class PlayerRepData {
         d.untracked.addAll(untracked);
         d.stats.putAll(stats);
         d.gossip.putAll(gossip);
+        d.visited.putAll(visited);
         return d;
     }));
 
@@ -68,6 +71,8 @@ public final class PlayerRepData {
     final Set<UUID> untracked = new HashSet<>();
     final Map<String, Integer> stats = new HashMap<>();
     final Map<ResourceLocation, Integer> gossip = new HashMap<>();
+    /** The Fealty day each village was last visited. */
+    final Map<ResourceLocation, Long> visited = new HashMap<>();
 
     public Map<ResourceLocation, Integer> rep() {
         return rep;
@@ -103,6 +108,10 @@ public final class PlayerRepData {
 
     public Map<ResourceLocation, Long> aggroUntil() {
         return aggroUntil;
+    }
+
+    public Map<ResourceLocation, Long> visited() {
+        return visited;
     }
 
     public Map<ResourceLocation, Long> warnedAt() {

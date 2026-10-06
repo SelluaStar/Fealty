@@ -395,8 +395,9 @@ public final class VillageRecord {
                 Codec.DOUBLE.optionalFieldOf("treasury", 0.0).forGetter(l -> l.treasury),
                 Codec.LONG.optionalFieldOf("last_feast_day", -1000L).forGetter(l -> l.lastFeastDay),
                 Codec.LONG.optionalFieldOf("last_report_day", 0L).forGetter(l -> l.lastReportDay),
-                Codec.INT.optionalFieldOf("gifts", 0).forGetter(l -> l.gifts)
-        ).apply(i, (uuid, name, tax, tribute, taxDay, sworn, pending, treasury, feast, report, gifts) -> {
+                Codec.INT.optionalFieldOf("gifts", 0).forGetter(l -> l.gifts),
+                Codec.LONG.optionalFieldOf("low_since", -1L).forGetter(l -> l.lowSince)
+        ).apply(i, (uuid, name, tax, tribute, taxDay, sworn, pending, treasury, feast, report, gifts, lowSince) -> {
             LordInfo l = new LordInfo();
             l.uuid = uuid.orElse(null);
             l.name = name;
@@ -409,6 +410,7 @@ public final class VillageRecord {
             l.lastFeastDay = feast;
             l.lastReportDay = report;
             l.gifts = gifts;
+            l.lowSince = lowSince;
             return l;
         }));
 
@@ -424,10 +426,20 @@ public final class VillageRecord {
         private long lastFeastDay = -1000L;
         private long lastReportDay;
         private int gifts;
+        private long lowSince = -1L;
 
         @Nullable
         public UUID uuid() {
             return uuid;
+        }
+
+        /** The Fealty day the lord's standing fell below Honored, or -1 while they are Honored. */
+        public long lowSince() {
+            return lowSince;
+        }
+
+        public void setLowSince(long day) {
+            this.lowSince = day;
         }
 
         public boolean isLord(UUID player) {
@@ -521,11 +533,13 @@ public final class VillageRecord {
             this.pendingTribute = 0;
             this.treasury = 0.0;
             this.gifts = 0;
+            this.lowSince = -1L;
         }
 
         public void clear() {
             this.uuid = null;
             this.name = "";
+            this.lowSince = -1L;
         }
     }
 }

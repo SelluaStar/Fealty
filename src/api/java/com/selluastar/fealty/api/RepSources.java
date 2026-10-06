@@ -13,6 +13,8 @@ public final class RepSources {
     public static final ResourceLocation COURIER = FealtyApi.id("courier");
     public static final ResourceLocation LIBERATION = FealtyApi.id("liberation");
     public static final ResourceLocation TAX = FealtyApi.id("tax");
+    /** Standing that fades while a player stays away from a village. */
+    public static final ResourceLocation NEGLECT = FealtyApi.id("neglect");
     /** Small favors done for ordinary villagers. */
     public static final ResourceLocation FAVOR = FealtyApi.id("favor");
     /** A lord's feast: the village's thanks to the lord and to everyone who comes. */

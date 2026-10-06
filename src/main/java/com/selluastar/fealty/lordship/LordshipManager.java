@@ -224,17 +224,61 @@ public final class LordshipManager {
         }
     }
 
-    /** A lord who falls below Trusted is renounced. */
+    /**
+     * A lord who falls below Honored has a few days to win the village back before it renounces them; the clock
+     * starts the moment they fall and stops when they are Honored again.
+     */
     @SubscribeEvent
     public static void onTierChanged(TierChangedEvent event) {
-        if (!Factions.isVillage(event.getFaction()) || event.isRising()) {
+        if (!Factions.isVillage(event.getFaction())) {
             return;
         }
-        Optional<VillageRecord> village = FealtyWorldData.get(event.getPlayer().server).village(event.getFaction());
-        if (village.isPresent() && village.get().lord().isLord(event.getPlayer().getUUID())
-                && event.getNewTier().rank() < TierManager.trusted().rank()) {
-            clearLord(event.getPlayer().server, village.get(), "fealty.lord.lost");
+        ServerPlayer player = event.getPlayer();
+        Optional<VillageRecord> village = FealtyWorldData.get(player.server).village(event.getFaction());
+        if (village.isEmpty() || !village.get().lord().isLord(player.getUUID())) {
+            return;
         }
+        checkLordStanding(player.server, village.get(), RepManager.day(player.server), RepManager.getRep(player, event.getFaction()));
+    }
+
+    /**
+     * Start, stop or run out the lord's grace for a village. @return whether the lord was renounced
+     */
+    private static boolean checkLordStanding(MinecraftServer server, VillageRecord village, long day, int rep) {
+        VillageRecord.LordInfo info = village.lord();
+        UUID lord = info.uuid();
+        if (lord == null) {
+            return false;
+        }
+        ServerPlayer online = server.getPlayerList().getPlayer(lord);
+        if (RepManager.tierOf(rep).rank() >= TierManager.honored().rank()) {
+            if (info.lowSince() >= 0) {
+                info.setLowSince(-1L);
+                FealtyWorldData.get(server).setDirty();
+                if (online != null) {
+                    online.sendSystemMessage(Component.translatable("fealty.lord.loved_again", village.name()).withStyle(ChatFormatting.GREEN));
+                }
+            }
+            return false;
+        }
+        int grace = FealtyConfig.LORD_GRACE_DAYS.get();
+        if (info.lowSince() < 0) {
+            info.setLowSince(day);
+            FealtyWorldData.get(server).setDirty();
+            if (grace > 0) {
+                MailService.fromVillage(server, lord, village, "lord_unrest", List.of(), 20 * 20, grace);
+                if (online != null) {
+                    Feedback.banner(online, Component.translatable("fealty.banner.lord_unrest"),
+                            Component.translatable("fealty.banner.lord_unrest.detail", village.name(), grace), 0xE0A040, "crown");
+                }
+                return false;
+            }
+        }
+        if (day - info.lowSince() >= grace) {
+            clearLord(server, village, "fealty.lord.lost");
+            return true;
+        }
+        return false;
     }
 
     // ---- Daily: taxes and tribute ----
@@ -280,11 +324,10 @@ public final class LordshipManager {
                     RepManager.change(online, village.id(), amount, RepSources.TAX, true);
                 } else {
                     RepManager.changeOffline(server, lord, village.id(), amount);
-                    if (RepManager.tierOf(RepManager.getRep(server, lord, village.id())).rank() < TierManager.trusted().rank()) {
-                        clearLord(server, village, null);
-                        continue;
-                    }
                 }
+            }
+            if (checkLordStanding(server, village, day, RepManager.getRep(server, lord, village.id()))) {
+                continue;
             }
             // Tribute is gathered every day, whether or not anyone is there, and waits in the treasury.
             long tributeDays = Math.max(0, Math.min(7, day - info.lastTributeDay()));

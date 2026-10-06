@@ -16,6 +16,13 @@ public final class FealtyConfig {
     public static final ModConfigSpec.IntValue RENOWN_START_CAP;
     public static final ModConfigSpec.BooleanValue NEGATIVE_REP_DECAY;
     public static final ModConfigSpec.IntValue NEGATIVE_REP_DECAY_PER_DAY;
+    public static final ModConfigSpec.BooleanValue NEGLECT;
+    public static final ModConfigSpec.IntValue NEGLECT_GRACE_DAYS;
+    public static final ModConfigSpec.IntValue NEGLECT_FIRST;
+    public static final ModConfigSpec.IntValue NEGLECT_DAILY;
+    public static final ModConfigSpec.IntValue NEGLECT_FLOOR;
+    public static final ModConfigSpec.IntValue GUARDS_FORGIVE_AT;
+    public static final ModConfigSpec.IntValue LORD_GRACE_DAYS;
     public static final ModConfigSpec.BooleanValue DISABLE_VANILLA_GOSSIP;
     public static final ModConfigSpec.BooleanValue SHOW_REP_CHANGES;
     public static final ModConfigSpec.BooleanValue GIVE_LEDGER;
@@ -122,6 +129,13 @@ public final class FealtyConfig {
                 .define("negative_rep_decay", false);
         NEGATIVE_REP_DECAY_PER_DAY = b.comment("Rep healed per in-game day when negative_rep_decay is on")
                 .defineInRange("negative_rep_decay_per_day", 1, 0, 100);
+        NEGLECT = b.comment("Standing with a village fades while you stay away from it").define("neglect", true);
+        NEGLECT_GRACE_DAYS = b.comment("Days away from a village before its standing starts to fade")
+                .defineInRange("neglect_grace_days", 2, 1, 1000);
+        NEGLECT_FIRST = b.comment("Rep lost on the first day the grace runs out").defineInRange("neglect_first", 10, 0, 1000);
+        NEGLECT_DAILY = b.comment("Rep lost on each later day away").defineInRange("neglect_daily", 5, 0, 1000);
+        NEGLECT_FLOOR = b.comment("Staying away never takes standing below this (0: fades to Neutral at worst)")
+                .defineInRange("neglect_floor", 0, -100000, 100000);
         DISABLE_VANILLA_GOSSIP = b.comment("Turn off vanilla villager gossip for prices and golems so the two systems do not stack")
                 .define("disable_vanilla_gossip", true);
         SHOW_REP_CHANGES = b.comment("Show rep changes in the action bar").define("show_rep_changes", true);
@@ -139,6 +153,10 @@ public final class FealtyConfig {
                 .defineInRange("guard_aggro_ticks", 2400, 20, 240000);
         GUARD_WARNING_WINDOW = b.comment("A second offence within this many ticks of a warning turns guards hostile")
                 .defineInRange("guard_warning_window", 6000, 20, 240000);
+        GUARDS_FORGIVE_AT = b.comment("A player whose rep with a village was at least this before a crime is not attacked or fined for it;",
+                        "the crime only costs rep (61: Honored players). Below it, guards warn or fine first and attack for severe",
+                        "crimes, repeat offences or a refused fine.")
+                .defineInRange("guards_forgive_at_rep", 61, -100000, 100000);
         ESCORT_TICKS = b.comment("How long a guard escorts an Honored player (ticks)")
                 .defineInRange("escort_ticks", 24000, 20, 240000);
         FEALTY_GUARDS = b.comment("Villages keep a watch of Fealty guards (swordsmen, archers and a sergeant in the village's colours).",
@@ -229,6 +247,8 @@ public final class FealtyConfig {
 
         b.comment("Village lordship").push("lordship");
         MAX_LORDSHIPS = b.comment("How many villages one player may rule at once").defineInRange("max_lordships", 2, 1, 100);
+        LORD_GRACE_DAYS = b.comment("Days a lord may stay below Honored with their village before it renounces them")
+                .defineInRange("lord_grace_days", 2, 0, 1000);
         TRIBUTE_INTERVAL_DAYS = b.comment("Days between tribute reports sent to the lord by letter (tribute itself is gathered daily)")
                 .defineInRange("tribute_interval_days", 3, 1, 100);
         TRIBUTE_ROLLS_PER_10_VILLAGERS = b.comment("Tribute loot rolls gathered each day per 10 villagers at the 'fair' tax level")

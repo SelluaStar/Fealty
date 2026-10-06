@@ -41,8 +41,12 @@ Return), and can demand a fine (golems excepted; pay by using emeralds on any of
 installed, Guard Villagers' `guardvillagers:guard`. Add your guard mod's entities to the tag. Fealty gives them its
 targeting goals when they spawn, so the guard mod needs no compile dependency. Guards attack Hated and wanted
 players, watch Distrusted ones, help Trusted ones, and escort Honored ones. A witnessed crime alerts guards within
-32 blocks; for small crimes, Fealty guards demand a fine first (`fines`, `guard_fine_seconds`). Guards of other
-villages only answer if the criminal's Renown is low.
+32 blocks. A player the village honoured before the crime (`guards_forgive_at_rep`, 61) is only scolded: the crime
+costs rep and nothing more. Below that, small crimes get a warning first (Fealty guards demand a fine: `fines`,
+`guard_fine_seconds`), and guards attack for severe crimes, a repeat offence, a refused fine, or any crime by a
+Distrusted player. Golems and other mods' guards follow the same rules instead of their own anger, though any guard
+hits back when struck by someone the village does not honour. Guards of other villages only answer if the
+criminal's Renown is low.
 
 ## FTB Quests
 
@@ -82,6 +86,8 @@ FealtyEvents.quest(event => {
   - rep range; witness radius (16) and guard alert radius (32)
   - Renown share (10%) and start factor (¼, capped at ±25)
   - threat cooldown (one day); negative rep decay (off)
+  - staying away: `neglect` (on), `neglect_grace_days` (2), `neglect_first` (10), `neglect_daily` (5),
+    `neglect_floor` (0): standing with a village fades once you have been away two days, never below Neutral
   - consequences: `fines`, `word_travels_share` (25%) and `word_travels_radius` (1000), `hated_arrival`,
     `locked_village_chests`
   - quests: `max_active_quests`, `elder_quests_at_once`, `favors` and `favor_chance`
@@ -111,7 +117,8 @@ Lords run the village from the Village Hall (ask the elder, or open it from the 
 - the Lord's Horn, usable anywhere: call guards (they arrive from out of sight), hold, guard an area, or send them
   home
 
-Below Trusted, the village renounces its lord. In multiplayer, a rival with a Writ who is Honored and better loved
+A lord who falls below Honored gets a letter and has `lord_grace_days` (2) to win the village back; after that it
+renounces them. In multiplayer, a rival with a Writ who is Honored and better loved
 than the current lord can usurp the village.
 
 ## Outlaw path

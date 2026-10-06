@@ -7,7 +7,7 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.NeutralMob;
 import net.minecraft.world.entity.ai.goal.Goal;
 
-/** Calls off an attack on a player once the village no longer wants them hurt, unless they hit the guard. */
+/** Calls off an attack on a player once the village no longer wants them hurt (see {@link GuardManager#mayFight}). */
 public class GuardStandDownGoal extends Goal {
     private final Mob guard;
     private int cooldown;
@@ -25,8 +25,7 @@ public class GuardStandDownGoal extends Goal {
             return false;
         }
         cooldown = 10;
-        boolean provoked = guard.getLastHurtByMob() == player && guard.tickCount - guard.getLastHurtByMobTimestamp() < 200;
-        return !provoked && !GuardManager.isHostileTo(guard, player);
+        return !GuardManager.mayFight(guard, player);
     }
 
     @Override

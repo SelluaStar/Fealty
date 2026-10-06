@@ -24,10 +24,13 @@ guild, bandit followers, bounty hunters and the **Tyrant Lord**.
   pickpocketing; threats; hitting villagers, children or guards; murder; trampling or harvesting crops; killing
   the village's animals and cats; arson and explosions; lurking in homes at night; sleeping in a villager's bed;
   killing a wandering trader.
-- **Consequences.** Word of a crime reaches the villages nearby the next day. Guards demand a fine for small
-  crimes (pay it, or they come for you). Walk into a village that hates you and the bell rings and everyone runs.
+- **Consequences.** Word of a crime reaches the villages nearby the next day. A village that honours you lets a
+  crime go with a scowl (it still costs you). Otherwise guards demand a fine for small crimes (pay it, or they come
+  for you) and attack for violent ones. Walk into a village that hates you and the bell rings and everyone runs.
   Elders let you pay to clear your name, a little each day. Stay Hated and heat builds: bounty hunters, then the
   Tyrant Lord.
+- **Out of sight, out of mind.** Stay away from a village for two days and your standing there starts to fade
+  (10, then 5 a day), down to Neutral at worst.
 
 ### Talking
 - **Dialogue box and speech bubbles.** Right-click a villager to talk: trade, ask for work, hear rumours, give a
@@ -53,7 +56,8 @@ guild, bandit followers, bounty hunters and the **Tyrant Lord**.
   Every few days a camp may raid a nearby village while you are there.
 
 ### Lordship
-Present the Royal Writ to a village that honours you. Run it from the **Village Hall**: set taxes (Crushing fills the
+Present the Royal Writ to a village that honours you. Keep their love: fall below Honored for two days and they
+renounce you. Run it from the **Village Hall**: set taxes (Crushing fills the
 treasury fast and costs you their love; light taxes bring less, but a village that adores you sometimes gathers a
 gift of love), collect the treasury, hold feasts, recruit guards. Golems and other mods' guards are on the roster too. Blow the **Lord's Horn**
 anywhere to call your guards to you; a bar at the top of the screen shows who follows you.

@@ -1281,5 +1281,11 @@
   "fealty.mail.gift_of_love.subject": "With love, from %s",
   "fealty.mail.gift_of_love.body": "Your people in %1$s love you, and have gathered a gift for their lord. It waits for you in the treasury: collect it at the Village Hall.",
   "fealty.command.rehomed": "The elder of %s now lives at %s, %s, %s. The coffer stays where it was.",
-  "fealty.command.rehome_failed": "Found no home for the elder of %s. Stand in the village so it is loaded, then try again."
+  "fealty.command.rehome_failed": "Found no home for the elder of %s. Stand in the village so it is loaded, then try again.",
+  "fealty.guard.forgiven": "%s frowns at you, but lets it go. Your standing still suffers.",
+  "fealty.lord.loved_again": "The people of %s are content with their lord again.",
+  "fealty.banner.lord_unrest": "Your people grow restless",
+  "fealty.banner.lord_unrest.detail": "%s will renounce you in %s days unless you win back their honour.",
+  "fealty.mail.lord_unrest.subject": "Unrest in %s",
+  "fealty.mail.lord_unrest.body": "My lord, the people of %1$s grumble in the square: they no longer hold you in honour. Win back their love within %2$s days, or they will renounce their fealty to you."
 }

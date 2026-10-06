@@ -41,6 +41,7 @@ import net.minecraft.world.phys.AABB;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.event.entity.living.LivingChangeTargetEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 
 /**
@@ -118,13 +119,43 @@ public final class GuardManager {
         return HeatManager.wantedLevel(player, faction) > 0;
     }
 
+    /**
+     * Whether a guard may fight the player: the village wants them hurt, or they just struck this guard and are
+     * not someone the village forgives (see {@code guards_forgive_at_rep}).
+     */
+    public static boolean mayFight(Mob guard, ServerPlayer player) {
+        if (isHostileTo(guard, player)) {
+            return true;
+        }
+        boolean provoked = guard.getLastHurtByMob() == player && guard.tickCount - guard.getLastHurtByMobTimestamp() < 200;
+        if (!provoked) {
+            return false;
+        }
+        Optional<ResourceLocation> faction = FactionResolver.factionOf(guard);
+        return faction.isEmpty() || RepManager.getRep(player, faction.get()) < FealtyConfig.GUARDS_FORGIVE_AT.get();
+    }
+
+    /**
+     * Guards only take aim at a player when Fealty's rules allow it. This also stops iron golems and other mods'
+     * guards from turning on a player by their own AI (for a stray hit on a villager, say): the crime system decides.
+     */
+    @SubscribeEvent
+    public static void onChangeTarget(LivingChangeTargetEvent event) {
+        if (event.getEntity() instanceof Mob mob && event.getNewAboutToBeSetTarget() instanceof ServerPlayer player
+                && !mob.level().isClientSide && isGuard(mob) && !mayFight(mob, player)) {
+            event.setNewAboutToBeSetTarget(null);
+        }
+    }
+
     public static GuardStance stance(ServerPlayer player, ResourceLocation faction) {
         return RepManager.getTier(player, faction).guardStance();
     }
 
     /**
-     * A witnessed crime alerts guards nearby. Severe crimes, or any crime by a player the guards already watch,
-     * turn them hostile; otherwise they warn first (a Fealty guard demands a fine) and attack on a repeat offence.
+     * A witnessed crime alerts guards nearby. A player the village honoured before the crime is only scolded: the
+     * crime costs them rep and nothing more. Otherwise severe crimes, or any crime by a player the guards already
+     * watch, turn them hostile; lesser crimes get a warning first (a Fealty guard demands a fine), and a repeat
+     * offence turns them hostile.
      *
      * @param change what the crime cost the player with the village
      */
@@ -137,6 +168,10 @@ public final class GuardManager {
         }
         long now = level.getGameTime();
         PlayerRepData data = RepManager.data(player);
+        if (RepManager.getRep(player, faction) - change >= FealtyConfig.GUARDS_FORGIVE_AT.get()) {
+            forgive(player, faction, guards);
+            return;
+        }
         RepTier tier = RepManager.getTier(player, faction);
         boolean lowRenown = RepManager.renown(player) <= FealtyConfig.OUTSIDE_GUARD_RENOWN.get();
         Long warned = data.warnedAt().get(faction);
@@ -144,6 +179,10 @@ public final class GuardManager {
         boolean attack = severity == Severity.SEVERE || repeat
                 || tier.guardStance() == GuardStance.ATTACK_ON_SIGHT || tier.guardStance() == GuardStance.WATCH;
 
+        if (attack) {
+            // (Set first, so the guards are allowed to take aim below.)
+            data.aggroUntil().put(faction, now + FealtyConfig.GUARD_AGGRO_TICKS.get());
+        }
         Mob speaker = null;
         for (Mob guard : guards) {
             Optional<ResourceLocation> guardFaction = FactionResolver.factionOf(guard);
@@ -164,7 +203,6 @@ public final class GuardManager {
             return;
         }
         if (attack) {
-            data.aggroUntil().put(faction, now + FealtyConfig.GUARD_AGGRO_TICKS.get());
             player.sendSystemMessage(Component.translatable("fealty.guard.attack", speaker.getDisplayName()));
         } else {
             data.warnedAt().put(faction, now);
@@ -176,6 +214,21 @@ public final class GuardManager {
             }
         }
         FealtyWorldData.get(level.getServer()).setDirty();
+    }
+
+    /** The nearest of the village's guards looks the player over and lets it go. */
+    private static void forgive(ServerPlayer player, ResourceLocation faction, List<Mob> guards) {
+        Mob speaker = null;
+        for (Mob guard : guards) {
+            if (FactionResolver.factionOf(guard).filter(faction::equals).isPresent()
+                    && (speaker == null || guard.distanceToSqr(player) < speaker.distanceToSqr(player))) {
+                speaker = guard;
+            }
+        }
+        if (speaker != null) {
+            speaker.getLookControl().setLookAt(player);
+            player.displayClientMessage(Component.translatable("fealty.guard.forgiven", speaker.getDisplayName()), true);
+        }
     }
 
     /** Called every second for a player inside a village: guards greet friends. */

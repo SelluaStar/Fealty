@@ -21,6 +21,7 @@ public final class ModRepSources {
         register(RepSources.TRADE, RepSource.action(1));
         register(RepSources.CURE_VILLAGER, RepSource.action(5));
         register(RepSources.TAX, RepSource.action(0));
+        register(RepSources.NEGLECT, RepSource.action(0));
         register(RepSources.FAVOR, RepSource.redemption(2));
         register(RepSources.FEAST, RepSource.action(3));
         register(RepSources.KILL_MONSTER, RepSource.action(1));

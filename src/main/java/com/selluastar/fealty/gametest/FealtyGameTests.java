@@ -9,6 +9,7 @@ import com.mojang.authlib.GameProfile;
 import com.selluastar.fealty.Fealty;
 import com.selluastar.fealty.api.RepSources;
 import com.selluastar.fealty.api.RepTiers;
+import com.selluastar.fealty.api.Severity;
 import com.selluastar.fealty.chain.ChainManager;
 import com.selluastar.fealty.config.FealtyConfig;
 import com.selluastar.fealty.crime.CrimeHandlers;
@@ -21,6 +22,7 @@ import com.selluastar.fealty.data.TierManager;
 import com.selluastar.fealty.dialogue.DialogueNode;
 import com.selluastar.fealty.dialogue.DialogueService;
 import com.selluastar.fealty.guard.Garrison;
+import com.selluastar.fealty.guard.GuardManager;
 import com.selluastar.fealty.lordship.LordshipManager;
 import com.selluastar.fealty.mail.MailService;
 import com.selluastar.fealty.outlaw.BanditCamps;
@@ -31,6 +33,7 @@ import com.selluastar.fealty.quest.RepQuestDefinition;
 import com.selluastar.fealty.registry.ModAttachments;
 import com.selluastar.fealty.registry.ModBlocks;
 import com.selluastar.fealty.rep.Factions;
+import com.selluastar.fealty.rep.DailyTicker;
 import com.selluastar.fealty.rep.FealtyCalendar;
 import com.selluastar.fealty.rep.FealtyWorldData;
 import com.selluastar.fealty.rep.RepManager;
@@ -60,6 +63,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.animal.IronGolem;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -515,6 +519,67 @@ public final class FealtyGameTests {
                 StructurePoolElement.empty(), StructurePoolElement.single("minecraft:village/plains/houses/plains_library_1")))
                 .apply(StructureTemplatePool.Projection.RIGID));
         check(helper, list.isPresent() && list.get().getPath().endsWith("plains_library_1"), "a list piece should name its first template");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void honouredCrimesOnlyCostRep(GameTestHelper helper) {
+        ServerPlayer player = player(helper);
+        VillageRecord village = testVillage(helper, BlockPos.ZERO, "Forgiving");
+        try {
+            IronGolem golem = helper.spawn(EntityType.IRON_GOLEM, new BlockPos(1, 1, 1));
+            golem.setData(ModAttachments.FACTION, village.id());
+            BlockPos pos = helper.absolutePos(new BlockPos(1, 1, 1));
+            RepManager.meet(player, village.id());
+            RepManager.set(player, village.id(), 80, RepSources.COMMAND);
+            GuardManager.alert(helper.getLevel(), player, village.id(), pos, Severity.SEVERE, Fealty.id("hit_child"), -20);
+            check(helper, !GuardManager.isHostileTo(village.id(), player), "an Honored player's crime should only cost rep");
+            RepManager.set(player, village.id(), 30, RepSources.COMMAND);
+            GuardManager.alert(helper.getLevel(), player, village.id(), pos, Severity.MODERATE, Fealty.id("steal"), -15);
+            check(helper, !GuardManager.isHostileTo(village.id(), player), "a first small crime below Honored gets a warning, not an attack");
+            GuardManager.alert(helper.getLevel(), player, village.id(), pos, Severity.SEVERE, Fealty.id("hit_child"), -20);
+            check(helper, GuardManager.isHostileTo(village.id(), player), "a severe crime below Honored turns the guards hostile");
+            golem.discard();
+        } finally {
+            RepManager.data(player).aggroUntil().remove(village.id());
+            RepManager.data(player).warnedAt().remove(village.id());
+            forget(helper, village);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void stayingAwayFades(GameTestHelper helper) {
+        check(helper, DailyTicker.neglectAfter(0) == 0 && DailyTicker.neglectAfter(1) == 0, "nothing fades in the first two days");
+        check(helper, DailyTicker.neglectAfter(2) == 10, "two days away costs 10, got " + DailyTicker.neglectAfter(2));
+        check(helper, DailyTicker.neglectAfter(3) == 15 && DailyTicker.neglectAfter(5) == 25, "then 5 more each day");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void lordsGetTwoDaysOfGrace(GameTestHelper helper) {
+        ServerPlayer player = player(helper);
+        VillageRecord village = testVillage(helper, BlockPos.ZERO, "Fickleford");
+        MinecraftServer server = helper.getLevel().getServer();
+        try {
+            RepManager.meet(player, village.id());
+            RepManager.set(player, village.id(), 80, RepSources.COMMAND);
+            LordshipManager.swear(player, village, true);
+            long day = RepManager.day(server);
+            RepManager.set(player, village.id(), 50, RepSources.COMMAND);
+            check(helper, village.lord().isLord(player.getUUID()), "falling below Honored should not cost the lordship at once");
+            check(helper, village.lord().lowSince() == day, "the grace should start the day the lord falls");
+            LordshipManager.onNewDay(server, day + 1);
+            check(helper, village.lord().isLord(player.getUUID()), "one day below Honored is still within the grace");
+            RepManager.set(player, village.id(), 70, RepSources.COMMAND);
+            check(helper, village.lord().lowSince() < 0, "being Honored again stops the clock");
+            RepManager.set(player, village.id(), 50, RepSources.COMMAND);
+            LordshipManager.onNewDay(server, village.lord().lowSince() + 2);
+            check(helper, !village.lord().isLord(player.getUUID()), "two days below Honored and the village renounces its lord");
+        } finally {
+            LordshipManager.clearLord(server, village, null);
+            forget(helper, village);
+        }
         helper.succeed();
     }
 }

@@ -262,7 +262,31 @@ public final class RepManager {
         return source != null && source.canRaiseNegative();
     }
 
+    /**
+     * Lower a player's standing with a village they have stayed away from, never below {@code floor}. Renown is
+     * left alone. Works whether or not the player is online.
+     *
+     * @return the change applied (zero or negative)
+     */
+    public static int fade(MinecraftServer server, UUID player, ResourceLocation faction, int amount, int floor) {
+        int old = getRep(server, player, faction);
+        if (amount <= 0 || old <= floor) {
+            return 0;
+        }
+        int target = Math.max(floor, old - amount);
+        ServerPlayer online = server.getPlayerList().getPlayer(player);
+        if (online != null) {
+            return applyValue(online, faction, old, target, RepSources.NEGLECT, false);
+        }
+        return changeOffline(server, player, faction, target - old);
+    }
+
     private static int applyValue(ServerPlayer player, ResourceLocation faction, int old, int target, ResourceLocation reason) {
+        return applyValue(player, faction, old, target, reason, true);
+    }
+
+    private static int applyValue(ServerPlayer player, ResourceLocation faction, int old, int target, ResourceLocation reason,
+                                  boolean shareRenown) {
         MinecraftServer server = player.server;
         FealtyWorldData world = FealtyWorldData.get(server);
         PlayerRepData data = world.player(player.getUUID());
@@ -274,7 +298,7 @@ public final class RepManager {
             return 0;
         }
 
-        double share = Factions.renownShare(server, faction);
+        double share = shareRenown ? Factions.renownShare(server, faction) : 0;
         if (share != 0) {
             adjustRenown(player, data, delta * share);
         }

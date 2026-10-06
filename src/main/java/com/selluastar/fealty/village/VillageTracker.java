@@ -16,6 +16,8 @@ import com.selluastar.fealty.lordship.LordshipManager;
 import com.selluastar.fealty.mail.MailService;
 import com.selluastar.fealty.network.Feedback;
 import com.selluastar.fealty.outlaw.TyrantEvent;
+import com.selluastar.fealty.rep.FealtyCalendar;
+import com.selluastar.fealty.rep.FealtyWorldData;
 import com.selluastar.fealty.rep.RepManager;
 import com.selluastar.fealty.trade.VillagerBehaviors;
 
@@ -68,6 +70,7 @@ public final class VillageTracker {
             return;
         }
         VillageRecord record = village.get();
+        noteVisit(player, record);
         VillagerBehaviors.tickNearPlayer(player, record);
         TyrantEvent.onPlayerInVillage(player, record);
         // Village-wide upkeep runs at most every 5 seconds per village, whoever is there.
@@ -79,6 +82,15 @@ public final class VillageTracker {
             LordshipManager.tickVillage(level, record);
             GarrisonManager.tickVillage(level, record);
             MailService.tickVillage(level, record);
+        }
+    }
+
+    /** Remember the day the player was last in a village, so standing only fades with villages they stay away from. */
+    private static void noteVisit(ServerPlayer player, VillageRecord village) {
+        long day = FealtyCalendar.day(player.server);
+        Long last = RepManager.data(player).visited().put(village.id(), day);
+        if (last == null || last != day) {
+            FealtyWorldData.get(player.server).setDirty();
         }
     }
 
