@@ -12,6 +12,7 @@ import com.selluastar.fealty.data.FealtyDataManager;
 import com.selluastar.fealty.entity.VillageElderEntity;
 import com.selluastar.fealty.lordship.LordshipManager;
 import com.selluastar.fealty.network.OpenQuestScreenPayload;
+import com.selluastar.fealty.crime.Fines;
 import com.selluastar.fealty.network.OpenQuestScreenPayload.ActionEntry;
 import com.selluastar.fealty.network.QuestActionPayload;
 import com.selluastar.fealty.quest.type.RestoreElderObjective;
@@ -71,6 +72,7 @@ public final class ElderGiver implements QuestGiver {
         List<ActionEntry> actions = new ArrayList<>();
         ChainManager.rumoursAction(player, record).ifPresent(actions::add);
         LordshipManager.elderActions(player, record, actions);
+        Fines.elderAction(player, record).ifPresent(actions::add);
 
         return new OpenQuestScreenPayload(entity.getId(), entity.getDisplayName(),
                 Component.translatable("fealty.elder.subtitle", record.name()), greeting, rep, true, quests, actions);
@@ -109,6 +111,7 @@ public final class ElderGiver implements QuestGiver {
             case QuestActionPayload.TURN_IN -> QuestManager.turnIn(player, record.id(), ResourceLocation.tryParse(argument));
             case QuestActionPayload.ABANDON -> QuestManager.abandon(player, record.id(), ResourceLocation.tryParse(argument), true);
             case ChainManager.ACTION_RUMOURS -> ChainManager.startFromElder(player, record);
+            case Fines.ELDER_ACTION -> Fines.payElder(player, record, entity);
             default -> LordshipManager.handleElderAction(player, record, action);
         }
     }

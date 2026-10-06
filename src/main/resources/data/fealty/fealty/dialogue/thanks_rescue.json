@@ -1,0 +1,30 @@
+{
+  "context": "thanks_rescue",
+  "lines": [
+    {
+      "text": {
+        "translate": "fealty.line.thanks_rescue.any.0"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.thanks_rescue.any.1"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.thanks_rescue.any.2"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.thanks_rescue.any.3"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.thanks_rescue.any.4"
+      }
+    }
+  ]
+}

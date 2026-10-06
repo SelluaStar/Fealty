@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import com.selluastar.fealty.advancement.FealtyEvents;
 import com.selluastar.fealty.api.GuardStance;
 import com.selluastar.fealty.config.FealtyConfig;
+import com.selluastar.fealty.crime.Fines;
 import com.selluastar.fealty.entity.VillageGuardEntity;
 import com.selluastar.fealty.guard.Garrison;
 import com.selluastar.fealty.guard.GarrisonManager;
@@ -31,6 +32,8 @@ final class GuardDialogue {
     static final String ESCORT = "escort";
     static final String END_ESCORT = "end_escort";
     static final String REPORT = "report";
+    static final String PAY_FINE = "pay_fine";
+    static final String REFUSE_FINE = "refuse_fine";
 
     private GuardDialogue() {
     }
@@ -47,6 +50,10 @@ final class GuardDialogue {
 
     static DialogueNode node(ServerPlayer player, VillageGuardEntity guard, @Nullable Component reply) {
         Optional<VillageRecord> village = village(player, guard);
+        Optional<Fines.Pending> fine = Fines.owed(player, guard);
+        if (fine.isPresent()) {
+            return fineNode(player, guard, village, fine.get(), reply);
+        }
         Component text = reply != null ? reply
                 : DialogueLines.pick("guard_greet", SpeakerContext.of(guard, player), guard.getRandom(), player.getDisplayName())
                 .orElse(Component.translatable("fealty.guard.dialogue.fallback"));
@@ -80,6 +87,21 @@ final class GuardDialogue {
         return new DialogueNode(guard.getDisplayName(), subtitle, text, options);
     }
 
+    /** A guard waiting on a fine talks of nothing else. */
+    private static DialogueNode fineNode(ServerPlayer player, VillageGuardEntity guard, Optional<VillageRecord> village, Fines.Pending fine,
+                                         @Nullable Component reply) {
+        Component text = reply != null ? reply : Component.translatable("fealty.guard.fine.text", fine.cost());
+        List<DialogueNode.Option> options = new ArrayList<>();
+        Component pay = Component.translatable("fealty.guard.option.pay_fine", fine.cost());
+        options.add(Fines.canPay(player, fine.cost()) ? DialogueNode.Option.of(PAY_FINE, pay, "coin")
+                : DialogueNode.Option.disabled(PAY_FINE, pay, "coin", Component.translatable("fealty.fine.short", fine.cost())));
+        options.add(DialogueNode.Option.of(REFUSE_FINE, Component.translatable("fealty.guard.option.refuse_fine"), "sword"));
+        guard.getLookControl().setLookAt(player);
+        Component rank = Component.translatable("fealty.guard.rank." + guard.rank().getSerializedName());
+        Component subtitle = village.<Component>map(v -> Component.translatable("fealty.guard.dialogue.subtitle", rank, v.name())).orElse(rank);
+        return new DialogueNode(guard.getDisplayName(), subtitle, text, options);
+    }
+
     static void handle(ServerPlayer player, VillageGuardEntity guard, String option) {
         Optional<VillageRecord> village = village(player, guard);
         boolean lord = village.map(v -> v.lord().isLord(player.getUUID())).orElse(false);
@@ -87,6 +109,16 @@ final class GuardDialogue {
         long now = guard.level().getGameTime();
         String answer = null;
         switch (option) {
+            case PAY_FINE -> {
+                if (Fines.payGuard(player, guard)) {
+                    answer = "fealty.guard.reply.fine_paid";
+                }
+            }
+            case REFUSE_FINE -> {
+                Fines.refuse(player, guard);
+                DialogueService.end(player);
+                return;
+            }
             case FOLLOW -> {
                 if (lord) {
                     orders.set(GuardOrders.Mode.FOLLOW, player.getUUID(), 0, null);

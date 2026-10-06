@@ -34,6 +34,11 @@ public final class FealtyConfig {
     public static final ModConfigSpec.IntValue EMPTY_VILLAGE_GUARDS;
     public static final ModConfigSpec.IntValue SERGEANT_POPULATION;
     public static final ModConfigSpec.IntValue GUARD_RESPAWN_DAYS;
+    public static final ModConfigSpec.BooleanValue FINES;
+    public static final ModConfigSpec.IntValue GUARD_FINE_SECONDS;
+    public static final ModConfigSpec.DoubleValue WORD_TRAVELS_SHARE;
+    public static final ModConfigSpec.IntValue WORD_TRAVELS_RADIUS;
+    public static final ModConfigSpec.BooleanValue HATED_ARRIVAL;
     public static final ModConfigSpec.IntValue HORN_SUMMON_COUNT;
     public static final ModConfigSpec.IntValue HORN_ARRIVAL_SECONDS;
     public static final ModConfigSpec.BooleanValue VILLAGE_MAILBOXES;
@@ -139,6 +144,16 @@ public final class FealtyConfig {
         SERGEANT_POPULATION = b.comment("Villages with at least this many villagers also have a sergeant (0 for never)")
                 .defineInRange("sergeant_population", 12, 0, 1000);
         GUARD_RESPAWN_DAYS = b.comment("Days before a fallen guard is replaced").defineInRange("guard_respawn_days", 1, 0, 100);
+        FINES = b.comment("Guards demand a fine for minor and moderate crimes, and elders let players pay to clear their name")
+                .define("fines", true);
+        GUARD_FINE_SECONDS = b.comment("Seconds a player has to pay a guard's fine before the watch turns hostile")
+                .defineInRange("guard_fine_seconds", 60, 5, 3600);
+        WORD_TRAVELS_SHARE = b.comment("Share of a witnessed crime's reputation loss that reaches other villages the next day (0 to turn off)")
+                .defineInRange("word_travels_share", 0.25, 0.0, 1.0);
+        WORD_TRAVELS_RADIUS = b.comment("Villages within this many blocks of a crime hear of it")
+                .defineInRange("word_travels_radius", 1000, 0, 100000);
+        HATED_ARRIVAL = b.comment("When a Hated player walks into a village, the bell tolls and villagers run for their homes")
+                .define("hated_arrival", true);
         b.pop();
 
         b.comment("Threats, trades and gifts").push("trade");

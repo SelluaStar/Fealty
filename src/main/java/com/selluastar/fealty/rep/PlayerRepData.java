@@ -31,8 +31,9 @@ public final class PlayerRepData {
             ResourceLocation.CODEC.listOf().optionalFieldOf("flags", List.of()).forGetter(d -> List.copyOf(d.flags)),
             Codec.STRING.optionalFieldOf("name", "").forGetter(d -> d.name),
             UUIDUtil.STRING_CODEC.listOf().optionalFieldOf("untracked_quests", List.of()).forGetter(d -> List.copyOf(d.untracked)),
-            Codec.unboundedMap(Codec.STRING, Codec.INT).optionalFieldOf("stats", Map.of()).forGetter(d -> d.stats)
-    ).apply(i, (rep, renown, heat, wanted, tallies, quests, chains, aggro, warned, nextBounty, flags, name, untracked, stats) -> {
+            Codec.unboundedMap(Codec.STRING, Codec.INT).optionalFieldOf("stats", Map.of()).forGetter(d -> d.stats),
+            Codec.unboundedMap(ResourceLocation.CODEC, Codec.INT).optionalFieldOf("gossip", Map.of()).forGetter(d -> d.gossip)
+    ).apply(i, (rep, renown, heat, wanted, tallies, quests, chains, aggro, warned, nextBounty, flags, name, untracked, stats, gossip) -> {
         PlayerRepData d = new PlayerRepData();
         d.rep.putAll(rep);
         d.renown = renown;
@@ -48,6 +49,7 @@ public final class PlayerRepData {
         d.name = name;
         d.untracked.addAll(untracked);
         d.stats.putAll(stats);
+        d.gossip.putAll(gossip);
         return d;
     }));
 
@@ -65,6 +67,7 @@ public final class PlayerRepData {
     String name = "";
     final Set<UUID> untracked = new HashSet<>();
     final Map<String, Integer> stats = new HashMap<>();
+    final Map<ResourceLocation, Integer> gossip = new HashMap<>();
 
     public Map<ResourceLocation, Integer> rep() {
         return rep;
@@ -166,6 +169,11 @@ public final class PlayerRepData {
         return stats;
     }
 
+    /** Reputation loss waiting to spread from each village where the player was seen committing crimes. */
+    public Map<ResourceLocation, Integer> gossip() {
+        return gossip;
+    }
+
     public Tally tally(ResourceLocation faction, ResourceLocation source, long day) {
         Tally t = tallies.computeIfAbsent(faction + "|" + source, k -> new Tally(day, 0, 0));
         if (t.day != day) {
@@ -192,6 +200,11 @@ public final class PlayerRepData {
             this.day = day;
             this.count = count;
             this.applied = applied;
+        }
+
+        /** How much the source has changed reputation today (as a positive number). */
+        public int applied() {
+            return applied;
         }
     }
 }

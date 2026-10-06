@@ -1,0 +1,35 @@
+{
+  "context": "hated_arrival",
+  "lines": [
+    {
+      "text": {
+        "translate": "fealty.line.hated_arrival.any.0"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.hated_arrival.any.1"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.hated_arrival.any.2"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.hated_arrival.any.3"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.hated_arrival.any.4"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.hated_arrival.any.5"
+      }
+    }
+  ]
+}

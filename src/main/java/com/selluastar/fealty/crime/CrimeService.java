@@ -95,7 +95,10 @@ public final class CrimeService {
             HeatManager.addHeat(player, faction, settings.heat());
         }
         if (settings.alertsGuards()) {
-            GuardManager.alert(level, player, faction, pos, severity);
+            GuardManager.alert(level, player, faction, pos, severity, crime, change);
+        }
+        if (!witnesses.isEmpty()) {
+            Gossip.heard(player, faction, change);
         }
         for (LivingEntity witness : witnesses) {
             if (witness instanceof AbstractVillager villager) {

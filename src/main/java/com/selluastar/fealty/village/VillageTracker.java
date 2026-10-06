@@ -8,17 +8,27 @@ import java.util.UUID;
 
 import com.selluastar.fealty.Fealty;
 import com.selluastar.fealty.api.RepTier;
+import com.selluastar.fealty.config.FealtyConfig;
+import com.selluastar.fealty.data.TierManager;
+import com.selluastar.fealty.dialogue.Speech;
 import com.selluastar.fealty.guard.GarrisonManager;
 import com.selluastar.fealty.lordship.LordshipManager;
 import com.selluastar.fealty.mail.MailService;
+import com.selluastar.fealty.network.Feedback;
 import com.selluastar.fealty.outlaw.TyrantEvent;
 import com.selluastar.fealty.rep.RepManager;
 import com.selluastar.fealty.trade.VillagerBehaviors;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.village.poi.PoiManager;
+import net.minecraft.world.entity.ai.village.poi.PoiTypes;
+import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.level.block.BellBlock;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
@@ -30,6 +40,9 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 public final class VillageTracker {
     private static final Map<UUID, ResourceLocation> CURRENT = new HashMap<>();
     private static final Map<ResourceLocation, Long> LAST_VILLAGE_TICK = new HashMap<>();
+    /** When each village last raised the alarm at each Hated player. */
+    private static final Map<String, Long> ALARMS = new HashMap<>();
+    private static final int ALARM_COOLDOWN = 6000;
 
     private VillageTracker() {
     }
@@ -84,6 +97,41 @@ public final class VillageTracker {
             message = Component.translatable("fealty.village.enter", village.name(), tierName, rep);
         }
         player.displayClientMessage(message, true);
+        if (tier.rank() <= TierManager.hated().rank() && !village.lord().isLord(player.getUUID()) && FealtyConfig.HATED_ARRIVAL.get()) {
+            hatedArrival(player, village);
+        }
+    }
+
+    /** A Hated player walks in: the bell tolls, villagers run for their homes and someone cries the alarm. */
+    private static void hatedArrival(ServerPlayer player, VillageRecord village) {
+        if (player.isCreative() || player.isSpectator()) {
+            return;
+        }
+        ServerLevel level = player.serverLevel();
+        long now = level.getGameTime();
+        String key = player.getUUID() + "|" + village.id();
+        Long last = ALARMS.get(key);
+        if (last != null && now - last < ALARM_COOLDOWN) {
+            return;
+        }
+        ALARMS.put(key, now);
+        Optional<BlockPos> bell = level.getPoiManager().findClosest(h -> h.is(PoiTypes.MEETING), village.center(), 48, PoiManager.Occupancy.ANY);
+        if (bell.isPresent() && level.getBlockState(bell.get()).getBlock() instanceof BellBlock block) {
+            block.attemptToRing(level, bell.get(), null);
+        }
+        Villager crier = null;
+        for (Villager villager : level.getEntitiesOfClass(Villager.class, player.getBoundingBox().inflate(32), v -> v.isAlive() && !v.isSleeping())) {
+            villager.getBrain().setMemoryWithExpiry(MemoryModuleType.HURT_BY, player.damageSources().playerAttack(player), 300);
+            villager.getBrain().setMemoryWithExpiry(MemoryModuleType.HURT_BY_ENTITY, player, 300);
+            if (crier == null || villager.distanceToSqr(player) < crier.distanceToSqr(player)) {
+                crier = villager;
+            }
+        }
+        if (crier != null) {
+            Speech.bark(crier, "hated_arrival", player, 0);
+        }
+        Feedback.banner(player, Component.translatable("fealty.banner.hated_arrival"),
+                Component.translatable("fealty.banner.hated_arrival.detail", village.name()), 0xC0392B, "skull");
     }
 
     /** The village the player is standing in, as of their last check (once a second). */
@@ -100,6 +148,7 @@ public final class VillageTracker {
     public static void onServerStopped(ServerStoppedEvent event) {
         CURRENT.clear();
         LAST_VILLAGE_TICK.clear();
+        ALARMS.clear();
         VillageResolver.clearCache();
     }
 }

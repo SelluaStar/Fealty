@@ -121,6 +121,9 @@ final class GiverDialogue {
         if (action.contains("horn")) {
             return "horn";
         }
+        if (action.equals("fine")) {
+            return "coin";
+        }
         if (action.contains("combine") || action.contains("writ")) {
             return "seal";
         }

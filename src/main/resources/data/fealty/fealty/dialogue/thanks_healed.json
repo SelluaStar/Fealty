@@ -1,0 +1,25 @@
+{
+  "context": "thanks_healed",
+  "lines": [
+    {
+      "text": {
+        "translate": "fealty.line.thanks_healed.any.0"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.thanks_healed.any.1"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.thanks_healed.any.2"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.thanks_healed.any.3"
+      }
+    }
+  ]
+}

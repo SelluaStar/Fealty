@@ -37,4 +37,29 @@ public final class Inventories {
         player.getInventory().setChanged();
         return true;
     }
+
+    public static int count(Player player, Item item) {
+        return player.getInventory().countItem(item);
+    }
+
+    /** Remove {@code amount} of the item if the player has that many. @return whether they were removed */
+    public static boolean take(Player player, Item item, int amount) {
+        if (amount <= 0) {
+            return true;
+        }
+        if (count(player, item) < amount) {
+            return false;
+        }
+        int left = amount;
+        for (int i = 0; i < player.getInventory().getContainerSize() && left > 0; i++) {
+            ItemStack stack = player.getInventory().getItem(i);
+            if (stack.is(item)) {
+                int take = Math.min(left, stack.getCount());
+                stack.shrink(take);
+                left -= take;
+            }
+        }
+        player.getInventory().setChanged();
+        return true;
+    }
 }

@@ -12,6 +12,7 @@ import com.selluastar.fealty.api.GuardStance;
 import com.selluastar.fealty.api.RepTier;
 import com.selluastar.fealty.api.Severity;
 import com.selluastar.fealty.config.FealtyConfig;
+import com.selluastar.fealty.crime.Fines;
 import com.selluastar.fealty.dialogue.Speech;
 import com.selluastar.fealty.entity.VillageGuardEntity;
 import com.selluastar.fealty.mixin.MobAccessor;
@@ -122,9 +123,12 @@ public final class GuardManager {
 
     /**
      * A witnessed crime alerts guards nearby. Severe crimes, or any crime by a player the guards already watch,
-     * turn them hostile; otherwise they warn first and attack on a repeat offence.
+     * turn them hostile; otherwise they warn first (a Fealty guard demands a fine) and attack on a repeat offence.
+     *
+     * @param change what the crime cost the player with the village
      */
-    public static void alert(ServerLevel level, ServerPlayer player, ResourceLocation faction, BlockPos pos, Severity severity) {
+    public static void alert(ServerLevel level, ServerPlayer player, ResourceLocation faction, BlockPos pos, Severity severity,
+                             ResourceLocation crime, int change) {
         int radius = FealtyConfig.GUARD_ALERT_RADIUS.get();
         List<Mob> guards = level.getEntitiesOfClass(Mob.class, new AABB(pos).inflate(radius), m -> m.isAlive() && isGuard(m));
         if (guards.isEmpty()) {
@@ -163,7 +167,11 @@ public final class GuardManager {
             player.sendSystemMessage(Component.translatable("fealty.guard.attack", speaker.getDisplayName()));
         } else {
             data.warnedAt().put(faction, now);
-            player.sendSystemMessage(Component.translatable("fealty.guard.warning", speaker.getDisplayName()));
+            boolean fined = speaker instanceof VillageGuardEntity guard && FactionResolver.factionOf(guard).filter(faction::equals).isPresent()
+                    && Fines.issue(player, guard, faction, crime, change);
+            if (!fined) {
+                player.sendSystemMessage(Component.translatable("fealty.guard.warning", speaker.getDisplayName()));
+            }
         }
         FealtyWorldData.get(level.getServer()).setDirty();
     }

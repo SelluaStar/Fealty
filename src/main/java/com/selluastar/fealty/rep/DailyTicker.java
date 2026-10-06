@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import com.selluastar.fealty.Fealty;
 import com.selluastar.fealty.config.FealtyConfig;
+import com.selluastar.fealty.crime.Gossip;
 import com.selluastar.fealty.lordship.LordshipManager;
 import com.selluastar.fealty.network.FealtyNetwork;
 import com.selluastar.fealty.outlaw.HeatManager;
@@ -39,6 +40,7 @@ public final class DailyTicker {
 
     private static void onNewDay(MinecraftServer server, long day) {
         LordshipManager.onNewDay(server, day);
+        Gossip.spread(server);
         if (FealtyConfig.NEGATIVE_REP_DECAY.get()) {
             int heal = FealtyConfig.NEGATIVE_REP_DECAY_PER_DAY.get();
             FealtyWorldData world = FealtyWorldData.get(server);
