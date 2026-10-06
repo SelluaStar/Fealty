@@ -3,6 +3,7 @@ package com.selluastar.fealty.quest.type;
 import java.util.List;
 import java.util.Optional;
 
+import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -20,6 +21,7 @@ import com.selluastar.fealty.war.Strongholds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.saveddata.maps.MapDecorationTypes;
 
@@ -40,13 +42,13 @@ public record FreeCaptivesObjective(int count, int searchRadius) implements Ques
 
     @Override
     public boolean start(QuestContext ctx) {
-        BlockPos camp = ctx.level().findNearestMapStructure(Scouting.CAMPS, ctx.anchor(), searchRadius, false);
+        Pair<BlockPos, ResourceLocation> camp = Scouting.nearest(ctx.level(), Scouting.CAMPS, ctx.anchor(), searchRadius);
         if (camp == null) {
             ctx.player().sendSystemMessage(Component.translatable("fealty.quest.free_captives.none"));
             return false;
         }
-        Strongholds.Entry entry = Strongholds.get(ctx.server()).register(ctx.level(), camp, Stronghold.Kind.CAMP, Strongholds.PILLAGER_CAMP, 20,
-                StrongholdEvent.Discovered.How.SCOUTED);
+        Strongholds.Entry entry = Strongholds.get(ctx.server()).register(ctx.level(), camp.getFirst(), Stronghold.Kind.CAMP, camp.getSecond(),
+                Scouting.radiusOf(ctx.level(), camp.getSecond()), StrongholdEvent.Discovered.How.SCOUTED);
         ctx.state().put("camp", NbtUtils.writeBlockPos(entry.pos()));
         ItemStack map = Maps.treasureMap(ctx.level(), entry.pos(), MapDecorationTypes.RED_X, Component.translatable("item.fealty.captive_map"));
         Maps.give(ctx.player(), map);

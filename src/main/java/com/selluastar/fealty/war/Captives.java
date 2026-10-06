@@ -77,38 +77,42 @@ public final class Captives {
     }
 
     /**
-     * Put one or two captives in each cage of a camp.
+     * Put captives in a stronghold's cages, shared out among them.
      *
      * @param cages where each cage's captives stand, from the War Banner
      * @return how many were placed
      */
-    public static int fillCages(ServerLevel level, BlockPos banner, BlockPos[] cages) {
+    public static int fillCages(ServerLevel level, BlockPos banner, List<BlockPos> cages, int count) {
         RandomSource random = level.getRandom();
         ResourceLocation home = nearestVillage(level, banner).map(VillageRecord::id).orElse(null);
-        int placed = 0;
+        List<BlockPos> open = new ArrayList<>();
         for (BlockPos offset : cages) {
             BlockPos pos = banner.offset(offset);
-            if (!level.isLoaded(pos) || !level.getBlockState(pos).isAir()) {
+            if (level.isLoaded(pos) && level.getBlockState(pos).isAir()) {
+                open.add(pos);
+            }
+        }
+        if (open.isEmpty()) {
+            return 0;
+        }
+        int placed = 0;
+        for (int i = 0; i < count; i++) {
+            BlockPos pos = open.get(i % open.size());
+            Villager villager = EntityType.VILLAGER.create(level);
+            if (villager == null) {
                 continue;
             }
-            int count = 1 + random.nextInt(2);
-            for (int i = 0; i < count; i++) {
-                Villager villager = EntityType.VILLAGER.create(level);
-                if (villager == null) {
-                    continue;
-                }
-                villager.moveTo(pos.getX() + 0.3 + random.nextDouble() * 0.4, pos.getY(), pos.getZ() + 0.3 + random.nextDouble() * 0.4,
-                        random.nextFloat() * 360F, 0);
-                villager.finalizeSpawn(level, level.getCurrentDifficultyAt(pos), MobSpawnType.STRUCTURE, null);
-                makeCaptive(villager, banner, home);
-                villager.setCustomName(Component.literal(VillageNames.personName(random)));
-                if (NeoForge.EVENT_BUS.post(new CaptiveEvent.Taken(villager, banner, home)).isCanceled()) {
-                    villager.discard();
-                    continue;
-                }
-                level.addFreshEntity(villager);
-                placed++;
+            villager.moveTo(pos.getX() + 0.3 + random.nextDouble() * 0.4, pos.getY(), pos.getZ() + 0.3 + random.nextDouble() * 0.4,
+                    random.nextFloat() * 360F, 0);
+            villager.finalizeSpawn(level, level.getCurrentDifficultyAt(pos), MobSpawnType.STRUCTURE, null);
+            makeCaptive(villager, banner, home);
+            villager.setCustomName(Component.literal(VillageNames.personName(random)));
+            if (NeoForge.EVENT_BUS.post(new CaptiveEvent.Taken(villager, banner, home)).isCanceled()) {
+                villager.discard();
+                continue;
             }
+            level.addFreshEntity(villager);
+            placed++;
         }
         return placed;
     }

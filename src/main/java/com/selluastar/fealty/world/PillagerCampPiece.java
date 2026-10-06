@@ -4,6 +4,7 @@ import com.selluastar.fealty.Fealty;
 import com.selluastar.fealty.block.WarBannerBlockEntity;
 import com.selluastar.fealty.registry.ModBlocks;
 import com.selluastar.fealty.registry.ModStructures;
+import com.selluastar.fealty.war.Strongholds;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -38,8 +39,9 @@ public class PillagerCampPiece extends ScatteredFeaturePiece {
     /** Where each cage's captives stand, from the War Banner. */
     public static final BlockPos[] CAGES = {new BlockPos(17 - BANNER_X, 0, 5 - BANNER_Z), new BlockPos(23 - BANNER_X, 0, 22 - BANNER_Z)};
 
-    public PillagerCampPiece(int x, int z, Direction orientation) {
-        super(ModStructures.PILLAGER_CAMP_PIECE.get(), x, 64, z, SIZE, 14, SIZE, orientation);
+    public PillagerCampPiece(int x, int y, int z, Direction orientation) {
+        super(ModStructures.PILLAGER_CAMP_PIECE.get(), x, y, z, SIZE, 14, SIZE, orientation);
+        heightPosition = y;
     }
 
     public PillagerCampPiece(CompoundTag tag) {
@@ -77,7 +79,7 @@ public class PillagerCampPiece extends ScatteredFeaturePiece {
         b.set(BANNER_X, 0, BANNER_Z, ModBlocks.WAR_BANNER.get().defaultBlockState());
         BlockPos flag = b.pos(BANNER_X, 0, BANNER_Z);
         if (b.inChunk(flag) && level.getBlockEntity(flag) instanceof WarBannerBlockEntity banner) {
-            banner.setNatural();
+            banner.setNatural(Strongholds.PILLAGER_CAMP, CAGES);
         }
 
         tent(b, 3, 3, Blocks.GRAY_WOOL.defaultBlockState(), Blocks.GRAY_CARPET.defaultBlockState(), random, true);
@@ -129,7 +131,7 @@ public class PillagerCampPiece extends ScatteredFeaturePiece {
     }
 
     /** An A-frame tent five blocks long, open at the south end. */
-    private static void tent(BuildHelper b, int x, int z, BlockState wool, BlockState carpet, RandomSource random, boolean chest) {
+    static void tent(BuildHelper b, int x, int z, BlockState wool, BlockState carpet, RandomSource random, boolean chest) {
         for (int dz = 0; dz < 5; dz++) {
             b.set(x, 0, z + dz, wool);
             b.set(x + 4, 0, z + dz, wool);
@@ -147,7 +149,7 @@ public class PillagerCampPiece extends ScatteredFeaturePiece {
     }
 
     /** A 5x5 iron-bar cage with a plank roof; captives stand in the middle (see {@link #CAGES}). */
-    private static void cage(BuildHelper b, int x, int z) {
+    static void cage(BuildHelper b, int x, int z) {
         BlockState bars = Blocks.IRON_BARS.defaultBlockState();
         BlockState post = Blocks.DARK_OAK_LOG.defaultBlockState();
         b.fill(x, -1, z, x + 4, -1, z + 4, Blocks.SPRUCE_PLANKS.defaultBlockState());

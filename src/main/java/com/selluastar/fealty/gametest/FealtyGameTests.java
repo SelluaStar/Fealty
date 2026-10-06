@@ -1,11 +1,11 @@
 package com.selluastar.fealty.gametest;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
 import com.mojang.authlib.GameProfile;
-
 import com.selluastar.fealty.Fealty;
 import com.selluastar.fealty.api.RepSources;
 import com.selluastar.fealty.api.RepTiers;
@@ -38,8 +38,8 @@ import com.selluastar.fealty.quest.QuestManager;
 import com.selluastar.fealty.quest.RepQuestDefinition;
 import com.selluastar.fealty.registry.ModAttachments;
 import com.selluastar.fealty.registry.ModBlocks;
-import com.selluastar.fealty.rep.Factions;
 import com.selluastar.fealty.rep.DailyTicker;
+import com.selluastar.fealty.rep.Factions;
 import com.selluastar.fealty.rep.FealtyCalendar;
 import com.selluastar.fealty.rep.FealtyWorldData;
 import com.selluastar.fealty.rep.RepManager;
@@ -48,15 +48,19 @@ import com.selluastar.fealty.trade.VillagerInteractions;
 import com.selluastar.fealty.trade.VillagerMemory;
 import com.selluastar.fealty.village.SitePlanner;
 import com.selluastar.fealty.village.StructureMatcher;
-import com.selluastar.fealty.village.VillageRecord;
 import com.selluastar.fealty.village.VillageLayout;
 import com.selluastar.fealty.village.VillageLayouts;
+import com.selluastar.fealty.village.VillageRecord;
 import com.selluastar.fealty.village.VillageResolver;
 import com.selluastar.fealty.war.Campaigns;
 import com.selluastar.fealty.war.Captives;
+import com.selluastar.fealty.war.StrongholdKind;
+import com.selluastar.fealty.war.StrongholdKinds;
 import com.selluastar.fealty.war.StrongholdNames;
+import com.selluastar.fealty.war.StrongholdTrait;
 import com.selluastar.fealty.war.Strongholds;
 
+import io.netty.channel.embedded.EmbeddedChannel;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -89,11 +93,9 @@ import net.minecraft.world.level.levelgen.structure.BuiltinStructures;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.pools.StructurePoolElement;
 import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
-import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
-
-import io.netty.channel.embedded.EmbeddedChannel;
 
 /** In-game tests for the core rules. Run with {@code ./gradlew runGameTestServer}. */
 @GameTestHolder(Fealty.MOD_ID)
@@ -647,7 +649,9 @@ public final class FealtyGameTests {
         Strongholds strongholds = Strongholds.get(server);
         Strongholds.Entry target = strongholds.register(helper.getLevel(), village.center().offset(300, 0, 0), Stronghold.Kind.OUTPOST,
                 ResourceLocation.withDefaultNamespace("pillager_outpost"), 24, StrongholdEvent.Discovered.How.SCOUTED);
+        target.setTrait(StrongholdTrait.NONE);
         try {
+            check(helper, Campaigns.raidCost(target.threat()) == 12, "an outpost with no trait costs the config's 12 emeralds");
             village.garrison().setPopulation(16);
             RepManager.meet(player, village.id());
             RepManager.set(player, village.id(), 80, RepSources.COMMAND);
@@ -689,6 +693,107 @@ public final class FealtyGameTests {
             forget(helper, village);
         }
         helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void strongholdKindsMatchTheirStructures(GameTestHelper helper) {
+        MinecraftServer server = helper.getLevel().getServer();
+        for (String kind : List.of("scout_camp", "camp", "outpost", "fort", "castle")) {
+            check(helper, StrongholdKinds.byId(Fealty.id(kind)).isPresent(), "the " + kind + " kind should load");
+        }
+        check(helper, StrongholdKinds.idFor(server, Fealty.id("pillager_scout_camp")).equals(Fealty.id("scout_camp")), "scout camps");
+        check(helper, StrongholdKinds.idFor(server, Fealty.id("pillager_camp")).equals(Fealty.id("camp")), "camps");
+        check(helper, StrongholdKinds.idFor(server, Fealty.id("pillager_fort")).equals(Fealty.id("fort")), "forts");
+        check(helper, StrongholdKinds.idFor(server, Fealty.id("pillager_castle")).equals(Fealty.id("castle")), "castles");
+        check(helper, StrongholdKinds.idFor(server, ResourceLocation.withDefaultNamespace("pillager_outpost")).equals(Fealty.id("outpost")),
+                "vanilla outposts");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void traitsAddThreat(GameTestHelper helper) {
+        Strongholds strongholds = Strongholds.get(helper.getLevel().getServer());
+        Strongholds.Entry scouts = stronghold(helper, strongholds, 0, "pillager_scout_camp");
+        Strongholds.Entry castle = stronghold(helper, strongholds, 1, "pillager_castle");
+        try {
+            scouts.setTrait(StrongholdTrait.NONE);
+            check(helper, scouts.threat() == 1, "a plain scout camp is one skull, got " + scouts.threat());
+            scouts.setTrait(StrongholdTrait.VETERANS);
+            check(helper, scouts.threat() == 2, "veterans make a scout camp two skulls, got " + scouts.threat());
+            castle.setTrait(StrongholdTrait.NONE);
+            check(helper, castle.threat() == 4, "a plain castle is four skulls, got " + castle.threat());
+            castle.setTrait(StrongholdTrait.EVOKER);
+            check(helper, castle.threat() == 5, "a castle with a trait is five skulls, got " + castle.threat());
+            check(helper, castle.view(0).threat() == 5 && castle.view(0).tier().equals(Fealty.id("castle")),
+                    "the API record carries the threat and tier");
+        } finally {
+            strongholds.remove(scouts);
+            strongholds.remove(castle);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void raidsScaleWithThreat(GameTestHelper helper) {
+        VillageRecord village = testVillage(helper, BlockPos.ZERO, "Skullford");
+        try {
+            int base = FealtyConfig.RAID_COST_EMERALDS.get();
+            check(helper, Campaigns.raidCost(2) == base, "an ordinary camp costs the config's emeralds");
+            check(helper, Campaigns.raidCost(1) < base && Campaigns.raidCost(4) > base && Campaigns.raidCost(5) > Campaigns.raidCost(4),
+                    "a raid costs more the more skulls");
+            int warband = FealtyConfig.WARBAND_SIZE.get();
+            check(helper, Campaigns.warbandSize(1) == warband && Campaigns.warbandSize(3) == warband + 2 && Campaigns.warbandSize(5) == warband + 4,
+                    "more guards march against a harder stronghold");
+            village.garrison().setPopulation(400);
+            check(helper, Campaigns.levySize(village, 4) > Campaigns.levySize(village, 1), "more militia are called up against a castle");
+        } finally {
+            forget(helper, village);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void castlesAreHeldInForce(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(52000, 70, 52000);
+        Map<EntityType<?>, Integer> castle = StrongholdKinds.get(Fealty.id("castle")).plan(StrongholdTrait.NONE, pos);
+        check(helper, castle.getOrDefault(EntityType.EVOKER, 0) >= 2, "a castle keeps evokers");
+        check(helper, castle.getOrDefault(EntityType.RAVAGER, 0) >= 1, "a castle keeps a ravager");
+        StrongholdKind scouts = StrongholdKinds.get(Fealty.id("scout_camp"));
+        check(helper, !scouts.plan(StrongholdTrait.NONE, pos).containsKey(EntityType.EVOKER), "a plain scout camp has no evoker");
+        check(helper, scouts.plan(StrongholdTrait.EVOKER, pos).getOrDefault(EntityType.EVOKER, 0) == 1, "an evoker trait adds one");
+        check(helper, scouts.plan(StrongholdTrait.BEASTS, pos).getOrDefault(EntityType.RAVAGER, 0) == 1, "war beasts add a ravager");
+        check(helper, castle.equals(StrongholdKinds.get(Fealty.id("castle")).plan(StrongholdTrait.NONE, pos)),
+                "a stronghold musters the same garrison every time");
+        check(helper, StrongholdKinds.get(Fealty.id("castle")).defenders(StrongholdTrait.NONE, pos)
+                > scouts.defenders(StrongholdTrait.NONE, pos), "a castle has more defenders than a scout camp");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void spoilsScaleWithThreat(GameTestHelper helper) {
+        Strongholds strongholds = Strongholds.get(helper.getLevel().getServer());
+        Strongholds.Entry scouts = stronghold(helper, strongholds, 2, "pillager_scout_camp");
+        Strongholds.Entry castle = stronghold(helper, strongholds, 3, "pillager_castle");
+        try {
+            scouts.setTrait(StrongholdTrait.NONE);
+            castle.setTrait(StrongholdTrait.NONE);
+            check(helper, castle.spoils() > scouts.spoils(), "razing a castle wins more tribute than a scout camp");
+            check(helper, castle.peaceDays() > scouts.peaceDays(), "razing a castle wins a longer peace");
+            check(helper, castle.menaceRange() > scouts.menaceRange(), "a castle menaces villages further off");
+            int plain = scouts.spoils();
+            scouts.setTrait(StrongholdTrait.BEASTS);
+            check(helper, scouts.spoils() == plain + 1, "a trait adds to the spoils");
+        } finally {
+            strongholds.remove(scouts);
+            strongholds.remove(castle);
+        }
+        helper.succeed();
+    }
+
+    /** A stronghold far from everything, built as a Fealty structure. */
+    private static Strongholds.Entry stronghold(GameTestHelper helper, Strongholds strongholds, int slot, String structure) {
+        return strongholds.register(helper.getLevel(), new BlockPos(60000 + slot * 500, 70, 60000), Stronghold.Kind.CAMP, Fealty.id(structure),
+                24, StrongholdEvent.Discovered.How.SCOUTED);
     }
 
     @GameTest(template = "empty", timeoutTicks = 200)

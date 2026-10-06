@@ -3,7 +3,11 @@ package com.selluastar.fealty.war;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
+import org.jetbrains.annotations.Nullable;
+
+import com.mojang.datafixers.util.Pair;
 import com.selluastar.fealty.Fealty;
 import com.selluastar.fealty.api.FealtyTags;
 import com.selluastar.fealty.api.Stronghold;
@@ -14,6 +18,7 @@ import com.selluastar.fealty.village.VillageRecord;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
+import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
@@ -117,26 +122,51 @@ public final class Scouting {
             if (found.size() >= MAX_FOUND) {
                 break;
             }
-            noteFound(level, strongholds, center, range, found, level.findNearestMapStructure(CAMPS, origin, chunks, false),
-                    Stronghold.Kind.CAMP);
-            noteFound(level, strongholds, center, range, found,
-                    level.findNearestMapStructure(FealtyTags.Structures.PILLAGER_OUTPOSTS, origin, chunks, false), Stronghold.Kind.OUTPOST);
+            noteFound(level, strongholds, center, range, found, nearest(level, CAMPS, origin, chunks), Stronghold.Kind.CAMP);
+            noteFound(level, strongholds, center, range, found, nearest(level, FealtyTags.Structures.PILLAGER_OUTPOSTS, origin, chunks),
+                    Stronghold.Kind.OUTPOST);
         }
         return found;
     }
 
     private static void noteFound(ServerLevel level, Strongholds strongholds, BlockPos center, int range, List<Strongholds.Entry> found,
-                                  BlockPos pos, Stronghold.Kind kind) {
-        if (pos == null || Strongholds.flatDistSqr(pos, center) > (double) range * range) {
+                                  @Nullable Pair<BlockPos, ResourceLocation> find, Stronghold.Kind kind) {
+        if (find == null || Strongholds.flatDistSqr(find.getFirst(), center) > (double) range * range) {
             return;
         }
+        BlockPos pos = find.getFirst();
         boolean known = strongholds.at(level.dimension(), pos, 64) != null;
         BlockPos ground = level.isLoaded(pos) ? level.getHeightmapPos(Heightmap.Types.WORLD_SURFACE, pos) : pos;
-        ResourceLocation structure = kind == Stronghold.Kind.CAMP ? Strongholds.PILLAGER_CAMP : ResourceLocation.withDefaultNamespace("pillager_outpost");
-        Strongholds.Entry entry = strongholds.register(level, ground, kind, structure, kind == Stronghold.Kind.CAMP ? 20 : 24,
+        Strongholds.Entry entry = strongholds.register(level, ground, kind, find.getSecond(), radiusOf(level, find.getSecond()),
                 StrongholdEvent.Discovered.How.SCOUTED);
         if (!known && !found.contains(entry)) {
             found.add(entry);
         }
+    }
+
+    /**
+     * The nearest structure in a tag, as the map knows it: where it is and which structure it is (a camp may turn out
+     * to be a fort or a castle).
+     */
+    @Nullable
+    public static Pair<BlockPos, ResourceLocation> nearest(ServerLevel level, TagKey<Structure> tag, BlockPos origin, int chunks) {
+        if (!level.getServer().getWorldData().worldGenOptions().generateStructures()) {
+            return null;
+        }
+        Optional<HolderSet.Named<Structure>> set = level.registryAccess().registryOrThrow(Registries.STRUCTURE).getTag(tag);
+        if (set.isEmpty()) {
+            return null;
+        }
+        Pair<BlockPos, Holder<Structure>> found = level.getChunkSource().getGenerator().findNearestMapStructure(level, set.get(), origin,
+                chunks, false);
+        if (found == null) {
+            return null;
+        }
+        return Pair.of(found.getFirst(), found.getSecond().unwrapKey().map(ResourceKey::location).orElse(Strongholds.PILLAGER_CAMP));
+    }
+
+    /** How far a stronghold built as this structure reaches from its heart. */
+    public static int radiusOf(ServerLevel level, ResourceLocation structure) {
+        return StrongholdKinds.get(StrongholdKinds.idFor(level.getServer(), structure)).radius();
     }
 }

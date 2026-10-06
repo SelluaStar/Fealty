@@ -180,7 +180,8 @@ public final class FealtyConfig {
         VILLAGERS_PER_GUARD = b.comment("One guard for every this many villagers").defineInRange("villagers_per_guard", 4, 1, 100);
         MIN_GUARDS = b.comment("Fewest guards a village with villagers keeps").defineInRange("min_guards", 2, 0, 32);
         MAX_GUARDS = b.comment("Most guards a village keeps (not counting the sergeant)").defineInRange("max_guards", 6, 0, 32);
-        EMPTY_VILLAGE_GUARDS = b.comment("Guards for a village with no villagers (a castle, say)").defineInRange("empty_village_guards", 3, 0, 32);
+        EMPTY_VILLAGE_GUARDS = b.comment("Guards for a village with no villagers (a castle, say)")
+                .defineInRange("empty_village_guards", 3, 0, 32);
         SERGEANT_POPULATION = b.comment("Villages with at least this many villagers also have a sergeant (0 for never)")
                 .defineInRange("sergeant_population", 12, 0, 1000);
         GUARD_RESPAWN_DAYS = b.comment("Days before a fallen guard is replaced").defineInRange("guard_respawn_days", 1, 0, 100);
@@ -263,21 +264,28 @@ public final class FealtyConfig {
         b.comment("War: pillager camps and the lord's raids on them").push("war");
         WAR_RANGE = b.comment("How far from the village (blocks) a lord's warband will march, and its scouts search")
                 .defineInRange("war_range", 1200, 100, 10000);
-        WARBAND_SIZE = b.comment("Most of the village's guards that march with the lord").defineInRange("warband_size", 6, 1, 32);
+        WARBAND_SIZE = b.comment("Most of the village's guards that march with the lord (two more against a stronghold of 3 skulls, four more against 5)")
+                .defineInRange("warband_size", 6, 1, 32);
         LEVY_PER_VILLAGERS = b.comment("One villager is called up as militia for every this many villagers")
                 .defineInRange("levy_per_villagers", 8, 1, 1000);
-        MAX_LEVY = b.comment("Most militia called up for one raid").defineInRange("max_levy", 4, 0, 32);
-        RAID_COST_EMERALDS = b.comment("Emeralds to raise the warband (arms and food)").defineInRange("raid_cost_emeralds", 12, 0, 640);
-        SCOUT_COST_EMERALDS = b.comment("Emeralds to send scouts out (once a day per village)").defineInRange("scout_cost_emeralds", 8, 0, 640);
+        MAX_LEVY = b.comment("Most militia called up for one raid (half as many again against a stronghold of 4 skulls or more)")
+                .defineInRange("max_levy", 4, 0, 32);
+        RAID_COST_EMERALDS = b.comment("Emeralds to raise the warband against an ordinary camp (2 skulls); a quarter less or more per skull")
+                .defineInRange("raid_cost_emeralds", 12, 0, 640);
+        SCOUT_COST_EMERALDS = b.comment("Emeralds to send scouts out (once a day per village)")
+                .defineInRange("scout_cost_emeralds", 8, 0, 640);
         CAMPAIGN_COOLDOWN_DAYS = b.comment("Days a village rests between raids").defineInRange("campaign_cooldown_days", 3, 0, 1000);
         CAMPAIGN_DAYS = b.comment("Days a lord has to win a raid once it is declared").defineInRange("campaign_days", 3, 1, 1000);
-        RAZE_DAYS = b.comment("Days a razed stronghold stays empty").defineInRange("raze_days", 10, 0, 10000);
-        PEACE_DAYS = b.comment("Days of peace (no bandit raids, no pillager patrols) a victory wins the village")
+        RAZE_DAYS = b.comment("Days a razed stronghold stays empty, unless its stronghold kind says otherwise")
+                .defineInRange("raze_days", 10, 0, 10000);
+        PEACE_DAYS = b.comment("Days of peace (no bandit raids, no pillager patrols) a victory wins the village, unless its stronghold kind says otherwise")
                 .defineInRange("peace_days", 7, 0, 10000);
-        WAR_SPOILS = b.comment("Rolls of the tribute table a victory adds to the village treasury").defineInRange("war_spoils", 2, 0, 100);
+        WAR_SPOILS = b.comment("Rolls of the tribute table a victory adds to the village treasury, unless its stronghold kind says otherwise (one more for a trait)")
+                .defineInRange("war_spoils", 2, 0, 100);
         PILLAGER_MENACE = b.comment("Pillager camps and outposts left standing send raids against villages near them")
                 .define("pillager_menace", true);
-        MENACE_RANGE = b.comment("How far (blocks) a stronghold's menace reaches").defineInRange("menace_range", 600, 50, 10000);
+        MENACE_RANGE = b.comment("How far (blocks) a stronghold's menace reaches, unless its stronghold kind says otherwise")
+                .defineInRange("menace_range", 600, 50, 10000);
         MENACE_MIN_DAYS = b.comment("Fewest days between a stronghold's raids on one village").defineInRange("menace_min_days", 5, 1, 1000);
         MENACE_MAX_DAYS = b.comment("Most days between a stronghold's raids on one village").defineInRange("menace_max_days", 8, 1, 1000);
         b.pop();
@@ -309,7 +317,8 @@ public final class FealtyConfig {
         VILLAGE_MAILBOXES = b.comment("Every village gets a mailbox when first visited (put back once a day if it goes missing)")
                 .define("village_mailboxes", true);
         MAIL_BASE_DELAY = b.comment("Seconds every letter takes to arrive").defineInRange("base_delay_seconds", 30, 0, 86400);
-        MAIL_DELAY_PER_100 = b.comment("Extra seconds for every 100 blocks a letter travels").defineInRange("seconds_per_100_blocks", 6, 0, 3600);
+        MAIL_DELAY_PER_100 = b.comment("Extra seconds for every 100 blocks a letter travels")
+                .defineInRange("seconds_per_100_blocks", 6, 0, 3600);
         MAIL_MAX_DELAY = b.comment("Longest a letter takes, in seconds").defineInRange("max_delay_seconds", 600, 0, 86400);
         b.pop();
 
@@ -327,14 +336,16 @@ public final class FealtyConfig {
         HEAT_BOUNTY = b.comment("Heat at which bounty hunters are sent (wanted level 1)").defineInRange("heat_bounty", 20, 1, 100000);
         HEAT_TYRANT = b.comment("Heat at which the Tyrant Lord event starts (wanted level 2)").defineInRange("heat_tyrant", 60, 1, 100000);
         HEAT_MAX = b.comment("Heat cap").defineInRange("heat_max", 100, 1, 100000);
-        BOUNTY_INTERVAL = b.comment("Ticks between bounty hunter parties while wanted").defineInRange("bounty_interval", 12000, 200, 2400000);
+        BOUNTY_INTERVAL = b.comment("Ticks between bounty hunter parties while wanted")
+                .defineInRange("bounty_interval", 12000, 200, 2400000);
         ENABLE_TYRANT = b.comment("Enable the Tyrant Lord boss event").define("enable_tyrant", true);
         CAMP_EXCLUSION_RADIUS = b.comment("Only one bandit camp within this many blocks is manned; the others stand empty")
                 .defineInRange("camp_exclusion_radius", 768, 0, 100000);
         BANDIT_RAIDS = b.comment("Manned bandit camps raid nearby villages while a player is there").define("bandit_raids", true);
         RAID_RANGE = b.comment("Camps raid villages within this many blocks").defineInRange("raid_range", 640, 16, 100000);
         RAID_MIN_DAYS = b.comment("Fewest days between raids on one village").defineInRange("raid_min_days", 3, 1, 1000);
-        RAID_MAX_DAYS = b.comment("Most days between raids on one village (while a player is there)").defineInRange("raid_max_days", 5, 1, 1000);
+        RAID_MAX_DAYS = b.comment("Most days between raids on one village (while a player is there)")
+                .defineInRange("raid_max_days", 5, 1, 1000);
         b.pop();
 
         SPEC = b.build();

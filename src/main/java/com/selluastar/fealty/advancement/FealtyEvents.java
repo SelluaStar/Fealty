@@ -47,6 +47,8 @@ public final class FealtyEvents {
     public static final ResourceLocation STRONGHOLD_RAZED = Fealty.id("stronghold_razed");
     public static final ResourceLocation CAPTIVE_FREED = Fealty.id("captive_freed");
     public static final ResourceLocation LIBERATOR = Fealty.id("liberator");
+    public static final ResourceLocation CASTLE_STORMED = Fealty.id("castle_stormed");
+    public static final ResourceLocation LIONS_DEN = Fealty.id("lions_den");
 
     private FealtyEvents() {
     }

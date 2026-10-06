@@ -109,6 +109,48 @@ only when its mod `mr_epic_structuresvillages` is loaded) and a catch-all `defau
 other town and castle mod. Elders already placed keep their home; `/rep village rehome <village>` moves one to the
 best building the village has now (stand in the village so it is loaded).
 
+## stronghold_kinds/
+
+`data/<ns>/fealty/stronghold_kinds/<name>.json` sorts pillager strongholds into kinds. The kind that matches a
+stronghold's structure (highest `priority` first) decides how dangerous it is, who holds it and what razing it
+wins. Fealty ships `scout_camp`, `camp`, `outpost`, `fort` and `castle`.
+
+```json
+{
+  "structures": ["fealty:pillager_fort"],
+  "priority": 0,
+  "name": "fealty.stronghold.fort",
+  "threat": 3,
+  "garrison": [
+    {"entity": "minecraft:pillager", "min": 5, "max": 7},
+    {"entity": "minecraft:vindicator", "min": 3, "max": 4},
+    {"entity": "minecraft:evoker", "min": 1, "max": 1}
+  ],
+  "captain": "minecraft:pillager",
+  "captives_min": 4, "captives_max": 6,
+  "spoils": 4, "peace_days": 10, "raze_days": 14,
+  "menace_range": 800, "menace_omen": 2,
+  "traits": {"none": 4, "veterans": 3, "evoker": 1, "beasts": 2},
+  "radius": 24
+}
+```
+
+| Field | Meaning |
+|---|---|
+| `structures` | Structure ids and `#tags` it covers |
+| `priority` | Higher wins when two kinds match (default 0; `outpost` is -10 so a pack's kind for a modded outpost wins) |
+| `name` | Translation key, given the stronghold's name, such as `"%s Fort"` |
+| `threat` | Skulls before its trait, 1-5 (default 2) |
+| `garrison`, `captain` | Who a War Banner keeps there (strongholds without a banner, like outposts, are held by whoever is there) |
+| `captives_min`, `captives_max` | Captives in its cages |
+| `spoils`, `peace_days`, `raze_days`, `menace_range` | Override the war config (-1 or left out: use the config) |
+| `menace_omen` | Raid Omen level of the raids it sends (1-5, default 1) |
+| `traits` | Weights for `none`, `veterans`, `evoker` and `beasts` (default only `none`) |
+| `radius` | How far its ground reaches from its heart (default 20) |
+
+To make a modded structure raidable, add it to `#fealty:pillager_outposts` (or `#fealty:pillager_camps` if it has a
+War Banner) and give it a kind.
+
 ## rep_actions/ and crimes/
 
 The file id must match a registered rep source (see `RepSources` in the API). Mods can register more.
@@ -241,7 +283,7 @@ Objective types for the war (see also `fealty:explore` with `"structure": "#feal
 
 - `fealty:raid_stronghold`: the lord's raid, started from the Village Hall. No fields; the quest
   `fealty:war/raid_stronghold` sets its reward (default 15 rep, 5 Renown, `quest_rewards/war_spoils`).
-- `fealty:free_captives` `{ "count": 2, "search_radius": 50 }`: free captives held in the nearest pillager camp
+- `fealty:free_captives` `{ "count": 2, "search_radius": 50 }`: free captives held in the nearest pillager camp, fort or castle
   (comes with a map).
 
 ## quest_chains/
@@ -349,6 +391,7 @@ Each marketeer stocks five offers picked by weight, and restocks daily.
 | `fealty:chests/village_coffer` | Village coffers |
 | `fealty:chests/bandit_camp` | Bandit camp chests |
 | `fealty:chests/pillager_camp` | Pillager camp barrels and chests |
+| `fealty:chests/pillager_scout_camp`, `pillager_fort`, `pillager_castle` | Scout camp, fort and castle stores |
 | `fealty:quest_rewards/war_spoils` | The lord's reward for a won raid |
 | `fealty:chests/hidden_hamlet` | The Keeper's lodge |
 | `fealty:chests/hamlet_cottage` | Hamlet cottages |
@@ -375,7 +418,7 @@ Each marketeer stocks five offers picked by weight, and restocks daily.
 | `#fealty:elder_villages` (structure) | Villages that get an elder |
 | `#fealty:hidden_hamlets` (structure) | Where the chain's map leads |
 | `#fealty:bandit_camps` (structure) | Bandit camps |
-| `#fealty:pillager_camps` (structure) | Fealty's pillager camps |
+| `#fealty:pillager_camps` (structure) | Fealty's pillager strongholds with a War Banner: scout camps, camps, forts, castles |
 | `#fealty:pillager_outposts` (structure) | Pillager outposts (vanilla's and `#c:pillager_outposts`) |
 | `#fealty:pillager_strongholds` (structure) | Everything a lord can raid (the two above) |
 | `#fealty:stronghold_defenders` (entity type) | Mobs that defend a stronghold (default `#minecraft:raiders`) |

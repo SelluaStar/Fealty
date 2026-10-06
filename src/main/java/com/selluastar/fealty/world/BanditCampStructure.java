@@ -20,7 +20,7 @@ public class BanditCampStructure extends Structure {
     @Override
     protected Optional<GenerationStub> findGenerationPoint(GenerationContext context) {
         return FlatGround.find(context, BanditCampPiece.SIZE, 5).map(pos -> new GenerationStub(pos, builder ->
-                builder.addPiece(new BanditCampPiece(pos.getX(), pos.getZ(), Direction.NORTH))));
+                builder.addPiece(new BanditCampPiece(pos.getX(), pos.getY(), pos.getZ(), Direction.NORTH))));
     }
 
     @Override

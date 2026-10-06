@@ -23,6 +23,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 public class LordshipScreen extends Screen {
     private static final int WIDTH = 320;
     private static final int HEIGHT = 210;
+    private static final int THREAT_PIP = 8;
     private static final String[] TAXES = {"none", "light", "fair", "heavy", "crushing"};
     /** Gifts of love, in rose. */
     private static final int LOVE = 0xFFC2185B;
@@ -144,9 +145,10 @@ public class LordshipScreen extends Screen {
                 : row == null ? Component.translatable("fealty.hall.war.pick")
                 : row.razedDays() > 0 ? Component.translatable("fealty.hall.war.razed", row.razedDays())
                 : war.cooldown() > 0 ? Component.translatable("fealty.war.cooldown", war.cooldown())
-                : Component.translatable("fealty.hall.war.raise_hint", war.ready(), war.levy());
+                : Component.translatable("fealty.hall.war.raise_hint", row.warband(), row.levy());
         boolean ready = data.near() && row != null && row.razedDays() == 0 && war.cooldown() == 0;
-        addRenderableWidget(new FealtyButton(left + WIDTH - 134, top + HEIGHT - 32, 120, 20, Component.translatable("fealty.hall.war.raise", war.raidCost()),
+        int cost = row != null ? row.cost() : war.raidCost();
+        addRenderableWidget(new FealtyButton(left + WIDTH - 134, top + HEIGHT - 32, 120, 20, Component.translatable("fealty.hall.war.raise", cost),
                 b -> {
                     if (strongholds.selected() >= 0) {
                         send("declare", strongholds.selected());
@@ -308,6 +310,17 @@ public class LordshipScreen extends Screen {
         return Component.translatable("fealty.compass." + COMPASS[Math.floorMod(Math.round(bearing / 45.0F), 8)]);
     }
 
+    /** Skulls for a stronghold's threat, one to five, dark for the threat and faint for the rest when asked. */
+    private static void threat(GuiGraphics g, int threat, int x, int y, boolean empties) {
+        for (int i = 0; i < 5; i++) {
+            if (i < threat) {
+                Ui.icon(g, "skull", x + i * THREAT_PIP, y, THREAT_PIP - 1);
+            } else if (empties) {
+                Ui.sprite(g, Ui.icon("skull"), x + i * THREAT_PIP, y, THREAT_PIP - 1, THREAT_PIP - 1, 0.25F);
+            }
+        }
+    }
+
     private void renderWar(GuiGraphics g, int mouseX, int mouseY) {
         OpenHallPayload.War war = data.war();
         if (war.rows().isEmpty()) {
@@ -324,12 +337,14 @@ public class LordshipScreen extends Screen {
                 }
                 Ui.icon(gg, row.kind() == 0 ? "skull" : "shield", x + 2, y + 4, 12);
                 int nameColor = row.razedDays() > 0 ? Ui.FADED : Ui.INK;
-                gg.drawString(font, Ui.fit(font, row.name(), w - 70), x + 18, y + 3, nameColor, false);
+                gg.drawString(font, Ui.fit(font, row.name(), w - 22 - THREAT_PIP * 5), x + 18, y + 3, nameColor, false);
+                threat(gg, row.threat(), x + w - 3 - THREAT_PIP * 5, y + 3, false);
                 Component where = Component.translatable("fealty.hall.war.where", row.distance(), compass(row.bearing()));
                 Ui.scaled(gg, font, where, x + 18, y + 13, 0.7F, Ui.FADED, false);
                 Component state = row.razedDays() > 0 ? Component.translatable("fealty.hall.war.razed_short", row.razedDays())
                         : row.captives() > 0 ? Component.translatable("fealty.hall.war.captives_short", row.captives()) : Component.empty();
-                gg.drawString(font, state, x + w - 4 - font.width(state), y + 7, row.razedDays() > 0 ? Ui.GREEN : Ui.RED, false);
+                Ui.scaled(gg, font, state, x + w - 3 - (int) (font.width(state) * 0.7F), y + 13, 0.7F,
+                        row.razedDays() > 0 ? Ui.GREEN : Ui.RED, false);
             });
         }
         int rx = left + 200;
@@ -348,21 +363,38 @@ public class LordshipScreen extends Screen {
             if (row == null) {
                 Ui.wrapped(g, font, Component.translatable("fealty.hall.war.intro"), rx, y, rw, Ui.FADED, 8);
             } else {
-                Ui.wrapped(g, font, row.name().copy().withStyle(st -> st.withBold(true)), rx, y, rw, Ui.INK, 2);
-                Component kind = Component.translatable(row.kind() == 0 ? "fealty.hall.war.kind.camp" : "fealty.hall.war.kind.outpost");
-                Ui.wrapped(g, font, kind, rx, y + 22, rw, Ui.FADED, 2);
-                Ui.wrapped(g, font, Component.translatable("fealty.hall.war.where_long", row.distance(), compass(row.bearing())), rx, y + 44, rw,
-                        Ui.INK, 2);
+                int dy = y;
+                dy += Ui.wrapped(g, font, row.name().copy().withStyle(st -> st.withBold(true)), rx, dy, rw, Ui.INK, 2) + 1;
+                threat(g, row.threat(), rx, dy, true);
+                boolean traited = !row.trait().equals("none");
+                Component trait = Component.translatable("fealty.stronghold.trait." + row.trait());
+                Ui.scaled(g, font, Ui.fit(font, trait, (int) ((rw - THREAT_PIP * 5 - 4) / 0.75F)), rx + THREAT_PIP * 5 + 4, dy + 1, 0.75F,
+                        traited ? Ui.RED : Ui.FADED, false);
+                dy += 11;
+                if (traited) {
+                    dy += Ui.wrapped(g, font, Component.translatable("fealty.stronghold.trait." + row.trait() + ".desc"), rx, dy, rw, 0.7F,
+                            Ui.FADED, 2) + 2;
+                }
+                dy += Ui.wrapped(g, font, Component.translatable("fealty.hall.war.where_long", row.distance(), compass(row.bearing())), rx, dy, rw,
+                        0.75F, Ui.INK, 2) + 2;
+                Component held = row.defenders() > 0 ? Component.translatable("fealty.hall.war.defenders", row.defenders())
+                        : Component.translatable("fealty.hall.war.defenders_unknown");
+                dy += Ui.wrapped(g, font, held, rx, dy, rw, 0.75F, Ui.INK, 2) + 2;
                 if (row.captives() > 0) {
-                    Ui.wrapped(g, font, Component.translatable("fealty.hall.war.captives", row.captives()), rx, y + 66, rw, Ui.RED, 2);
+                    dy += Ui.wrapped(g, font, Component.translatable("fealty.hall.war.captives", row.captives()), rx, dy, rw, 0.75F, Ui.RED, 2) + 2;
                 }
                 if (row.razedDays() > 0) {
-                    Ui.wrapped(g, font, Component.translatable("fealty.hall.war.razed", row.razedDays()), rx, y + 88, rw, Ui.GREEN, 2);
+                    Ui.wrapped(g, font, Component.translatable("fealty.hall.war.razed", row.razedDays()), rx, dy, rw, 0.75F, Ui.GREEN, 2);
+                } else {
+                    Ui.wrapped(g, font, Component.translatable("fealty.hall.war.rewards", row.spoils(), row.peaceDays()), rx, dy, rw, 0.75F,
+                            Ui.GREEN, 3);
                 }
             }
         }
         int sy = top + HEIGHT - 48;
-        Component band = Component.translatable("fealty.hall.war.warband", war.ready(), war.levy());
+        OpenHallPayload.StrongholdRow picked = war.phase() > 0 ? null : strongholds.selectedItem();
+        Component band = picked != null ? Component.translatable("fealty.hall.war.warband_for", picked.warband(), picked.levy())
+                : Component.translatable("fealty.hall.war.warband", war.ready(), war.levy());
         Ui.scaled(g, font, band, left + 16, sy, 0.75F, Ui.FADED, false);
         if (war.peaceDays() > 0) {
             Component peace = Component.translatable("fealty.hall.war.peace", war.peaceDays());

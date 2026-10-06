@@ -1,0 +1,19 @@
+{
+  "structures": [
+    "#fealty:pillager_outposts"
+  ],
+  "priority": -10,
+  "name": "fealty.stronghold.outpost",
+  "threat": 2,
+  "spoils": 2,
+  "peace_days": 7,
+  "raze_days": 10,
+  "menace_omen": 2,
+  "traits": {
+    "none": 6,
+    "veterans": 2,
+    "evoker": 1,
+    "beasts": 1
+  },
+  "radius": 24
+}

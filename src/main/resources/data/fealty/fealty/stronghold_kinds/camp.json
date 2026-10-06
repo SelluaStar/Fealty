@@ -1,0 +1,30 @@
+{
+  "structures": [
+    "fealty:pillager_camp"
+  ],
+  "name": "fealty.stronghold.camp",
+  "threat": 2,
+  "garrison": [
+    {
+      "entity": "minecraft:pillager",
+      "min": 3,
+      "max": 5
+    },
+    {
+      "entity": "minecraft:vindicator",
+      "min": 1,
+      "max": 2
+    }
+  ],
+  "captain": "minecraft:pillager",
+  "captives_min": 2,
+  "captives_max": 4,
+  "menace_omen": 1,
+  "traits": {
+    "none": 5,
+    "veterans": 2,
+    "evoker": 1,
+    "beasts": 2
+  },
+  "radius": 20
+}

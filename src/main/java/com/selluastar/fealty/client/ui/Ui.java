@@ -127,6 +127,16 @@ public final class Ui {
         return count * (font.lineHeight + 1);
     }
 
+    /** Draws wrapped text scaled around its top-left corner and returns the height used. */
+    public static int wrapped(GuiGraphics g, Font font, Component text, int x, int y, int width, float scale, int color, int maxLines) {
+        g.pose().pushPose();
+        g.pose().translate(x, y, 0);
+        g.pose().scale(scale, scale, 1.0F);
+        int height = wrapped(g, font, text, 0, 0, (int) (width / scale), color, maxLines);
+        g.pose().popPose();
+        return Mth.ceil(height * scale);
+    }
+
     /** Cuts text to fit a width, ending with an ellipsis. */
     public static Component fit(Font font, Component text, int width) {
         if (font.width(text) <= width) {

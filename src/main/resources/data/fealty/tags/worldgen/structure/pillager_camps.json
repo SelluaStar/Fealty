@@ -1,6 +1,9 @@
 {
   "replace": false,
   "values": [
-    "fealty:pillager_camp"
+    "fealty:pillager_scout_camp",
+    "fealty:pillager_camp",
+    "fealty:pillager_fort",
+    "fealty:pillager_castle"
   ]
 }

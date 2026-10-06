@@ -59,8 +59,11 @@ public final class WarTable {
             int distance = (int) Math.round(Math.sqrt((double) dx * dx + (double) dz * dz));
             int bearing = (int) Math.round((Math.toDegrees(Math.atan2(dx, -dz)) + 360.0) % 360.0);
             boolean target = campaign.map(c -> c.stronghold().equals(entry.id())).orElse(false);
+            int threat = entry.threat();
             rows.add(new OpenHallPayload.StrongholdRow(entry.name(), entry.kind() == Stronghold.Kind.CAMP ? 0 : 1, distance, bearing,
-                    entry.captives(), entry.razedDays(day), target));
+                    entry.captives(), entry.razedDays(day), target, threat, entry.trait().getSerializedName(), entry.defenders(),
+                    Campaigns.raidCost(threat), Campaigns.guardsReady(village, threat), Campaigns.levySize(village, threat), entry.spoils(),
+                    entry.peaceDays()));
             ids.add(entry.id());
         }
         SHOWN.put(lord.getUUID(), ids);

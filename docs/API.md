@@ -66,7 +66,11 @@ Faction ids: villages are `village:<dim namespace>/<dim path>/<x>_<z>`. Static f
 ### War: pillager strongholds and the lord's raids (API 1.1.0)
 
 A `Stronghold` record describes a target: `id`, `dimension`, `pos`, `kind` (`CAMP` for Fealty's pillager camps,
-`OUTPOST` for pillager outposts), `structure`, `name`, `razed`, `captives`.
+forts and castles, `OUTPOST` for pillager outposts), `structure`, `name`, `razed`, `captives`, and (API 1.2.0)
+`tier` (its stronghold kind's id, such as `fealty:scout_camp`, `fealty:camp`, `fealty:outpost`, `fealty:fort` or
+`fealty:castle`), `threat` (1 to 5 skulls, trait included) and `trait` (`none`, `veterans`, `evoker` or `beasts`).
+Every event below carries it, so a listener can tell a scout camp from a castle; `CampaignEvent.Declare.getCost()`
+and `CampaignEvent.Won`'s spoils, peace and raze days already include the threat's scaling.
 
 | Event | Fires when | You can |
 |---|---|---|

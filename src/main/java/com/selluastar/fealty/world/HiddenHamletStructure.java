@@ -20,7 +20,7 @@ public class HiddenHamletStructure extends Structure {
     @Override
     protected Optional<GenerationStub> findGenerationPoint(GenerationContext context) {
         return FlatGround.find(context, HiddenHamletPiece.SIZE, 6).map(pos -> new GenerationStub(pos, builder ->
-                builder.addPiece(new HiddenHamletPiece(context.random(), pos.getX(), pos.getZ(), Direction.NORTH))));
+                builder.addPiece(new HiddenHamletPiece(context.random(), pos.getX(), pos.getY(), pos.getZ(), Direction.NORTH))));
     }
 
     @Override

@@ -30,8 +30,9 @@ public class BanditCampPiece extends ScatteredFeaturePiece {
     public static final int SIZE = 25;
     private static final ResourceKey<LootTable> CAMP_LOOT = ResourceKey.create(Registries.LOOT_TABLE, Fealty.id("chests/bandit_camp"));
 
-    public BanditCampPiece(int x, int z, Direction orientation) {
-        super(ModStructures.BANDIT_CAMP_PIECE.get(), x, 64, z, SIZE, 10, SIZE, orientation);
+    public BanditCampPiece(int x, int y, int z, Direction orientation) {
+        super(ModStructures.BANDIT_CAMP_PIECE.get(), x, y, z, SIZE, 10, SIZE, orientation);
+        heightPosition = y;
     }
 
     public BanditCampPiece(CompoundTag tag) {

@@ -34,11 +34,14 @@ public record OpenHallPayload(String village, String name, int color, String lor
     }
 
     /**
-     * A pillager stronghold on the War tab: kind 0 for a camp, 1 for an outpost; distance and bearing (degrees from
-     * north, clockwise) from the village; captives known to be held; days left of a raze; and whether the lord's
-     * current raid is against it.
+     * A pillager stronghold on the War tab: kind 0 for a camp (or fort or castle), 1 for an outpost; distance and
+     * bearing (degrees from north, clockwise) from the village; captives known to be held; days left of a raze;
+     * whether the lord's current raid is against it; its threat (1 to 5 skulls) and trait; about how many defend it
+     * (0: whoever is there); what a raid on it costs; the guards and militia who would march against it; and the
+     * tribute and days of peace razing it wins.
      */
-    public record StrongholdRow(Component name, int kind, int distance, int bearing, int captives, int razedDays, boolean target) {
+    public record StrongholdRow(Component name, int kind, int distance, int bearing, int captives, int razedDays, boolean target,
+                                int threat, String trait, int defenders, int cost, int warband, int levy, int spoils, int peaceDays) {
     }
 
     /**
@@ -92,6 +95,14 @@ public record OpenHallPayload(String village, String name, int color, String lor
             buf.writeVarInt(row.captives());
             buf.writeVarInt(row.razedDays());
             buf.writeBoolean(row.target());
+            buf.writeVarInt(row.threat());
+            buf.writeUtf(row.trait(), 32);
+            buf.writeVarInt(row.defenders());
+            buf.writeVarInt(row.cost());
+            buf.writeVarInt(row.warband());
+            buf.writeVarInt(row.levy());
+            buf.writeVarInt(row.spoils());
+            buf.writeVarInt(row.peaceDays());
         }
         buf.writeVarInt(war.ready());
         buf.writeVarInt(war.levy());
@@ -142,7 +153,8 @@ public record OpenHallPayload(String village, String name, int color, String lor
         List<StrongholdRow> rows = new ArrayList<>();
         for (int i = Math.min(buf.readVarInt(), 64); i > 0; i--) {
             rows.add(new StrongholdRow(ComponentSerialization.TRUSTED_STREAM_CODEC.decode(buf), buf.readVarInt(), buf.readVarInt(),
-                    buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readBoolean()));
+                    buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readBoolean(), buf.readVarInt(), buf.readUtf(32), buf.readVarInt(),
+                    buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt()));
         }
         War war = new War(rows, buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readBoolean(),
                 ComponentSerialization.TRUSTED_STREAM_CODEC.decode(buf), buf.readVarInt(), buf.readVarInt(), buf.readVarInt());

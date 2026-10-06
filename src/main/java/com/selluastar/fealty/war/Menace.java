@@ -41,6 +41,8 @@ public final class Menace {
     private static final int CHANCE = 12;
     /** Ticks of Raid Omen before the raid begins (vanilla turns the omen into a raid when it runs out). */
     private static final int OMEN_TICKS = 300;
+    /** No stronghold menaces villages further off than this, whatever its kind says. */
+    private static final double MAX_REACH = 10000;
 
     private Menace() {
     }
@@ -96,15 +98,16 @@ public final class Menace {
                 && level.dimensionType().hasRaids() && level.getRaidAt(village.center()) == null;
     }
 
-    /** The nearest stronghold standing within reach of a village. */
+    /** The nearest stronghold standing whose menace reaches a village (a castle's reaches further than a scout camp's). */
     public static Optional<Strongholds.Entry> menaceOf(ServerLevel level, VillageRecord village, long day) {
-        List<Strongholds.Entry> near = Strongholds.get(level.getServer()).near(village.dimension(), village.center(), FealtyConfig.MENACE_RANGE.get());
-        return near.stream().filter(e -> !e.isRazed(day)).findFirst();
+        List<Strongholds.Entry> near = Strongholds.get(level.getServer()).near(village.dimension(), village.center(), MAX_REACH);
+        return near.stream().filter(e -> !e.isRazed(day)
+                && Strongholds.flatDistSqr(e.pos(), village.center()) <= (double) e.menaceRange() * e.menaceRange()).findFirst();
     }
 
     /** The pillagers of a stronghold march on a village. @return whether a raid was set off */
     public static boolean start(ServerLevel level, VillageRecord village, Strongholds.Entry stronghold, ServerPlayer player, long day) {
-        int omen = 1 + (day >= 30 ? 1 : 0) + (day >= 60 ? 1 : 0);
+        int omen = Math.min(5, stronghold.menaceOmen() + (day >= 30 ? 1 : 0) + (day >= 60 ? 1 : 0));
         MenaceRaidEvent event = NeoForge.EVENT_BUS.post(new MenaceRaidEvent(level, village.id(), stronghold.view(day), player, omen));
         if (event.isCanceled()) {
             return false;

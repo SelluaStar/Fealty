@@ -13,6 +13,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.selluastar.fealty.Fealty;
 import com.selluastar.fealty.api.Stronghold;
 import com.selluastar.fealty.api.event.StrongholdEvent;
+import com.selluastar.fealty.config.FealtyConfig;
 import com.selluastar.fealty.rep.RepManager;
 
 import net.minecraft.core.BlockPos;
@@ -53,12 +54,16 @@ public final class Strongholds extends SavedData {
                 Codec.INT.optionalFieldOf("radius", 24).forGetter(e -> e.radius),
                 Codec.LONG.optionalFieldOf("razed_until", -1L).forGetter(e -> e.razedUntil),
                 Codec.INT.optionalFieldOf("captives", 0).forGetter(e -> e.captives),
-                Codec.BOOL.optionalFieldOf("reoccupy_pending", false).forGetter(e -> e.reoccupyPending)
-        ).apply(i, (id, dimension, pos, kind, structure, stem, radius, razed, captives, pending) -> {
+                Codec.BOOL.optionalFieldOf("reoccupy_pending", false).forGetter(e -> e.reoccupyPending),
+                ResourceLocation.CODEC.optionalFieldOf("tier").forGetter(e -> Optional.ofNullable(e.tier)),
+                StrongholdTrait.CODEC.optionalFieldOf("trait").forGetter(e -> Optional.ofNullable(e.trait))
+        ).apply(i, (id, dimension, pos, kind, structure, stem, radius, razed, captives, pending, tier, trait) -> {
             Entry e = new Entry(id, dimension, pos, Stronghold.Kind.valueOf(kind), structure, stem, radius);
             e.razedUntil = razed;
             e.captives = captives;
             e.reoccupyPending = pending;
+            e.tier = tier.orElse(null);
+            e.trait = trait.orElse(null);
             return e;
         }));
 
@@ -66,13 +71,18 @@ public final class Strongholds extends SavedData {
         private final ResourceKey<Level> dimension;
         private BlockPos pos;
         private final Stronghold.Kind kind;
-        private final ResourceLocation structure;
+        private ResourceLocation structure;
         private final String stem;
         /** How far from {@link #pos} the stronghold's ground reaches. */
-        private final int radius;
+        private int radius;
         private long razedUntil = -1L;
         private int captives;
         private boolean reoccupyPending;
+        /** Its stronghold kind (found from the structure the first time it is needed). */
+        @Nullable
+        private ResourceLocation tier;
+        @Nullable
+        private StrongholdTrait trait;
 
         Entry(UUID id, ResourceKey<Level> dimension, BlockPos pos, Stronghold.Kind kind, ResourceLocation structure, String stem, int radius) {
             this.id = id;
@@ -110,7 +120,76 @@ public final class Strongholds extends SavedData {
         }
 
         public Component name() {
-            return Component.translatable(kind == Stronghold.Kind.CAMP ? "fealty.stronghold.camp" : "fealty.stronghold.outpost", stem);
+            return Component.translatable(strongholdKind().name(), stem);
+        }
+
+        /** Its kind's id. */
+        public ResourceLocation tier() {
+            return tier != null ? tier : StrongholdKinds.FALLBACK_ID;
+        }
+
+        public StrongholdKind strongholdKind() {
+            return StrongholdKinds.get(tier);
+        }
+
+        public StrongholdTrait trait() {
+            return trait != null ? trait : StrongholdTrait.NONE;
+        }
+
+        /** How dangerous it is: 1 to 5 skulls, its kind's threat plus its trait. */
+        public int threat() {
+            return Math.max(1, Math.min(5, strongholdKind().threat() + trait().threat()));
+        }
+
+        /** Find its kind from its structure, and roll its trait, if not done yet. @return whether anything changed */
+        boolean resolve(MinecraftServer server) {
+            boolean changed = false;
+            if (tier == null || StrongholdKinds.byId(tier).isEmpty()) {
+                ResourceLocation found = StrongholdKinds.idFor(server, structure);
+                changed = !found.equals(tier);
+                tier = found;
+            }
+            if (trait == null) {
+                trait = strongholdKind().rollTrait(pos);
+                changed = true;
+            }
+            return changed;
+        }
+
+        /** Rolls of tribute razing it adds to the treasury: its kind's (or the config's), one more for a trait. */
+        public int spoils() {
+            int base = strongholdKind().spoils() >= 0 ? strongholdKind().spoils() : FealtyConfig.WAR_SPOILS.get();
+            return base + (trait() != StrongholdTrait.NONE ? 1 : 0);
+        }
+
+        /** Days of peace razing it wins the village. */
+        public int peaceDays() {
+            return strongholdKind().peaceDays() >= 0 ? strongholdKind().peaceDays() : FealtyConfig.PEACE_DAYS.get();
+        }
+
+        /** Days it stays empty once razed. */
+        public int razeDays() {
+            return strongholdKind().razeDays() >= 0 ? strongholdKind().razeDays() : FealtyConfig.RAZE_DAYS.get();
+        }
+
+        /** How far (blocks) it menaces villages. */
+        public int menaceRange() {
+            return strongholdKind().menaceRange() >= 0 ? strongholdKind().menaceRange() : FealtyConfig.MENACE_RANGE.get();
+        }
+
+        /** The Raid Omen its raids bring before the days add to it: its kind's, one more for a trait. */
+        public int menaceOmen() {
+            return Math.min(5, strongholdKind().menaceOmen() + (trait() != StrongholdTrait.NONE ? 1 : 0));
+        }
+
+        /** About how many hold it, by its War Banner's muster (0 when it is whoever is there). */
+        public int defenders() {
+            return strongholdKind().defenders(trait(), pos);
+        }
+
+        /** For tests and commands: give it a trait. */
+        public void setTrait(StrongholdTrait trait) {
+            this.trait = trait;
         }
 
         public boolean isRazed(long day) {
@@ -145,15 +224,46 @@ public final class Strongholds extends SavedData {
             this.pos = exact.immutable();
         }
 
+        /**
+         * The War Banner knows what the stronghold really is, and where: scouts only see a camp on the map, which may
+         * be a fort or a castle. A different structure means a different kind, so the trait is rolled again.
+         *
+         * @return whether anything changed
+         */
+        boolean confirm(MinecraftServer server, BlockPos exact, ResourceLocation built, int reach) {
+            boolean changed = !pos.equals(exact) || !structure.equals(built) || radius != reach;
+            pos = exact.immutable();
+            radius = reach;
+            if (!structure.equals(built)) {
+                structure = built;
+                tier = null;
+                trait = null;
+                resolve(server);
+            }
+            return changed;
+        }
+
         public Stronghold view(long day) {
-            return new Stronghold(id, dimension, pos, kind, structure, name(), isRazed(day), captives);
+            return new Stronghold(id, dimension, pos, kind, structure, name(), isRazed(day), captives, tier(), threat(),
+                    trait().getSerializedName());
         }
     }
 
     private final List<Entry> entries = new ArrayList<>();
+    /** Whether every entry's kind and trait were worked out since loading. */
+    private boolean resolved;
 
     public static Strongholds get(MinecraftServer server) {
-        return server.overworld().getDataStorage().computeIfAbsent(FACTORY, NAME);
+        Strongholds data = server.overworld().getDataStorage().computeIfAbsent(FACTORY, NAME);
+        if (!data.resolved) {
+            data.resolved = true;
+            for (Entry entry : data.entries) {
+                if (entry.resolve(server)) {
+                    data.setDirty();
+                }
+            }
+        }
+        return data;
     }
 
     private static Strongholds load(CompoundTag tag, HolderLookup.Provider registries) {
@@ -183,13 +293,13 @@ public final class Strongholds extends SavedData {
                           StrongholdEvent.Discovered.How how) {
         Entry known = at(level.dimension(), pos, SAME_PLACE);
         if (known != null) {
-            if (how == StrongholdEvent.Discovered.How.GENERATED && !known.pos.equals(pos)) {
-                known.settle(pos);
+            if (how == StrongholdEvent.Discovered.How.GENERATED && known.confirm(level.getServer(), pos, structure, radius)) {
                 setDirty();
             }
             return known;
         }
         Entry entry = new Entry(UUID.randomUUID(), level.dimension(), pos, kind, structure, StrongholdNames.stem(pos), radius);
+        entry.resolve(level.getServer());
         entries.add(entry);
         setDirty();
         NeoForge.EVENT_BUS.post(new StrongholdEvent.Discovered(level.getServer(), entry.view(RepManager.day(level.getServer())), how));

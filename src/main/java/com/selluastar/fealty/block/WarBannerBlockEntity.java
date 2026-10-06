@@ -1,6 +1,8 @@
 package com.selluastar.fealty.block;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.jetbrains.annotations.Nullable;
@@ -12,6 +14,9 @@ import com.selluastar.fealty.registry.ModBlockEntities;
 import com.selluastar.fealty.rep.RepManager;
 import com.selluastar.fealty.war.Campaigns;
 import com.selluastar.fealty.war.Captives;
+import com.selluastar.fealty.war.StrongholdKind;
+import com.selluastar.fealty.war.StrongholdKinds;
+import com.selluastar.fealty.war.StrongholdTrait;
 import com.selluastar.fealty.war.Strongholds;
 import com.selluastar.fealty.war.WarDefenders;
 import com.selluastar.fealty.world.PillagerCampPiece;
@@ -21,15 +26,21 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.monster.PatrollingMonster;
 import net.minecraft.world.entity.raid.Raid;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -47,9 +58,10 @@ import net.minecraft.world.phys.AABB;
 public class WarBannerBlockEntity extends BlockEntity {
     /** Garrison members stay within this many blocks of the banner. */
     public static final int MEMBER_RANGE = 32;
-    private static final int PILLAGERS = 3;
-    private static final int VINDICATORS = 1;
     private boolean natural;
+    /** The stronghold this banner belongs to, and where its captives stand (from the banner). */
+    private ResourceLocation structure = Strongholds.PILLAGER_CAMP;
+    private List<BlockPos> cages = List.of(PillagerCampPiece.CAGES);
     private boolean populated;
     private boolean captivesPlaced;
     @Nullable
@@ -60,9 +72,11 @@ public class WarBannerBlockEntity extends BlockEntity {
         super(ModBlockEntities.WAR_BANNER.get(), pos, state);
     }
 
-    /** Set when the camp is generated: only generated banners keep a camp. */
-    public void setNatural() {
-        natural = true;
+    /** Set when the stronghold is generated: only generated banners keep one. */
+    public void setNatural(ResourceLocation structure, BlockPos... cages) {
+        this.natural = true;
+        this.structure = structure;
+        this.cages = List.of(cages);
         setChanged();
     }
 
@@ -80,8 +94,8 @@ public class WarBannerBlockEntity extends BlockEntity {
         }
         banner.lastCheck = now;
         Strongholds strongholds = Strongholds.get(server.getServer());
-        Strongholds.Entry entry = strongholds.register(server, pos, Stronghold.Kind.CAMP, Strongholds.PILLAGER_CAMP, 20,
-                StrongholdEvent.Discovered.How.GENERATED);
+        Strongholds.Entry entry = strongholds.register(server, pos, Stronghold.Kind.CAMP, banner.structure,
+                StrongholdKinds.get(StrongholdKinds.idFor(server.getServer(), banner.structure)).radius(), StrongholdEvent.Discovered.How.GENERATED);
         long day = RepManager.day(server.getServer());
         boolean razed = entry.isRazed(day);
         if (state.getValue(WarBannerBlock.RAZED) != razed) {
@@ -97,13 +111,13 @@ public class WarBannerBlockEntity extends BlockEntity {
         }
         if (!banner.populated) {
             banner.populated = true;
-            banner.man(server, pos, true);
+            man(server, pos, entry);
         } else if (server.getNearestPlayer(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, 64, false) == null) {
-            banner.man(server, pos, false);
+            man(server, pos, entry);
         }
         if (!banner.captivesPlaced) {
             banner.captivesPlaced = true;
-            int placed = Captives.fillCages(server, pos, PillagerCampPiece.CAGES);
+            int placed = Captives.fillCages(server, pos, banner.cages, entry.strongholdKind().captives(pos));
             entry.setCaptives(placed);
             strongholds.setDirty();
         }
@@ -123,23 +137,21 @@ public class WarBannerBlockEntity extends BlockEntity {
         return true;
     }
 
-    /** Fill the garrison up to strength: pillagers, vindicators and one captain. */
-    private void man(ServerLevel level, BlockPos pos, boolean initial) {
+    /** Fill the garrison up to its kind's strength (the same every time), with its captain and its trait's extras. */
+    private static void man(ServerLevel level, BlockPos pos, Strongholds.Entry entry) {
+        StrongholdKind kind = entry.strongholdKind();
+        StrongholdTrait trait = entry.trait();
         List<Mob> members = garrison(level, pos);
         RandomSource random = level.getRandom();
-        long pillagers = members.stream().filter(m -> m.getType() == EntityType.PILLAGER && !isCaptain(m)).count();
-        long vindicators = members.stream().filter(m -> m.getType() == EntityType.VINDICATOR).count();
-        boolean captain = members.stream().anyMatch(WarBannerBlockEntity::isCaptain);
-        int wantPillagers = PILLAGERS + (initial ? random.nextInt(3) : 1);
-        int wantVindicators = VINDICATORS + (initial ? random.nextInt(2) : 0);
-        for (long i = pillagers; i < wantPillagers; i++) {
-            spawn(level, pos, EntityType.PILLAGER, random, false);
+        int reach = Math.max(6, Math.min(16, kind.radius() - 4));
+        for (Map.Entry<EntityType<?>, Integer> squad : kind.plan(trait, pos).entrySet()) {
+            long have = members.stream().filter(m -> m.getType() == squad.getKey() && !isCaptain(m)).count();
+            for (long i = have; i < squad.getValue(); i++) {
+                spawn(level, pos, squad.getKey(), random, false, reach, kind.radius(), trait);
+            }
         }
-        for (long i = vindicators; i < wantVindicators; i++) {
-            spawn(level, pos, EntityType.VINDICATOR, random, false);
-        }
-        if (!captain) {
-            spawn(level, pos, EntityType.PILLAGER, random, true);
+        if (kind.captain().isPresent() && members.stream().noneMatch(WarBannerBlockEntity::isCaptain)) {
+            spawn(level, pos, kind.captain().get(), random, true, reach, kind.radius(), trait);
         }
     }
 
@@ -154,12 +166,12 @@ public class WarBannerBlockEntity extends BlockEntity {
         return mob instanceof PatrollingMonster patrolling && patrolling.isPatrolLeader();
     }
 
-    private static void spawn(ServerLevel level, BlockPos banner, EntityType<? extends Mob> type, RandomSource random, boolean captain) {
-        Mob mob = type.create(level);
-        if (mob == null) {
+    private static void spawn(ServerLevel level, BlockPos banner, EntityType<?> type, RandomSource random, boolean captain, int reach,
+                              int restrict, StrongholdTrait trait) {
+        if (!(type.create(level) instanceof Mob mob)) {
             return;
         }
-        Optional<BlockPos> spot = BanditStandardBlockEntity.findSpot(level, banner, mob, random, 3, 11, false);
+        Optional<BlockPos> spot = BanditStandardBlockEntity.findSpot(level, banner, mob, random, 3, reach, false);
         if (spot.isEmpty()) {
             mob.discard();
             return;
@@ -179,10 +191,70 @@ public class WarBannerBlockEntity extends BlockEntity {
             }
         }
         if (mob instanceof PathfinderMob pathfinder) {
-            pathfinder.restrictTo(banner, 18);
+            pathfinder.restrictTo(banner, restrict);
+        }
+        if (trait == StrongholdTrait.VETERANS) {
+            equipVeteran(level, mob, random);
         }
         WarDefenders.enlist(mob);
         level.addFreshEntity(mob);
+    }
+
+    /**
+     * An outpost has no War Banner to muster it, so its trait shows when a battle starts there: an evoker or a ravager
+     * joins its defenders, or they turn out in veterans' gear.
+     *
+     * @return defenders who joined
+     */
+    public static List<LivingEntity> reinforce(ServerLevel level, Strongholds.Entry target, List<LivingEntity> defenders) {
+        RandomSource random = level.getRandom();
+        StrongholdTrait trait = target.trait();
+        if (trait == StrongholdTrait.VETERANS) {
+            for (LivingEntity defender : defenders) {
+                if (defender instanceof Mob mob) {
+                    equipVeteran(level, mob, random);
+                }
+            }
+            return List.of();
+        }
+        EntityType<?> extra = trait == StrongholdTrait.EVOKER ? EntityType.EVOKER : trait == StrongholdTrait.BEASTS ? EntityType.RAVAGER : null;
+        if (extra == null || !(extra.create(level) instanceof Mob mob)) {
+            return List.of();
+        }
+        Optional<BlockPos> spot = BanditStandardBlockEntity.findSpot(level, target.pos(), mob, random, 3, Math.max(6, target.radius() - 4), false);
+        if (spot.isEmpty()) {
+            mob.discard();
+            return List.of();
+        }
+        BlockPos pos = spot.get();
+        mob.moveTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, random.nextFloat() * 360F, 0);
+        mob.finalizeSpawn(level, level.getCurrentDifficultyAt(pos), MobSpawnType.STRUCTURE, null);
+        mob.setPersistenceRequired();
+        if (mob instanceof PathfinderMob pathfinder) {
+            pathfinder.restrictTo(target.pos(), target.radius());
+        }
+        level.addFreshEntity(mob);
+        return List.of(mob);
+    }
+
+    /** Veterans' gear: iron helm and mail, and an enchanted weapon. Beasts go as they are. */
+    public static void equipVeteran(ServerLevel level, Mob mob, RandomSource random) {
+        if (mob.getType() == EntityType.RAVAGER) {
+            return;
+        }
+        mob.setItemSlot(EquipmentSlot.HEAD, new ItemStack(Items.IRON_HELMET));
+        mob.setItemSlot(EquipmentSlot.CHEST, new ItemStack(Items.IRON_CHESTPLATE));
+        mob.setDropChance(EquipmentSlot.HEAD, 0.05F);
+        mob.setDropChance(EquipmentSlot.CHEST, 0.05F);
+        ItemStack weapon = mob.getMainHandItem();
+        if (!weapon.isEmpty()) {
+            HolderLookup.RegistryLookup<Enchantment> enchantments = level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT);
+            if (weapon.is(Items.CROSSBOW)) {
+                weapon.enchant(enchantments.getOrThrow(random.nextBoolean() ? Enchantments.QUICK_CHARGE : Enchantments.PIERCING), 2);
+            } else {
+                weapon.enchant(enchantments.getOrThrow(Enchantments.SHARPNESS), 2);
+            }
+        }
     }
 
     /** Fly the razing village's colours beside the tattered banner. */
@@ -211,6 +283,15 @@ public class WarBannerBlockEntity extends BlockEntity {
         natural = tag.getBoolean("Natural");
         populated = tag.getBoolean("Populated");
         captivesPlaced = tag.getBoolean("CaptivesPlaced");
+        ResourceLocation id = ResourceLocation.tryParse(tag.getString("Structure"));
+        structure = id != null && tag.contains("Structure") ? id : Strongholds.PILLAGER_CAMP;
+        if (tag.contains("Cages")) {
+            List<BlockPos> loaded = new ArrayList<>();
+            for (long packed : tag.getLongArray("Cages")) {
+                loaded.add(BlockPos.of(packed));
+            }
+            cages = List.copyOf(loaded);
+        }
         victoryBanner = NbtUtils.readBlockPos(tag, "VictoryBanner").orElse(null);
     }
 
@@ -220,6 +301,8 @@ public class WarBannerBlockEntity extends BlockEntity {
         tag.putBoolean("Natural", natural);
         tag.putBoolean("Populated", populated);
         tag.putBoolean("CaptivesPlaced", captivesPlaced);
+        tag.putString("Structure", structure.toString());
+        tag.putLongArray("Cages", cages.stream().mapToLong(BlockPos::asLong).toArray());
         if (victoryBanner != null) {
             tag.put("VictoryBanner", NbtUtils.writeBlockPos(victoryBanner));
         }

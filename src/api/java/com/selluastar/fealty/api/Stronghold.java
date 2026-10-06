@@ -15,9 +15,13 @@ import net.minecraft.world.level.Level;
  * @param structure the structure it belongs to
  * @param razed     whether a lord's warband razed it lately (no garrison, no illager spawns until it is reoccupied)
  * @param captives  villagers known to be held there
+ * @param tier      its stronghold kind ({@code fealty:scout_camp}, {@code fealty:camp}, {@code fealty:outpost},
+ *                  {@code fealty:fort}, {@code fealty:castle}, or a pack's own); since API 1.2.0
+ * @param threat    how dangerous it is, 1 to 5 skulls (its kind's threat plus its trait); since API 1.2.0
+ * @param trait     what sets it apart: {@code none}, {@code veterans}, {@code evoker} or {@code beasts}; since API 1.2.0
  */
 public record Stronghold(UUID id, ResourceKey<Level> dimension, BlockPos pos, Kind kind, ResourceLocation structure, Component name,
-                         boolean razed, int captives) {
+                         boolean razed, int captives, ResourceLocation tier, int threat, String trait) {
     public enum Kind {
         /** A Fealty pillager camp, with a War Banner that keeps its garrison. */
         CAMP,

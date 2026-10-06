@@ -37,8 +37,10 @@ import com.selluastar.fealty.mail.MailService;
 import com.selluastar.fealty.network.Feedback;
 import com.selluastar.fealty.quest.QuestContext;
 import com.selluastar.fealty.quest.QuestManager;
+import com.selluastar.fealty.quest.QuestReward;
 import com.selluastar.fealty.registry.ModAttachments;
 import com.selluastar.fealty.registry.ModEntities;
+import com.selluastar.fealty.rep.Factions;
 import com.selluastar.fealty.rep.FealtyWorldData;
 import com.selluastar.fealty.rep.RepManager;
 import com.selluastar.fealty.util.Inventories;
@@ -51,10 +53,12 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerBossEvent;
@@ -78,6 +82,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.saveddata.maps.MapDecorationTypes;
+import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -103,6 +108,9 @@ public final class Campaigns extends SavedData {
     public static final ResourceLocation QUEST = Fealty.id("war/raid_stronghold");
     /** The raid quest's giver: the village's war council (one raid at a time). */
     public static final ResourceLocation GIVER = Fealty.id("war");
+    private static final ResourceLocation CASTLE = Fealty.id("castle");
+    /** Spoils the lord takes from a stronghold: the raid's reward, and once more for each skull past the first. */
+    private static final ResourceKey<LootTable> SPOILS_TABLE = ResourceKey.create(Registries.LOOT_TABLE, Fealty.id("quest_rewards/war_spoils"));
     public static final String LEVY_TAG = "fealty.levy";
     private static final String LEVY_LORD = "fealty_levy_lord";
     /** The rest of the warband joins the lord this close to the stronghold. */
@@ -215,21 +223,45 @@ public final class Campaigns extends SavedData {
         return battle == null ? Optional.empty() : Optional.of(new int[]{battle.total - battle.defenders.size(), battle.total});
     }
 
-    /** Villagers the village can call up as militia. */
+    /** Villagers the village can call up as militia against an ordinary stronghold. */
     public static int levySize(VillageRecord village) {
+        return levySize(village, 1);
+    }
+
+    /** Villagers the village can call up as militia: half as many again against a stronghold of threat 4 or more. */
+    public static int levySize(VillageRecord village, int threat) {
         int population = Math.max(0, village.garrison().population());
-        return Math.min(FealtyConfig.MAX_LEVY.get(), population / FealtyConfig.LEVY_PER_VILLAGERS.get());
+        int most = FealtyConfig.MAX_LEVY.get();
+        if (threat >= 4) {
+            most += (most + 1) / 2;
+        }
+        return Math.min(most, population / FealtyConfig.LEVY_PER_VILLAGERS.get());
+    }
+
+    /** Guards the village can send against an ordinary stronghold. */
+    public static int guardsReady(VillageRecord village) {
+        return guardsReady(village, 1);
     }
 
     /** Guards the village can send: its Fealty guards still standing (others are on the roster too, but stay unless near). */
-    public static int guardsReady(VillageRecord village) {
+    public static int guardsReady(VillageRecord village, int threat) {
         int ready = 0;
         for (Garrison.Slot slot : village.garrison().slots()) {
             if (!slot.isDead()) {
                 ready++;
             }
         }
-        return Math.min(FealtyConfig.WARBAND_SIZE.get(), ready);
+        return Math.min(warbandSize(threat), ready);
+    }
+
+    /** Most guards who march with the lord: two more against a fort (threat 3), four more against threat 5. */
+    public static int warbandSize(int threat) {
+        return FealtyConfig.WARBAND_SIZE.get() + (threat >= 5 ? 4 : threat >= 3 ? 2 : 0);
+    }
+
+    /** Emeralds a raid costs: the config's for an ordinary camp (threat 2), a quarter less or more per skull. */
+    public static int raidCost(int threat) {
+        return Math.round(FealtyConfig.RAID_COST_EMERALDS.get() * (2 + threat) / 4F);
     }
 
     /** Days before the village can raise a warband again. */
@@ -280,7 +312,7 @@ public final class Campaigns extends SavedData {
         long day = RepManager.day(server);
         Stronghold view = target.view(day);
         CampaignEvent.Declare declare = NeoForge.EVENT_BUS.post(new CampaignEvent.Declare(server, lord.getUUID(), village.id(), view,
-                FealtyConfig.RAID_COST_EMERALDS.get()));
+                raidCost(target.threat())));
         if (declare.isCanceled()) {
             return Optional.of(declare.getCancelReason().orElse(Component.translatable("fealty.war.forbidden")));
         }
@@ -311,7 +343,7 @@ public final class Campaigns extends SavedData {
 
         // The guards with the lord fall in at once.
         List<Mob> near = GarrisonManager.guardsNear(lord, village, GUARDS_FALL_IN_RANGE);
-        List<Mob> warband = new ArrayList<>(near.subList(0, Math.min(near.size(), FealtyConfig.WARBAND_SIZE.get())));
+        List<Mob> warband = new ArrayList<>(near.subList(0, Math.min(near.size(), warbandSize(target.threat()))));
         CampaignEvent.Muster muster = NeoForge.EVENT_BUS.post(new CampaignEvent.Muster(server, lord.getUUID(), village.id(), view,
                 CampaignEvent.Muster.Stage.VILLAGE, warband, 0));
         for (Mob member : muster.members()) {
@@ -328,7 +360,7 @@ public final class Campaigns extends SavedData {
                 target.name(), muster.members().size()), 0xC0392B, "sword");
         lord.sendSystemMessage(Component.translatable("fealty.war.declared.chat", village.name(), target.name()).withStyle(ChatFormatting.GOLD));
         NeoForge.EVENT_BUS.post(new CampaignEvent.Started(server, lord.getUUID(), village.id(), view,
-                muster.members().size() + guardsReady(village)));
+                muster.members().size() + guardsReady(village, target.threat())));
         FealtyEvents.fire(lord, FealtyEvents.WAR_DECLARED);
         return Optional.empty();
     }
@@ -409,10 +441,10 @@ public final class Campaigns extends SavedData {
         MinecraftServer server = lord.server;
         List<Mob> retinue = GarrisonManager.retinue(lord, village);
         long own = retinue.stream().filter(m -> m instanceof VillageGuardEntity).count();
-        int need = (int) Math.max(0, FealtyConfig.WARBAND_SIZE.get() - own);
+        int need = (int) Math.max(0, warbandSize(target.threat()) - own);
         int sent = GarrisonManager.dispatch(lord, village, need, retinue);
         CampaignEvent.Muster muster = NeoForge.EVENT_BUS.post(new CampaignEvent.Muster(server, lord.getUUID(), village.id(),
-                target.view(RepManager.day(server)), CampaignEvent.Muster.Stage.FIELD, retinue, levySize(village)));
+                target.view(RepManager.day(server)), CampaignEvent.Muster.Stage.FIELD, retinue, levySize(village, target.threat())));
         for (Mob member : muster.members()) {
             if (!retinue.contains(member)) {
                 GarrisonManager.orderFollow(member, lord);
@@ -465,6 +497,9 @@ public final class Campaigns extends SavedData {
             }
         }
         List<LivingEntity> defenders = new ArrayList<>(defendersAt(level, target));
+        if (target.kind() == Stronghold.Kind.OUTPOST && !defenders.isEmpty()) {
+            defenders.addAll(WarBannerBlockEntity.reinforce(level, target, defenders));
+        }
         CampaignEvent.BattleStarted started = NeoForge.EVENT_BUS.post(new CampaignEvent.BattleStarted(server, lord.getUUID(), village.id(),
                 target.view(RepManager.day(server)), defenders));
         Battle battle = new Battle(target.name(), level.getGameTime());
@@ -558,7 +593,7 @@ public final class Campaigns extends SavedData {
             }
         }
         CampaignEvent.Won won = NeoForge.EVENT_BUS.post(new CampaignEvent.Won(server, lord.getUUID(), village.id(), target.view(day), fighters,
-                captives.size(), FealtyConfig.PEACE_DAYS.get(), FealtyConfig.RAZE_DAYS.get(), FealtyConfig.WAR_SPOILS.get()));
+                captives.size(), target.peaceDays(), target.razeDays(), target.spoils()));
         battle.bar.removeAllPlayers();
         BATTLES.remove(state.lord);
         Campaigns data = get(server);
@@ -578,17 +613,31 @@ public final class Campaigns extends SavedData {
         }
         FealtyWorldData.get(server).setDirty();
 
+        // The harder the fight, the greater the glory: more standing for those who fought, Renown for all of them, and
+        // more of the spoils for the lord.
+        int threat = target.threat();
         for (ServerPlayer fighter : fighters) {
             if (!fighter.getUUID().equals(lord.getUUID())) {
                 RepManager.meet(fighter, village.id());
-                RepManager.applySource(fighter, village.id(), RepSources.RAID_STRONGHOLD);
+                RepManager.applySource(fighter, village.id(), RepSources.RAID_STRONGHOLD, Math.max(1F, threat / 2F));
             }
+            RepManager.change(fighter, Factions.RENOWN, threat, RepSources.RAID_STRONGHOLD);
             FealtyEvents.fire(fighter, FealtyEvents.STRONGHOLD_RAZED);
+            if (target.tier().equals(CASTLE)) {
+                FealtyEvents.fire(fighter, FealtyEvents.CASTLE_STORMED);
+            }
+            if (threat >= 5) {
+                FealtyEvents.fire(fighter, FealtyEvents.LIONS_DEN);
+            }
             Feedback.banner(fighter, Component.translatable("fealty.war.won"), Component.translatable("fealty.war.won.detail", target.name(),
                     captives.size(), won.getPeaceDays()), 0xD4AF37, "crown");
             Feedback.sound(fighter, SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, 0.8F, 1.0F);
         }
         FealtyEvents.fire(lord, FealtyEvents.WARLORD);
+        QuestReward extra = new QuestReward(0, 0, Optional.of(SPOILS_TABLE), List.of(), 0);
+        for (int i = 1; i < threat; i++) {
+            QuestManager.giveRewards(lord, extra);
+        }
         quest(lord).ifPresent(QuestContext::setReady);
         MailService.fromVillage(server, lord.getUUID(), village, "war_victory", List.of(), 20 * 60, target.name(), captives.size());
         HOMEWARD.add(new Homeward(lord.getUUID(), village.id(), level.getGameTime() + 1200));
@@ -655,7 +704,7 @@ public final class Campaigns extends SavedData {
             long day = RepManager.day(server);
             Stronghold view = Strongholds.get(server).get(state.stronghold).map(e -> e.view(day))
                     .orElse(new Stronghold(state.stronghold, server.overworld().dimension(), BlockPos.ZERO, Stronghold.Kind.CAMP,
-                            Strongholds.PILLAGER_CAMP, Component.empty(), false, 0));
+                            Strongholds.PILLAGER_CAMP, Component.empty(), false, 0, StrongholdKinds.FALLBACK_ID, 1, "none"));
             NeoForge.EVENT_BUS.post(new CampaignEvent.Ended(server, state.lord, state.village, view, reason));
             ServerPlayer lord = server.getPlayerList().getPlayer(state.lord);
             Optional<VillageRecord> village = FealtyWorldData.get(server).village(state.village);

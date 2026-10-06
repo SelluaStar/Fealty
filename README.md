@@ -63,8 +63,8 @@ gift of love), collect the treasury, hold feasts, recruit guards. Golems and oth
 anywhere to call your guards to you; a bar at the top of the screen shows who follows you.
 
 ### War
-Pillager camps (palisades, watchtowers and cages of captive villagers) dot the land, and pillager outposts count
-too. From the Village Hall's **War** tab a lord sends scouts, picks a stronghold and raises the warband: a war map
+Pillager strongholds dot the land: scout camps, palisaded camps, walled forts and stone castles with dungeon cells,
+each rated one to five skulls, and pillager outposts count too. From the Village Hall's **War** tab a lord sends scouts, picks a stronghold and raises the warband: a war map
 and a tracked quest lead the way, the guards fall in behind, and the rest of the watch and a levy of militia catch
 up near the camp. Raze it to free the captives, fill the treasury and win the village days of peace. Leave it
 standing and its raiders come for the villages nearby.

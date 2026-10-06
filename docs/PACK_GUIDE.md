@@ -137,19 +137,45 @@ standards man a camp. A manned camp may raid villages within `raid_range` every 
 
 ## War: pillager camps and raids
 
-Pillager camps generate in plains, savanna, taiga, forest, meadow and snowy biomes
-(`#fealty:has_structure/pillager_camp`), kept 6 chunks from villages. Each has a palisade, tents, a watchtower, two
-cages with captives from the nearest village, and a War Banner that keeps its garrison (pillagers, vindicators and
-a banner-bearing captain).
+Pillager strongholds come in sizes, and each shows its danger as one to five skulls (its **threat**):
 
-A lord raids them from the **War** tab of the Village Hall: send scouts (they find camps and outposts within
-`war_range`), pick one and raise the warband. The lord gets a War Map and the raid as a tracked quest; the guards
-nearby fall in, and near the stronghold the rest of the watch and a levy of militia (one per `levy_per_villagers`
-villagers, up to `max_levy`) catch up. A bar counts the defenders. Victory frees the captives (they turn up at
-home), razes the stronghold for `raze_days` (no garrison, no illager spawns), adds `war_spoils` to the treasury
-and gives the village `peace_days` without bandit raids or pillager patrols. Strongholds left standing raid the
-villages within `menace_range` every `menace_min_days` to `menace_max_days` days (`pillager_menace`). Elders also
-offer "Eyes on the Pillagers" (find a stronghold) and "The Cages" (free captives).
+| Kind | Where | Holds | Threat |
+|---|---|---|---|
+| Scout camp | Grassland, forest, taiga, snowy plains; the commonest | 2-3 pillagers and a captain, one cage | 1 |
+| Camp | Plains, savanna, taiga, forest, meadow, snowy | Pillagers, vindicators and a captain behind a palisade, two cages | 2 |
+| Outpost | Vanilla's and modded (`#fealty:pillager_outposts`) | Whoever is there | 2 |
+| Fort | Plains, meadow, forest, taiga; uncommon | A walled yard with towers, barracks, three cages, an evoker | 3 |
+| Castle | Dark forest, taiga, snowy, meadow; rare | Curtain walls, four towers, a keep with dungeon cells, evokers, a witch and a ravager | 4 |
+
+Each stronghold also has a **trait**, the same every time for the same place, that adds a skull: **Veterans**
+(iron armour and enchanted arms), **An evoker** or **War beasts** (a ravager). So a scout camp can be small but
+nasty, and a castle with a trait is the only five-skull stronghold. Camps keep 6 chunks from villages, and the
+scout camps, forts and castles 7 (one structure set, `fealty:pillager_strongholds`, so they never overlap). The
+War Banner in each keeps its garrison and fills the cages with captives from the nearest village.
+
+A lord raids them from the **War** tab of the Village Hall: send scouts (they find strongholds within
+`war_range`), pick one and raise the warband. The tab shows each stronghold's skulls, trait, rough number of
+defenders, cost and rewards. The lord gets a War Map and the raid as a tracked quest; the guards nearby fall in,
+and near the stronghold the rest of the watch and a levy of militia (one per `levy_per_villagers` villagers, up to
+`max_levy`) catch up. A bar counts the defenders. Victory frees the captives (they turn up at home), razes the
+stronghold (no garrison, no illager spawns), adds tribute to the treasury and gives the village days without
+bandit raids or pillager patrols. Strongholds left standing raid the villages in reach every `menace_min_days` to
+`menace_max_days` days (`pillager_menace`). Elders also offer "Eyes on the Pillagers" (find a stronghold) and "The
+Cages" (free captives).
+
+The threat scales the raid:
+
+| | Scales with threat |
+|---|---|
+| Cost | `raid_cost_emeralds` for 2 skulls, a quarter less or more per skull (9, 12, 15, 18, 21 by default) |
+| Warband | `warband_size`, +2 guards at 3 skulls, +4 at 5; the levy cap is half again at 4+ |
+| Rewards | The kind's spoils, peace and raze days (scout camp 1/4/6, camp the config's, fort 4/10/14, castle 7/14/20); +1 spoils for a trait |
+| The lord | One more roll of `quest_rewards/war_spoils` per skull past the first |
+| Fighters | Rep for `raid_stronghold` times threat/2 (at least 1), and Renown equal to the threat |
+| Menace | Reach and Raid Omen from the kind (castles 1000 blocks, omen 3); a trait adds an omen level |
+
+Kinds are data: `data/<ns>/fealty/stronghold_kinds/` (see DATAPACKS.md), so a pack can retune them or give a
+modded fort or castle a kind of its own.
 
 Vanilla and modded pillager outposts are targets too (add yours to `#fealty:pillager_outposts`); their defenders
 are the mobs in `#fealty:stronghold_defenders` on the outpost's ground when the battle starts, so illager mods whose

@@ -37,8 +37,9 @@ public class HiddenHamletPiece extends ScatteredFeaturePiece {
     private static final ResourceKey<LootTable> LODGE_LOOT = ResourceKey.create(Registries.LOOT_TABLE, Fealty.id("chests/hidden_hamlet"));
     private static final ResourceKey<LootTable> COTTAGE_LOOT = ResourceKey.create(Registries.LOOT_TABLE, Fealty.id("chests/hamlet_cottage"));
 
-    public HiddenHamletPiece(RandomSource random, int x, int z, Direction orientation) {
-        super(ModStructures.HIDDEN_HAMLET_PIECE.get(), x, 64, z, SIZE, 16, SIZE, orientation);
+    public HiddenHamletPiece(RandomSource random, int x, int y, int z, Direction orientation) {
+        super(ModStructures.HIDDEN_HAMLET_PIECE.get(), x, y, z, SIZE, 16, SIZE, orientation);
+        heightPosition = y;
     }
 
     public HiddenHamletPiece(CompoundTag tag) {

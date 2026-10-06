@@ -1,0 +1,49 @@
+{
+  "structures": [
+    "fealty:pillager_castle"
+  ],
+  "name": "fealty.stronghold.castle",
+  "threat": 4,
+  "garrison": [
+    {
+      "entity": "minecraft:pillager",
+      "min": 8,
+      "max": 10
+    },
+    {
+      "entity": "minecraft:vindicator",
+      "min": 5,
+      "max": 6
+    },
+    {
+      "entity": "minecraft:evoker",
+      "min": 2,
+      "max": 2
+    },
+    {
+      "entity": "minecraft:ravager",
+      "min": 1,
+      "max": 1
+    },
+    {
+      "entity": "minecraft:witch",
+      "min": 1,
+      "max": 1
+    }
+  ],
+  "captain": "minecraft:pillager",
+  "captives_min": 6,
+  "captives_max": 9,
+  "spoils": 7,
+  "peace_days": 14,
+  "raze_days": 20,
+  "menace_range": 1000,
+  "menace_omen": 3,
+  "traits": {
+    "none": 3,
+    "veterans": 3,
+    "evoker": 2,
+    "beasts": 2
+  },
+  "radius": 30
+}

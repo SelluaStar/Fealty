@@ -20,7 +20,7 @@ public class PillagerCampStructure extends Structure {
     @Override
     protected Optional<GenerationStub> findGenerationPoint(GenerationContext context) {
         return FlatGround.find(context, PillagerCampPiece.SIZE, 5).map(pos -> new GenerationStub(pos, builder ->
-                builder.addPiece(new PillagerCampPiece(pos.getX(), pos.getZ(), Direction.NORTH))));
+                builder.addPiece(new PillagerCampPiece(pos.getX(), pos.getY(), pos.getZ(), Direction.NORTH))));
     }
 
     @Override
