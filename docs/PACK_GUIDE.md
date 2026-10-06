@@ -1,31 +1,44 @@
 # Fealty pack-maker guide
 
-## Castle villages and elders
+## Villages from other mods, and elders
 
-Every village structure in the `fealty:village` template's `structures` tag (default `#minecraft:village`) becomes
-a village faction. Only villages whose structure is also in `#fealty:elder_villages` get a trusting elder and a
-coffer. By default that tag holds `#minecraft:village`, so every village gets an elder. To limit elders to your
-castle villages, override the tag in a data pack:
+Every structure the `fealty:village` template matches becomes a village faction. By default that is
+`#minecraft:village`, ChoiceTheorem's Overhauled Village (`ctov:*`), and any structure whose id mentions village,
+town, castle, city, settlement, burg, hamlet or citadel, except ruins, outposts and the like. Stand in a town and
+run `/rep village scan` to see which structures are there and whether they count. To add or drop one without a data
+pack, use the server config lists `extra_village_structures` and `excluded_village_structures` (ids, `#tags` or
+patterns such as `mymod:*keep*`). Settlements with three or more homes and no structure are found too, and
+`/rep village create <radius> <name>` makes a village by hand where nothing is detected.
+
+Only villages whose structure is also in `#fealty:elder_villages` get a trusting elder and a coffer. By default
+that tag holds `#minecraft:village`, so every village gets an elder. To limit elders to your castle villages,
+override the tag in a data pack:
 
 ```json
 // data/fealty/tags/worldgen/structure/elder_villages.json
 { "replace": true, "values": ["yourcastlemod:castle_village", "yourcastlemod:keep_town"] }
 ```
 
-Villages from mods that aren't in any template's tag are still found by their bell, and their villagers belong
-to that village. Villagers with no village nearby belong to `fealty:wanderers`. To make another mod's town a full
-village, add its structure to `#minecraft:village`, or add a template in `fealty/factions/`.
+Villages nothing matches are still found by their bell, and their villagers belong to that village. Villagers with
+no village nearby belong to `fealty:wanderers`.
 
-The elder spawns indoors near the bell the first time a player visits, with the village coffer beside them.
-Config: `spawn_elders`, `place_coffers`, `bell_villages_have_elders`, `village_margin`.
+The elder spawns indoors near the bell the first time a player visits, with the village coffer beside them, a
+mailbox outside and a guard post. Config: `spawn_elders`, `place_coffers`, `village_mailboxes`,
+`bell_villages_have_elders`, `village_margin`.
 
 ## Guards
 
-Anything in `#fealty:guards` acts as a guard. The default tag holds iron golems and, if installed, Guard
-Villagers' `guardvillagers:guard`. Add your guard mod's entities to the tag. Fealty gives them its targeting goals
-when they spawn, so the guard mod needs no compile dependency. Guards attack Hated and wanted players, watch
-Distrusted ones, help Trusted ones, and escort Honored ones. A witnessed crime alerts guards within 32 blocks.
-Guards of other villages only answer if the criminal's Renown is low.
+Each village keeps a watch of Fealty guards: one per `villagers_per_guard` (4) villagers, between `min_guards` (2)
+and `max_guards` (6), plus a sergeant at `sergeant_population` (12) villagers, and `empty_village_guards` (3) for a
+castle with no villagers. A fallen guard is replaced after `guard_respawn_days` (1). Set `fealty_guards = false`
+to rely on golems and guard mods alone.
+
+Anything in `#fealty:guards` also acts as a guard. The default tag holds Fealty's guard, iron golems and, if
+installed, Guard Villagers' `guardvillagers:guard`. Add your guard mod's entities to the tag. Fealty gives them its
+targeting goals when they spawn, so the guard mod needs no compile dependency. Guards attack Hated and wanted
+players, watch Distrusted ones, help Trusted ones, and escort Honored ones. A witnessed crime alerts guards within
+32 blocks; for small crimes, Fealty guards demand a fine first (`fines`, `guard_fine_seconds`). Guards of other
+villages only answer if the criminal's Renown is low.
 
 ## FTB Quests
 
@@ -65,18 +78,29 @@ FealtyEvents.quest(event => {
   - rep range; witness radius (16) and guard alert radius (32)
   - Renown share (10%) and start factor (¼, capped at ±25)
   - threat cooldown (one day); negative rep decay (off)
+  - consequences: `fines`, `word_travels_share` (25%) and `word_travels_radius` (1000), `hated_arrival`,
+    `locked_village_chests`
+  - quests: `max_active_quests`, `elder_quests_at_once`, `favors` and `favor_chance`
+  - mail: `village_mailboxes`, delivery delays
   - heat thresholds and bounty interval
-  - tribute interval and tax table; max lordships per player
+  - tribute and tax table; max lordships per player; horn summons
+  - bandits: `camp_exclusion_radius` (768), `bandit_raids`, `raid_range` (640), `raid_min_days` and
+    `raid_max_days` (3 to 5)
   - outlaw Renown gates
+- Client config (`config/fealty-client.toml`): quest tracker mode, position and length, speech bubbles, the rep
+  feed, banners, quest markers and the retinue bar.
 
 ## Lordship
 
 The Royal Writ comes from the rare villager chain. Its holder can swear a village where they are Honored.
-Lords get:
+Lords run the village from the Village Hall (ask the elder, or open it from the journal):
 
-- tribute in the coffer every few days (more villagers and higher taxes mean more)
-- the Lord's Horn: follow, hold or defend
+- tribute gathered every day into the treasury, whether anyone is there or not (more villagers and higher taxes
+  mean more), collected in person; a report by letter every `tribute_interval_days`
 - a tax setting: None and Light raise the lord's standing a little each day, Heavy and Crushing lower it
+- decrees: a weekly feast, and paying to replace a fallen guard at once
+- the Lord's Horn, usable anywhere: call guards (they arrive from out of sight), hold, guard an area, or send them
+  home
 
 Below Trusted, the village renounces its lord. In multiplayer, a rival with a Writ who is Honored and better loved
 than the current lord can usurp the village.
@@ -90,6 +114,10 @@ Outlaw gates use Renown (a player's name across villages):
 
 Being Hated by a village builds heat. Enough heat sends bounty hunters; more summons the Tyrant Lord to a castle
 village. Killing him drops the Tyrant's Crown, clears heat and frees the village.
+
+Bandit camps are generated far apart, and only one within `camp_exclusion_radius` is manned. Only generated
+standards man a camp. A manned camp may raid villages within `raid_range` every few days while a player is there;
+`/rep village raid <village>` starts one for testing.
 
 ## Compatibility notes
 

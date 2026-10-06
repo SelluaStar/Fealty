@@ -1,6 +1,7 @@
 package com.selluastar.fealty.gametest;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import com.mojang.authlib.GameProfile;
@@ -9,27 +10,44 @@ import com.selluastar.fealty.Fealty;
 import com.selluastar.fealty.api.RepSources;
 import com.selluastar.fealty.api.RepTiers;
 import com.selluastar.fealty.chain.ChainManager;
+import com.selluastar.fealty.config.FealtyConfig;
+import com.selluastar.fealty.crime.CrimeHandlers;
 import com.selluastar.fealty.crime.CrimeService;
+import com.selluastar.fealty.crime.Fines;
+import com.selluastar.fealty.crime.Gossip;
+import com.selluastar.fealty.crime.Locks;
 import com.selluastar.fealty.data.FealtyDataManager;
 import com.selluastar.fealty.data.TierManager;
+import com.selluastar.fealty.mail.MailService;
+import com.selluastar.fealty.outlaw.BanditCamps;
 import com.selluastar.fealty.outlaw.ThievesGuild;
 import com.selluastar.fealty.quest.QuestLog;
 import com.selluastar.fealty.quest.QuestManager;
 import com.selluastar.fealty.quest.RepQuestDefinition;
 import com.selluastar.fealty.registry.ModAttachments;
+import com.selluastar.fealty.registry.ModBlocks;
 import com.selluastar.fealty.rep.Factions;
+import com.selluastar.fealty.rep.FealtyCalendar;
+import com.selluastar.fealty.rep.FealtyWorldData;
 import com.selluastar.fealty.rep.RepManager;
 import com.selluastar.fealty.trade.TradeHooks;
 import com.selluastar.fealty.trade.VillagerInteractions;
 import com.selluastar.fealty.trade.VillagerMemory;
+import com.selluastar.fealty.village.StructureMatcher;
+import com.selluastar.fealty.village.VillageRecord;
+import com.selluastar.fealty.village.VillageResolver;
 
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
@@ -41,6 +59,9 @@ import net.minecraft.world.item.trading.ItemCost;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.item.trading.MerchantOffers;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.levelgen.structure.BuiltinStructures;
+import net.minecraft.world.level.levelgen.structure.Structure;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -237,6 +258,172 @@ public final class FealtyGameTests {
         check(helper, !FealtyDataManager.blackMarket().isEmpty(), "black market offers missing");
         check(helper, !FealtyDataManager.villageTrades().isEmpty(), "village trades missing");
         check(helper, RepManager.baseAmount(RepSources.KILL_GUARD) == -50, "kill guard should cost 50");
+        helper.succeed();
+    }
+
+    // ---- 0.2: villages from any mod, the calendar, mail, camps, crimes, fines, word travelling, locks ----
+
+    @GameTest(template = "empty")
+    public static void structurePatterns(GameTestHelper helper) {
+        Registry<Structure> structures = helper.getLevel().registryAccess().registryOrThrow(Registries.STRUCTURE);
+        Holder<Structure> plains = structures.getHolderOrThrow(BuiltinStructures.VILLAGE_PLAINS);
+        Holder<Structure> desert = structures.getHolderOrThrow(BuiltinStructures.VILLAGE_DESERT);
+        Holder<Structure> city = structures.getHolderOrThrow(BuiltinStructures.ANCIENT_CITY);
+        check(helper, new StructureMatcher(List.of("#minecraft:village"), List.of()).matches(plains), "the village tag should match");
+        StructureMatcher glob = new StructureMatcher(List.of("*:*village*", "*:*city*"), List.of("minecraft:village_plains", "minecraft:ancient_*"));
+        check(helper, glob.matches(desert), "a pattern should match village_desert");
+        check(helper, !glob.matches(plains), "an excluded id should not match");
+        check(helper, !glob.matches(city), "an excluded pattern should not match");
+        check(helper, !new StructureMatcher(List.of("*:*castle*"), List.of()).matches(plains), "castle should not match a village");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void calendarNeverGoesBack(GameTestHelper helper) {
+        MinecraftServer server = helper.getLevel().getServer();
+        ServerLevel overworld = server.overworld();
+        long time = overworld.getDayTime();
+        FealtyCalendar.tick(server);
+        long day = FealtyCalendar.day(server);
+        overworld.setDayTime(Math.max(0, time - 48000));
+        FealtyCalendar.tick(server);
+        check(helper, FealtyCalendar.day(server) == day, "rewinding the clock must not change the day");
+        overworld.setDayTime(time + 48000);
+        FealtyCalendar.tick(server);
+        check(helper, FealtyCalendar.day(server) > day, "a day passing should advance the calendar");
+        overworld.setDayTime(time);
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void mailTakesLongerFurther(GameTestHelper helper) {
+        long near = MailService.travelTime(0);
+        long far = MailService.travelTime(2000);
+        long worldAway = MailService.travelTime(10_000_000);
+        check(helper, near == FealtyConfig.MAIL_BASE_DELAY.get() * 20L, "a letter next door takes the base delay");
+        check(helper, far > near, "a letter further away takes longer");
+        check(helper, worldAway == FealtyConfig.MAIL_MAX_DELAY.get() * 20L, "no letter takes longer than the cap");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void campsKeepTheirDistance(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BanditCamps camps = BanditCamps.get(level.getServer());
+        BlockPos first = new BlockPos(5_000_000 + counter++ * 10_000, 64, 5_000_000);
+        BlockPos second = first.offset(100, 0, 0);
+        BlockPos far = first.offset(5_000, 0, 0);
+        camps.register(level, first);
+        camps.register(level, second);
+        camps.register(level, far);
+        check(helper, camps.isActive(level, first), "the first camp found holds the ground");
+        check(helper, !camps.isActive(level, second), "a camp close to a manned one stands empty");
+        check(helper, camps.isActive(level, far), "a camp far away is manned");
+        camps.unregister(level, first);
+        check(helper, camps.isActive(level, second), "with the first camp gone, the next takes its place");
+        camps.unregister(level, second);
+        camps.unregister(level, far);
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void hittingAChildIsWorse(GameTestHelper helper) {
+        ServerPlayer player = player(helper);
+        ResourceLocation faction = freshFaction();
+        Villager child = villager(helper, faction, new BlockPos(2, 1, 2));
+        child.setBaby(true);
+        RepManager.meet(player, faction);
+        int before = RepManager.getRep(player, faction);
+        CrimeHandlers.assault(player, child, faction);
+        check(helper, RepManager.getRep(player, faction) == before + RepManager.baseAmount(RepSources.HIT_CHILD),
+                "hitting a child costs " + RepManager.baseAmount(RepSources.HIT_CHILD) + ", got " + (RepManager.getRep(player, faction) - before));
+        CrimeHandlers.assault(player, child, faction);
+        check(helper, RepManager.getRep(player, faction) == before + RepManager.baseAmount(RepSources.HIT_CHILD),
+                "a second blow right after the first is the same assault");
+        helper.succeed();
+    }
+
+    /** A village made by hand at the test's spot (and forgotten again by {@link #forget}). */
+    private static VillageRecord testVillage(GameTestHelper helper, BlockPos offset, String name) {
+        return VillageResolver.createManual(helper.getLevel(), helper.absolutePos(BlockPos.ZERO).offset(offset), name, 8);
+    }
+
+    private static void forget(GameTestHelper helper, VillageRecord... villages) {
+        for (VillageRecord village : villages) {
+            FealtyWorldData.get(helper.getLevel().getServer()).removeVillage(village.id());
+        }
+        VillageResolver.clearCache();
+    }
+
+    @GameTest(template = "empty")
+    public static void finesClearYourName(GameTestHelper helper) {
+        ServerPlayer player = player(helper);
+        VillageRecord village = testVillage(helper, BlockPos.ZERO, "Finebury");
+        try {
+            RepManager.meet(player, village.id());
+            RepManager.set(player, village.id(), -30, RepSources.COMMAND);
+            RepManager.data(player).aggroUntil().put(village.id(), player.level().getGameTime() + 2400);
+            Optional<Fines.Quote> quote = Fines.quote(player, village);
+            check(helper, quote.isPresent() && quote.get().available(), "a player with a bad name may pay a fine");
+            int cost = quote.get().cost();
+            int restore = quote.get().restore();
+            check(helper, restore == 20, "a fine wins back at most 20, got " + restore);
+            player.getInventory().add(new ItemStack(Items.EMERALD, cost));
+            Fines.payElder(player, village, player);
+            check(helper, RepManager.getRep(player, village.id()) == -30 + restore, "paying should win back " + restore);
+            check(helper, player.getInventory().countItem(Items.EMERALD) == 0, "the fine should cost " + cost + " emeralds");
+            check(helper, !RepManager.data(player).aggroUntil().containsKey(village.id()), "paying calls off the watch");
+        } finally {
+            forget(helper, village);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void wordTravels(GameTestHelper helper) {
+        ServerPlayer player = player(helper);
+        VillageRecord home = testVillage(helper, BlockPos.ZERO, "Gossiping");
+        VillageRecord neighbour = testVillage(helper, new BlockPos(600, 0, 0), "Listening");
+        VillageRecord distant = testVillage(helper, new BlockPos(5000, 0, 0), "Faraway");
+        try {
+            for (VillageRecord village : List.of(home, neighbour, distant)) {
+                RepManager.meet(player, village.id());
+                RepManager.set(player, village.id(), 0, RepSources.COMMAND);
+            }
+            Gossip.heard(player, home.id(), -40);
+            Gossip.spread(player.server);
+            int heard = RepManager.getRep(player, neighbour.id());
+            check(helper, heard == (int) Math.round(-40 * FealtyConfig.WORD_TRAVELS_SHARE.get()) || FealtyConfig.WORD_TRAVELS_RADIUS.get() < 600,
+                    "a neighbour should hear a quarter of it, got " + heard);
+            check(helper, RepManager.getRep(player, distant.id()) == 0, "a distant village hears nothing");
+            check(helper, RepManager.getRep(player, home.id()) == 0, "the village itself already counted the crime");
+        } finally {
+            forget(helper, home, neighbour, distant);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void locksKeepStrangersOut(GameTestHelper helper) {
+        ServerPlayer player = player(helper);
+        VillageRecord village = testVillage(helper, BlockPos.ZERO, "Lockton");
+        try {
+            ServerLevel level = helper.getLevel();
+            BlockPos chest = helper.absolutePos(new BlockPos(1, 1, 1));
+            BlockPos coffer = helper.absolutePos(new BlockPos(2, 1, 1));
+            helper.setBlock(new BlockPos(1, 1, 1), Blocks.CHEST);
+            helper.setBlock(new BlockPos(2, 1, 1), ModBlocks.VILLAGE_COFFER.get());
+            RepManager.meet(player, village.id());
+            RepManager.set(player, village.id(), 0, RepSources.COMMAND);
+            boolean lockedChest = Locks.isLocked(player, level, chest, level.getBlockState(chest));
+            check(helper, lockedChest == FealtyConfig.LOCKED_VILLAGE_CHESTS.get(), "village chests are locked to strangers");
+            check(helper, Locks.isLocked(player, level, coffer, level.getBlockState(coffer)), "the coffer is locked");
+            RepManager.set(player, village.id(), 40, RepSources.COMMAND);
+            check(helper, !Locks.isLocked(player, level, chest, level.getBlockState(chest)), "a trusted friend may open the chests");
+            check(helper, Locks.isLocked(player, level, coffer, level.getBlockState(coffer)), "only the lord may open the coffer");
+        } finally {
+            forget(helper, village);
+        }
         helper.succeed();
     }
 }

@@ -10,8 +10,9 @@ shipping a file with the same id, or add new ones under your own namespace. All 
 | `factions/` | Village templates and static factions (bandits, the thieves guild, ...) |
 | `rep_actions/` | Amounts for ways to gain rep (gifts, trades, raids, ...) |
 | `crimes/` | Offences: amount, severity, heat |
-| `rep_quests/` | Trusting villager quest pools, by tier |
+| `rep_quests/` | Quests: elder pools by tier, and villagers' favors |
 | `quest_chains/` | The rare villager chain and the thieves guild |
+| `dialogue/` | What NPCs say, in the dialogue box and in speech bubbles |
 | `village_trades/` | Trades villages keep for Trusted/Honored players |
 | `black_market/` | What black marketeers may stock |
 
@@ -53,7 +54,8 @@ guard logic refer to them.
 {
   "kind": "village",
   "name": {"translate": "fealty.faction.village"},
-  "structures": "#minecraft:village",
+  "structures": ["#minecraft:village", "ctov:*", "*:*castle*", "*:*town*"],
+  "exclude": ["minecraft:ancient_city", "*:*ruin*", "*:*outpost*"],
   "elder": true,
   "renown_share": 0.1,
   "renown_start_factor": 0.25,
@@ -62,9 +64,14 @@ guard logic refer to them.
 }
 ```
 
+- `structures` is one entry or a list. Each entry is a structure tag (`#minecraft:village`), a structure id
+  (`mymod:keep`), or a pattern where `*` matches anything (`ctov:*`, `*:*castle*`). `exclude` takes the same
+  entries and wins over `structures`. The server config adds `extra_village_structures` and
+  `excluded_village_structures` on top, so packs need no data pack for a quick fix.
 - `kind: village` is a template. Every structure start in `structures` becomes its own faction, with id
   `village:<dimension namespace>/<dimension path>/<chunkX>_<chunkZ>`. Villages found only by their bell use
-  `.../bell_<x>_<y>_<z>`. When several templates match a structure, the highest `priority` wins.
+  `.../bell_<x>_<y>_<z>`, and settlements of three or more homes with no structure or bell are found too. When
+  several templates match a structure, the highest `priority` wins.
 - `elder`: whether villages of this template get a trusting elder. The structure must also be in
   `#fealty:elder_villages`.
 - `renown_share`: share of each rep change that also moves Renown. `renown_start_factor`: a new faction starts at
@@ -94,8 +101,59 @@ The file id must match a registered rep source (see `RepSources` in the API). Mo
 | `can_raise_negative` | Whether this source may raise rep that is below zero. By design only quests can. |
 | `heat` | Wanted-level heat the crime adds |
 
-Defaults (from the design): quest +5..+15, defend raid +20, gift +2, trade +1 per 5 (max +3/day), break village
-blocks −5, steal −15, threaten −3, hit −10, kill guard −50, kill villager −40.
+Good deeds (`rep_actions/`):
+
+| Source | Default |
+|---|---|
+| `quest` | from the quest, +5 to +15 |
+| `favor` | from the favor, at most +6 a day per village |
+| `trade` | +1 per 5 trades, at most +3 a day |
+| `gift` | +2 |
+| `courier` | +3 with the village that receives the letter |
+| `defend_raid` | +20 for winning a vanilla raid |
+| `defend_bandit_raid` | +15 for standing with a village through a bandit raid |
+| `cure_villager` | +8 |
+| `kill_monster` | +1 for a monster killed in the village (at most +5 a day) |
+| `defend_villager` | +3 for killing something attacking a villager or guard |
+| `kill_bandit`, `kill_raider` | +2 and +1, near a village |
+| `heal_villager` | +2 for healing a hurt villager with a potion |
+| `ring_bell` | +2 for ringing the bell while monsters, bandits or raiders are near |
+| `repair_golem` | +1 for mending a village golem with iron |
+| `light_village` | +1 per 8 lights placed where there was no light |
+| `place_bed` | +2 for a new bed |
+| `tend_crops` | +1 per 8 crops planted or bonemealed |
+| `donate` | +1 per 8 emeralds put in the coffer |
+| `feast` | +3 for the lord's feast |
+| `fine` | what a paid fine wins back (amount comes from the fine; `daily_cap` limits it) |
+| `liberation` | +25 for freeing a village from the Tyrant Lord |
+
+Crimes (`crimes/`):
+
+| Source | Default |
+|---|---|
+| `break_block` | −5 per village block, at most −40 a day |
+| `break_fixture` | −15 for the bell, coffer or mailbox |
+| `steal` | −15, judged when the first item leaves the container |
+| `vault_raid` | −20 for taking from the coffer |
+| `pickpocket` | −8 |
+| `lockpicking` | −5 when someone hears a missed pick |
+| `threaten` | −3 |
+| `hit_villager`, `hit_guard` | −10 |
+| `hit_child` | −20, severe |
+| `kill_villager`, `kill_child` | −40 and −60 |
+| `kill_guard`, `kill_elder` | −50 and −60 |
+| `kill_member` | −20 for other village members |
+| `kill_animal`, `kill_cat` | −5 and −8 for the village's own animals |
+| `kill_trader` | −15 with the nearest village, and with `fealty:wanderers` |
+| `trample_crops` | −1 |
+| `harvest_crops` | −2 per 8 crops taken |
+| `arson` | −15, severe |
+| `explosion` | −25, severe, no witness needed |
+| `trespass` | −3 a minute in villagers' homes at night, after a warning |
+| `sleep_in_bed` | −2 for sleeping in a villager's bed below Trusted |
+
+`word_travels` is the source used when part of a witnessed crime's cost reaches nearby villages the next day
+(server config `word_travels_share` and `word_travels_radius`).
 
 ## rep_quests/
 
@@ -115,6 +173,8 @@ blocks −5, steal −15, threaten −3, hit −10, kill guard −50, kill villa
 
 - `pool`:
   - `fealty:redemption`: elder quests.
+  - `fealty:favor`: small favors any villager may offer once a day. `professions` limits who offers it
+    (`minecraft:nitwit` and `minecraft:none` work; empty means anyone). Favors pay `favor` rep, capped daily.
   - `fealty:restore`: offered when a Broken village is near.
   - `fealty:none`: used only by chains.
 - `tiers`: maps tiers to weights. Elders offer up to 3 quests a day, weighted by your tier, and don't repeat one
@@ -131,7 +191,11 @@ Objective types:
 | `fealty:clear_camp` | `give_map`, `search_radius` | Kill the nearest bandit camp's captain |
 | `fealty:restock` | `count` | Place workstations (`#fealty:workstations`) in the village |
 | `fealty:rebuild` | `count`, `radius` | Part of a building turns to rubble; rebuild it |
-| `fealty:courier` | | Carry a sealed letter to another elder; completes on delivery |
+| `fealty:courier` | `recipient` (`elder`, `person` or `mailbox`), `profession` | Carry a sealed letter to another village: to its elder, to a villager there (named when you arrive; they take it from your hand), or to its mailbox |
+| `fealty:kill` | `targets` (id, `#tag` or list), `count`, `near_village`, `night_only`, `label` | Defeat creatures |
+| `fealty:explore` | `structure` (tag), `radius`, `search`, `give_map`, `label` | Find a structure and come back |
+| `fealty:talk_to` | `profession`, `message`, `reply` | Carry word to another villager of the village and report back |
+| `fealty:retrieve` | `item_name`, `item`, `site` (`cache`, `cart` or `stash`), `min_distance`, `max_distance`, `give_map` | Something lost out in the wilds: a site appears when you near it; bring the item back |
 | `fealty:hunt` | `targets: [{entity, name?, health_multiplier, damage_bonus, armor_bonus, equipment}]`, `min_distance`, `max_distance` | A named elite appears when you near its lair |
 | `fealty:restore_elder` | `items` | Two stages: hand in items for an Elder's Mantle, then use it on a villager of the Broken village |
 | `fealty:steal` | `items`, `unseen` | Thieves guild |
@@ -187,6 +251,30 @@ can be asked to take their place.
 The `fealty:thieves_guild` chain (`kind: guild`) is handed out one step at a time by the guild fence. Each step
 can carry its own `rewards`.
 
+## dialogue/
+
+Lines NPCs say, by context. Every file adds lines to its `context`; several files may share one.
+
+```json
+{
+  "context": "greet",
+  "lines": [
+    { "text": {"translate": "mypack.line.greet.friend"}, "tiers": ["fealty:trusted", "fealty:honored"], "weight": 2 },
+    { "text": "Late to be out. Mind the dark.", "night": true },
+    { "text": {"translate": "mypack.line.greet.smith"}, "professions": ["minecraft:armorer"] }
+  ]
+}
+```
+
+Conditions (all optional, and a line must meet every one it has): `tiers` (the listener's tier with the speaker's
+village), `professions`, `entities` (the speaker's type), `lord` (the listener rules the village), `broken` (the
+village has lost its elder), `night`. In a `translate` line, `%s` is the listener's name. One line is picked at random
+by `weight`.
+
+Contexts Fealty uses include `greet`, `greet_child`, `farewell`, `news`, `work_none`, the `favor_*` set, the `gift_*`
+set, `threat_cower`, `threat_refuse`, `refuse_hated`, `refuse_threats`, `crime`, `crime_theft`, `crime_violence`,
+`crime_vandalism`, `guard_greet`, `guard_hostile`, `thanks_rescue`, `thanks_healed` and `hated_arrival`.
+
 ## village_trades/
 
 ```json
@@ -234,7 +322,7 @@ Each marketeer stocks five offers picked by weight, and restocks daily.
 | `#fealty:village_members` (entity type) | Extra entities that belong to the village they stand in |
 | `#fealty:bandits` (entity type) | Members of the bandit faction |
 | `#fealty:village_property` (block) | Breaking it in a village is a crime (POI blocks always count) |
-| `#fealty:village_containers` (block) | Taking from these in a village is theft |
+| `#fealty:village_containers` (block) | Taking from these in a village is theft; locked to players below Trusted (config `locked_village_chests`) |
 | `#fealty:workstations` (block) | Counted by restock quests |
 | `#fealty:rebuildable` (block) | May crumble for rebuild quests |
 | `#fealty:threat_weapons` (item) | Counts as a drawn weapon |
@@ -261,4 +349,5 @@ Advancement triggers:
 - `fealty:event`: field `event`, one of the ids in `FealtyEvents`. For example:
   - Village: `met_elder`, `courier_delivered`, `raid_defended`, `village_broken`, `elder_restored`.
   - Chain and lordship: `chain_started`, `hamlet_found`, `writ_forged`, `sworn_lord`, `tribute_collected`, `usurped`.
-  - Outlaw: `black_market_trade`, `guild_joined`, `follower_hired`, `wanted`, `tyrant_slain`.
+  - Outlaw: `black_market_trade`, `guild_joined`, `follower_hired`, `unseen_theft`, `lock_picked`, `wanted`,
+    `tyrant_slain`.
