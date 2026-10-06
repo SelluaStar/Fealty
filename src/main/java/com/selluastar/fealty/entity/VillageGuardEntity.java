@@ -60,8 +60,8 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 
 /**
- * A guard of a village's own watch: a swordsman, an archer or a sergeant in the village's colours. Guards patrol
- * around their post (closer to it at night), defend villagers, fight monsters and raiders, turn on players their
+ * A guard of a village's own watch: a swordsman, an archer or a sergeant in the village's colours. Each guard
+ * patrols their own beat in the village (closer to it at night), defend villagers, fight monsters and raiders, turn on players their
  * village is hostile to, and obey the village's lord. Each one holds a slot in the village's {@link Garrison}.
  */
 public class VillageGuardEntity extends PathfinderMob implements RangedAttackMob {
@@ -78,6 +78,8 @@ public class VillageGuardEntity extends PathfinderMob implements RangedAttackMob
     private BlockPos post;
     private int upkeep;
     private int leaderGone;
+    /** Whether this guard's beat has been checked since it was loaded (see {@code GarrisonManager.tickVillage}). */
+    public boolean beatChecked;
     private int returning;
     @Nullable
     private MeleeAttackGoal meleeGoal;
@@ -178,6 +180,12 @@ public class VillageGuardEntity extends PathfinderMob implements RangedAttackMob
     @Nullable
     public BlockPos post() {
         return post;
+    }
+
+    /** Move the guard's beat (where they patrol and stand at night). */
+    public void setPost(BlockPos post) {
+        this.post = post.immutable();
+        updateRestriction();
     }
 
     /** Take up a slot in a village's watch: colours, rank, gear, name and post. */

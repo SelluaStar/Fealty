@@ -43,7 +43,7 @@ guild, bandit followers, bounty hunters and the **Tyrant Lord**.
 
 ### The village
 - **Guards.** Each village keeps a watch of Fealty guards (swordsmen, archers and a sergeant in the village's
-  colours) that respawn a day after they fall. Iron golems and other mods' guards in `#fealty:guards` work too.
+  colours), each walking their own beat across the village, that respawn a day after they fall. Iron golems and other mods' guards in `#fealty:guards` work too.
 - **Mail.** Every village has a mailbox, and you can craft your own. Write to a village or another player, with up
   to three parcels. Villages write back, thank those they trust, and warn those they hate.
 - **Locks.** Village chests are locked to anyone the village does not trust, and the coffer to everyone but the

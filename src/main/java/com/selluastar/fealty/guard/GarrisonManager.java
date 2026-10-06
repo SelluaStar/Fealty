@@ -134,6 +134,28 @@ public final class GarrisonManager {
         return post != null ? post : record.center();
     }
 
+    /**
+     * Where one guard keeps watch. The first slot stands by the post; the others get beats spread round the village
+     * (a golden-angle spiral from a per-village start, alternating inner and outer rings), so the watch covers the
+     * whole place instead of crowding the bell. Falls back to the post when the spot is not loaded or has no ground.
+     */
+    public static BlockPos beat(ServerLevel level, VillageRecord record, int index, BlockPos post) {
+        if (index <= 0) {
+            return post;
+        }
+        BlockPos center = record.center();
+        double extent = Mth.clamp(Math.min(record.bounds().getXSpan(), record.bounds().getZSpan()) / 2.0 * 0.6, 12.0, 80.0);
+        double radius = extent * (index % 2 == 1 ? 0.6 : 1.0);
+        double start = (record.id().hashCode() & 0xFFFF) / 65536.0 * Math.PI * 2;
+        double angle = start + index * 2.39996; // the golden angle, in radians
+        BlockPos column = BlockPos.containing(center.getX() + Math.cos(angle) * radius, center.getY(), center.getZ() + Math.sin(angle) * radius);
+        if (!level.isLoaded(column)) {
+            return post;
+        }
+        BlockPos ground = SitePlanner.surface(level, column);
+        return SitePlanner.outdoors(level, record, ground, 8).orElse(post);
+    }
+
     /** Called every few seconds while a player is in the village: count the villagers and fill empty posts. */
     public static void tickVillage(ServerLevel level, VillageRecord record) {
         if (!record.dimension().equals(level.dimension())) {
@@ -163,8 +185,16 @@ public final class GarrisonManager {
             Garrison.Slot slot = garrison.slots().get(i);
             if (slot.entity() != null) {
                 Entity holder = level.getEntity(slot.entity());
-                if (holder instanceof VillageGuardEntity && holder.isAlive()) {
+                if (holder instanceof VillageGuardEntity guard && holder.isAlive()) {
                     slot.missing = 0;
+                    // Guards from before beats all shared the post: give each their own, once.
+                    if (!guard.beatChecked && guard.post() != null && guard.post().equals(post) && guard.orders().mode() == GuardOrders.Mode.NONE) {
+                        guard.beatChecked = true;
+                        BlockPos beat = beat(level, record, i, post);
+                        if (!beat.equals(post)) {
+                            guard.setPost(beat);
+                        }
+                    }
                 } else if (level.dimension().equals(slot.lastDimension()) && slot.lastPos() != null && level.isLoaded(slot.lastPos())
                         && level.areEntitiesLoaded(ChunkPos.asLong(slot.lastPos())) && ++slot.missing >= 3) {
                     // Their last known place is loaded and they are not there: lost (removed by a command, say).
@@ -177,7 +207,8 @@ public final class GarrisonManager {
                 continue;
             }
             boolean replacement = slot.isDead();
-            VillageGuardEntity guard = spawn(level, record, i, slot, post, post, 6);
+            BlockPos beat = beat(level, record, i, post);
+            VillageGuardEntity guard = spawn(level, record, i, slot, beat, beat, 4);
             if (guard != null) {
                 changed = true;
                 if (replacement) {
