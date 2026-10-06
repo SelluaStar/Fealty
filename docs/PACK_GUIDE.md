@@ -22,8 +22,10 @@ override the tag in a data pack:
 Villages nothing matches are still found by their bell, and their villagers belong to that village. Villagers with
 no village nearby belong to `fealty:wanderers`.
 
-The elder spawns indoors near the bell the first time a player visits, with the village coffer beside them, a
-mailbox outside and a guard post. Config: `spawn_elders`, `place_coffers`, `village_mailboxes`,
+The elder spawns indoors the first time a player visits, in the village's main building (see
+`village_layouts/` in [DATAPACKS.md](DATAPACKS.md)), with the village coffer beside them, a mailbox outside and a
+guard post. The village centre is the bell nearest the structure's town-centre piece, so big towns with a bell in
+every square still centre on the main one. Config: `spawn_elders`, `place_coffers`, `village_mailboxes`,
 `bell_villages_have_elders`, `village_margin`.
 
 ## Guards
@@ -127,6 +129,23 @@ standards man a camp. A manned camp may raid villages within `raid_range` every 
 `/rep village raid <village>` starts one for testing.
 
 ## Compatibility notes
+
+- **Oh The Biomes We've Gone:** its six village kinds (Skyris, Salem, Red Rock, Pumpkin Patch, Forgotten, Swamp)
+  are in `#minecraft:village`, so they are villages with elders. The `biomeswevegone` layout puts the elder in the
+  temple or largest house and never in streets, pens, farms or markets. Bandit camps and the hidden hamlet use the
+  `#minecraft:is_forest`, `#minecraft:is_taiga`, `#minecraft:is_savanna` and `#c:is_plains` tags, which BWG's
+  biomes are in.
+- **Epic Structures: Villages:** it rebuilds the five vanilla villages under vanilla's piece names, so the names no
+  longer say what a building is (a "small house" can be a three-storey hall). With the mod loaded, the
+  `epic_villages` layout takes over: the elder lives in the town-centre complex by the main bell, and Fealty
+  judges other buildings by their beds rather than their names. If you use the **data pack** version instead of
+  the mod, copy `data/fealty/fealty/village_layouts/epic_villages.json` into your pack without the `mods` line.
+- Villages visited before a structure mod or layout was added keep their elder where they are;
+  `/rep village rehome <village>` moves the elder to the best building now.
+- **Tectonic and Lithosphere:** both replace the overworld terrain, so use one of them, not both. Fealty does not
+  depend on terrain height: elder spots, bandit spawns, quest sites and guard arrivals are all found column by
+  column on the real ground, and bandit camps and the hidden hamlet only generate on dry, fairly flat land, so they
+  are rarer in very mountainous worlds. Tectonic's taller worlds work as they are.
 
 - MineColonies overlaps heavily with a village reputation system and is best left out of the pack.
 - Mods that rewrite villager AI or professions can clash with the price and threat logic. Test them before

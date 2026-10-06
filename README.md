@@ -11,9 +11,10 @@ guild, bandit followers, bounty hunters and the **Tyrant Lord**.
 - **Reputation per village, plus Renown.** Rep runs from -100 to 100 across five tiers: Hated, Distrusted,
   Neutral, Trusted and Honored. Renown carries 10% of every change between villages, and a new village starts at a
   quarter of it (capped at ±25). Every change shows as a line on screen; tier changes get a banner.
-- **Villages from any mod.** Vanilla villages, ChoiceTheorem's Overhauled Village, castle and town mods, and any
-  settlement with three or more homes are all villages. `/rep village scan` shows what is at your feet, and
-  `/rep village create` makes one by hand.
+- **Villages from any mod.** Vanilla villages, ChoiceTheorem's Overhauled Village, Oh The Biomes We've Gone,
+  Epic Structures: Villages, castle and town mods, and any settlement with three or more homes are all villages.
+  The elder lives in each kind of village's main building (data-driven `village_layouts`). `/rep village scan`
+  shows what is at your feet, and `/rep village create` makes one by hand.
 - **Good deeds** villages notice: quests and favors, trade, gifts, defending them from raids and bandits, killing
   monsters in the village (more if they were attacking a villager), healing villagers with potions, ringing the
   bell when danger is near, mending golems, lighting dark corners, giving beds, tending crops, and putting

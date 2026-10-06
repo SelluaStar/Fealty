@@ -104,6 +104,9 @@ public final class RepCommand {
                         .then(Commands.literal("delete")
                                 .then(Commands.argument("village", ResourceLocationArgument.id()).suggests(RepCommand::suggestVillages)
                                         .executes(RepCommand::villageDelete)))
+                        .then(Commands.literal("rehome")
+                                .then(Commands.argument("village", ResourceLocationArgument.id()).suggests(RepCommand::suggestVillages)
+                                        .executes(RepCommand::villageRehome)))
                         .then(Commands.literal("restore")
                                 .then(Commands.argument("village", ResourceLocationArgument.id()).suggests(RepCommand::suggestVillages)
                                         .executes(RepCommand::restore)))
@@ -283,6 +286,19 @@ public final class RepCommand {
         FealtyWorldData.get(ctx.getSource().getServer()).removeVillage(record.id());
         VillageResolver.clearCache();
         ctx.getSource().sendSuccess(() -> Component.translatable("fealty.command.village_deleted", record.name()), true);
+        return 1;
+    }
+
+    private static int villageRehome(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+        VillageRecord record = village(ctx);
+        ServerLevel level = ctx.getSource().getServer().getLevel(record.dimension());
+        BlockPos home = level == null ? null : ElderManager.rehome(level, record);
+        if (home == null) {
+            ctx.getSource().sendFailure(Component.translatable("fealty.command.rehome_failed", record.name()));
+            return 0;
+        }
+        ctx.getSource().sendSuccess(() -> Component.translatable("fealty.command.rehomed", record.name(),
+                home.getX(), home.getY(), home.getZ()), true);
         return 1;
     }
 

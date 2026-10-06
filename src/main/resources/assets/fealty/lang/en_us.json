@@ -1279,5 +1279,7 @@
   "fealty.banner.gift_of_love.detail": "%s has gathered a gift for you",
   "fealty.lord.gifts": "Out of love for you, the people of %s give you %s gift(s).",
   "fealty.mail.gift_of_love.subject": "With love, from %s",
-  "fealty.mail.gift_of_love.body": "Your people in %1$s love you, and have gathered a gift for their lord. It waits for you in the treasury: collect it at the Village Hall."
+  "fealty.mail.gift_of_love.body": "Your people in %1$s love you, and have gathered a gift for their lord. It waits for you in the treasury: collect it at the Village Hall.",
+  "fealty.command.rehomed": "The elder of %s now lives at %s, %s, %s. The coffer stays where it was.",
+  "fealty.command.rehome_failed": "Found no home for the elder of %s. Stand in the village so it is loaded, then try again."
 }

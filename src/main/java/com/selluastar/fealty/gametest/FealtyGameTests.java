@@ -37,8 +37,11 @@ import com.selluastar.fealty.rep.RepManager;
 import com.selluastar.fealty.trade.TradeHooks;
 import com.selluastar.fealty.trade.VillagerInteractions;
 import com.selluastar.fealty.trade.VillagerMemory;
+import com.selluastar.fealty.village.SitePlanner;
 import com.selluastar.fealty.village.StructureMatcher;
 import com.selluastar.fealty.village.VillageRecord;
+import com.selluastar.fealty.village.VillageLayout;
+import com.selluastar.fealty.village.VillageLayouts;
 import com.selluastar.fealty.village.VillageResolver;
 
 import net.minecraft.commands.arguments.EntityAnchorArgument;
@@ -69,6 +72,8 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.BuiltinStructures;
 import net.minecraft.world.level.levelgen.structure.Structure;
+import net.minecraft.world.level.levelgen.structure.pools.StructurePoolElement;
+import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -478,6 +483,38 @@ public final class FealtyGameTests {
                 > 3 * LordshipManager.tributePerDay(new VillageRecord(Fealty.id("test_tribute"), Level.OVERWORLD, BlockPos.ZERO,
                         new BoundingBox(0, 0, 0, 1, 1, 1), Factions.VILLAGE_TEMPLATE, null, "Test", false), 2),
                 "crushing taxes bring in more than three times what fair ones do");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void villageLayoutsPickTheHall(GameTestHelper helper) {
+        Registry<Structure> structures = helper.getLevel().registryAccess().registryOrThrow(Registries.STRUCTURE);
+        Holder<Structure> plains = structures.getHolderOrThrow(BuiltinStructures.VILLAGE_PLAINS);
+        Optional<VillageLayout> vanilla = VillageLayouts.byId(Fealty.id("vanilla"));
+        Optional<VillageLayout> bwg = VillageLayouts.byId(Fealty.id("biomeswevegone"));
+        Optional<VillageLayout> epic = VillageLayouts.byId(Fealty.id("epic_villages"));
+        check(helper, vanilla.isPresent() && bwg.isPresent() && epic.isPresent(), "the built-in village layouts should load");
+        check(helper, VillageLayouts.forStructure(plains) == vanilla.get(), "a plains village should use the vanilla layout without Epic Villages");
+        check(helper, vanilla.get().elderRank(ResourceLocation.parse("minecraft:village/plains/houses/plains_big_house_1")).orElse(99) == 0,
+                "the big house should be the vanilla elder's first choice");
+        check(helper, vanilla.get().avoids(ResourceLocation.parse("minecraft:village/plains/town_centers/plains_meeting_point_1")),
+                "a vanilla well is no home");
+        check(helper, bwg.get().avoids(ResourceLocation.parse("biomeswevegone:village/skyris/streets/straight_01")),
+                "streets are no home");
+        check(helper, bwg.get().avoids(ResourceLocation.parse("biomeswevegone:village/salem/houses/animal_pen_1")),
+                "animal pens are no home");
+        int temple = bwg.get().elderRank(ResourceLocation.parse("biomeswevegone:village/salem/houses/temple_1")).orElse(99);
+        int house = bwg.get().elderRank(ResourceLocation.parse("biomeswevegone:village/salem/houses/small_house_1")).orElse(99);
+        check(helper, temple < house && house < 99, "a BWG temple should rank above a small house, and both should be listed");
+        check(helper, epic.get().elderRank(ResourceLocation.parse("minecraft:village/plains/town_centers/plains_fountain_01")).orElse(99) == 0,
+                "the Epic Villages town centre should be the elder's first choice");
+        Optional<ResourceLocation> single = SitePlanner.template(StructurePoolElement.single("minecraft:village/plains/houses/plains_temple_3")
+                .apply(StructureTemplatePool.Projection.RIGID));
+        check(helper, single.isPresent() && single.get().getPath().endsWith("plains_temple_3"), "a jigsaw piece should name its template");
+        Optional<ResourceLocation> list = SitePlanner.template(StructurePoolElement.list(List.of(
+                StructurePoolElement.empty(), StructurePoolElement.single("minecraft:village/plains/houses/plains_library_1")))
+                .apply(StructureTemplatePool.Projection.RIGID));
+        check(helper, list.isPresent() && list.get().getPath().endsWith("plains_library_1"), "a list piece should name its first template");
         helper.succeed();
     }
 }

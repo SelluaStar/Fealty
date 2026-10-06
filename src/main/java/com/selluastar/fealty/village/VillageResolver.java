@@ -284,9 +284,10 @@ public final class VillageResolver {
                                                         ResourceLocation templateId, FactionDefinition template, FealtyWorldData data) {
         ResourceLocation id = structureVillageId(level, start.getChunkPos());
         BoundingBox box = start.getBoundingBox().inflatedBy(FealtyConfig.VILLAGE_MARGIN.get());
-        BlockPos center = box.getCenter();
+        // Big towns have bells in many buildings; the one nearest the town centre piece is the village bell.
+        BlockPos center = SitePlanner.heart(start);
         Optional<BlockPos> bell = level.getPoiManager().findClosest(h -> h.is(PoiTypes.MEETING), box::isInside, center,
-                Math.max(box.getXSpan(), box.getZSpan()) / 2, PoiManager.Occupancy.ANY);
+                Math.max(box.getXSpan(), box.getZSpan()), PoiManager.Occupancy.ANY);
         if (bell.isPresent()) {
             center = bell.get();
         }
@@ -390,8 +391,8 @@ public final class VillageResolver {
             return;
         }
         BoundingBox box = record.bounds();
-        BlockPos boxCenter = box.getCenter();
-        int radius = Math.max(box.getXSpan(), box.getZSpan()) / 2;
+        BlockPos boxCenter = SitePlanner.start(level, record).map(SitePlanner::heart).orElse(box.getCenter());
+        int radius = Math.max(box.getXSpan(), box.getZSpan());
         PoiManager poi = level.getPoiManager();
         BlockPos center = null;
         Optional<BlockPos> bell = poi.findClosest(h -> h.is(PoiTypes.MEETING), box::isInside, boxCenter, radius, PoiManager.Occupancy.ANY);

@@ -1,0 +1,6 @@
+{
+  "structures": ["biomeswevegone:*"],
+  "priority": 10,
+  "elder": ["*temple*", "*large_house*", "*library*", "*medium_house*", "*cleric*", "*house*"],
+  "avoid": ["*/streets/*", "*/terminators/*", "*/villagers/*", "*/wards/*", "*animal_pen*", "*farm*", "*market*", "*accessory*", "*meeting_point*", "*fisher*"]
+}

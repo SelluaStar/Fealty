@@ -120,6 +120,30 @@ public final class ElderManager {
         return true;
     }
 
+    /**
+     * Move the elder to the best home the village has now, after a layout or a structure mod changed. The coffer
+     * stays where it is. The village must be loaded around its centre.
+     */
+    @Nullable
+    public static BlockPos rehome(ServerLevel level, VillageRecord record) {
+        if (!level.isLoaded(record.center())) {
+            return null;
+        }
+        BlockPos home = SitePlanner.elderHome(level, record);
+        if (home == null) {
+            return null;
+        }
+        VillageRecord.ElderInfo elder = record.elder();
+        elder.setHome(home);
+        if (elder.uuid() != null && level.getEntity(elder.uuid()) instanceof VillageElderEntity entity) {
+            entity.setHome(home);
+            entity.getNavigation().stop();
+            entity.teleportTo(home.getX() + 0.5, home.getY(), home.getZ() + 0.5);
+        }
+        FealtyWorldData.get(level.getServer()).setDirty();
+        return home;
+    }
+
     /** An indoor spot in the village's main building, see {@link SitePlanner#elderHome}. */
     @Nullable
     static BlockPos findHome(ServerLevel level, VillageRecord record) {

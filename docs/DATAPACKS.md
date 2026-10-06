@@ -8,6 +8,7 @@ shipping a file with the same id, or add new ones under your own namespace. All 
 |---|---|
 | `tiers/` | Tier names, rep ranges, price multipliers, guard and trade behaviour |
 | `factions/` | Village templates and static factions (bandits, the thieves guild, ...) |
+| `village_layouts/` | Which building in each kind of village the elder lives in |
 | `rep_actions/` | Amounts for ways to gain rep (gifts, trades, raids, ...) |
 | `crimes/` | Offences: amount, severity, heat |
 | `rep_quests/` | Quests: elder pools by tier, and villagers' favors |
@@ -77,6 +78,36 @@ guard logic refer to them.
 - `renown_share`: share of each rep change that also moves Renown. `renown_start_factor`: a new faction starts at
   this fraction of the player's Renown.
 - `kind: static` is a single faction under the file's id (e.g. `fealty:bandits`).
+
+## village_layouts/
+
+Which building the elder lives in. Buildings are matched by the template they were built from (the jigsaw piece
+name, such as `minecraft:village/plains/houses/plains_big_house_1`), with `*` matching anything. For each village
+the highest-`priority` layout whose `structures` match is used; layouts whose `mods` are not all loaded are skipped.
+
+```json
+{
+  "structures": ["biomeswevegone:*"],
+  "exclude": [],
+  "mods": [],
+  "priority": 10,
+  "reach": 64,
+  "elder": ["*temple*", "*large_house*", "*library*", "*house*"],
+  "avoid": ["*/streets/*", "*animal_pen*", "*farm*"]
+}
+```
+
+- `elder`: buildings for the elder, best first. Unlisted buildings can still be picked.
+- `avoid`: buildings that are never the elder's home: roads, walls, farms, pens, plazas.
+- `reach`: how far (blocks) from the village centre the building may be.
+- Beds inside a building, its size and how close it is to the centre count as well, so a town whose building names
+  mean nothing (or that has no layout at all) still gets an indoor home near the middle. The spot itself must be
+  indoors, standable, off the paths and near beds where possible.
+
+Fealty ships `vanilla`, `biomeswevegone` (Oh The Biomes We've Gone), `epic_villages` (Epic Structures: Villages,
+only when its mod `mr_epic_structuresvillages` is loaded) and a catch-all `default` at priority -100 for every
+other town and castle mod. Elders already placed keep their home; `/rep village rehome <village>` moves one to the
+best building the village has now (stand in the village so it is loaded).
 
 ## rep_actions/ and crimes/
 

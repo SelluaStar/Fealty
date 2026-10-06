@@ -3,15 +3,21 @@ package com.selluastar.fealty.village;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalDouble;
 
 import org.jetbrains.annotations.Nullable;
 
+import com.selluastar.fealty.mixin.ListPoolElementAccessor;
+import com.selluastar.fealty.mixin.SinglePoolElementAccessor;
+import com.selluastar.fealty.mixin.TemplateStructurePieceAccessor;
 import com.selluastar.fealty.util.SpawnSpots;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.RandomSource;
@@ -25,71 +31,156 @@ import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.level.levelgen.structure.PoolElementStructurePiece;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructurePiece;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
+import net.minecraft.world.level.levelgen.structure.pools.StructurePoolElement;
 
 /**
  * Picks spots in a village for the things Fealty adds: the elder's home, the coffer, the mailbox and the guard
- * post. It works from the structure's own pieces where it can (the largest building near the middle is taken
- * to be the hall or keep), so it copes with modded towns and castles as well as vanilla villages.
+ * post. It works from the structure's own pieces where it can, ranking them with the village's
+ * {@link VillageLayout} and with what is inside them (beds, size, closeness to the middle), so it copes with
+ * modded towns and castles as well as vanilla villages.
  */
 public final class SitePlanner {
     private SitePlanner() {
     }
 
-    /** Bounding boxes of the structure's buildings, largest first. Flat pieces such as roads are left out. */
-    public static List<BoundingBox> buildings(ServerLevel level, VillageRecord record) {
+    /** One piece of a village's structure: its box and the template it was built from, if known. */
+    public record Building(BoundingBox box, @Nullable ResourceLocation template) {
+    }
+
+    /** The structure start a village was found from, if it is still there. */
+    public static Optional<StructureStart> start(ServerLevel level, VillageRecord record) {
         Optional<ChunkPos> startChunk = record.startChunk();
         if (record.structure() == null || startChunk.isEmpty()) {
-            return List.of();
+            return Optional.empty();
         }
         Structure structure = level.registryAccess().registryOrThrow(Registries.STRUCTURE).get(record.structure());
         if (structure == null) {
-            return List.of();
+            return Optional.empty();
         }
         ChunkAccess access = level.getChunk(startChunk.get().x, startChunk.get().z, ChunkStatus.STRUCTURE_STARTS);
         StructureStart start = access.getStartForStructure(structure);
-        if (start == null || !start.isValid()) {
-            return List.of();
-        }
-        List<BoundingBox> boxes = new ArrayList<>();
-        for (StructurePiece piece : start.getPieces()) {
-            BoundingBox box = piece.getBoundingBox();
-            if (box.getYSpan() >= 4 && box.getXSpan() >= 4 && box.getZSpan() >= 4) {
-                boxes.add(box);
-            }
-        }
-        boxes.sort(Comparator.comparingLong((BoundingBox b) -> (long) b.getXSpan() * b.getYSpan() * b.getZSpan()).reversed());
-        return boxes;
+        return start != null && start.isValid() ? Optional.of(start) : Optional.empty();
     }
 
-    /** An indoor spot for the elder: in a large building near the middle, with a roof, near beds, off the roads. */
+    /**
+     * Where to look for a structure village's middle: the first piece, which for jigsaw villages is the town centre
+     * (the well, the square or the keep), else the middle of the whole structure.
+     */
+    public static BlockPos heart(StructureStart start) {
+        List<StructurePiece> pieces = start.getPieces();
+        return pieces.isEmpty() ? start.getBoundingBox().getCenter() : pieces.getFirst().getBoundingBox().getCenter();
+    }
+
+    /** The template a piece was built from, for jigsaw pieces and plain template pieces. */
+    public static Optional<ResourceLocation> template(StructurePiece piece) {
+        if (piece instanceof PoolElementStructurePiece pool) {
+            return template(pool.getElement());
+        }
+        if ((Object) piece instanceof TemplateStructurePieceAccessor templated) {
+            return Optional.ofNullable(ResourceLocation.tryParse(templated.fealty$getTemplateName()));
+        }
+        return Optional.empty();
+    }
+
+    /** The template a jigsaw element places; a list element gives its first part's. */
+    public static Optional<ResourceLocation> template(StructurePoolElement element) {
+        if ((Object) element instanceof SinglePoolElementAccessor single) {
+            return single.fealty$getTemplate().left();
+        }
+        if ((Object) element instanceof ListPoolElementAccessor list) {
+            for (StructurePoolElement part : list.fealty$getElements()) {
+                Optional<ResourceLocation> id = template(part);
+                if (id.isPresent()) {
+                    return id;
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    /** The structure's buildings, largest first. Flat pieces such as roads are left out. */
+    public static List<Building> buildings(ServerLevel level, VillageRecord record) {
+        Optional<StructureStart> start = start(level, record);
+        if (start.isEmpty()) {
+            return List.of();
+        }
+        List<Building> buildings = new ArrayList<>();
+        for (StructurePiece piece : start.get().getPieces()) {
+            BoundingBox box = piece.getBoundingBox();
+            if (box.getYSpan() >= 4 && box.getXSpan() >= 4 && box.getZSpan() >= 4) {
+                buildings.add(new Building(box, template(piece).orElse(null)));
+            }
+        }
+        buildings.sort(Comparator.comparingLong((Building b) -> volume(b.box())).reversed());
+        return buildings;
+    }
+
+    /**
+     * How good a home a building would make for the elder, or empty if it must not be one. The village's
+     * {@link VillageLayout} ranks buildings by name; beds inside and closeness to the middle count too, so towns
+     * whose buildings do not match their names (or have no layout at all) still get a sensible pick.
+     */
+    static OptionalDouble buildingScore(ServerLevel level, VillageLayout layout, Building building, BlockPos center) {
+        double distance = Math.sqrt(building.box().getCenter().distSqr(center));
+        if (distance > layout.reach()) {
+            return OptionalDouble.empty();
+        }
+        double score = -distance / 4.0;
+        if (building.template() != null) {
+            if (layout.avoids(building.template())) {
+                return OptionalDouble.empty();
+            }
+            Optional<Integer> rank = layout.elderRank(building.template());
+            if (rank.isPresent()) {
+                score += Math.max(12, 40 - rank.get() * 6);
+            }
+        }
+        score += Math.min(4, beds(level, building.box())) * 3;
+        score += Math.min(8, volume(building.box()) / 1000);
+        return OptionalDouble.of(score);
+    }
+
+    /** An indoor spot for the elder: in the best building near the middle, with a roof, near beds, off the roads. */
     @Nullable
     public static BlockPos elderHome(ServerLevel level, VillageRecord record) {
         BlockPos center = record.center();
         RandomSource random = level.getRandom();
+        VillageLayout layout = VillageLayouts.forVillage(level, record);
+        List<Building> buildings = buildings(level, record);
+        List<Map.Entry<Building, Double>> ranked = new ArrayList<>();
+        List<BoundingBox> avoided = new ArrayList<>();
+        for (Building building : buildings) {
+            OptionalDouble score = buildingScore(level, layout, building, center);
+            if (score.isPresent()) {
+                ranked.add(Map.entry(building, score.getAsDouble()));
+            } else if (building.template() != null && layout.avoids(building.template())) {
+                avoided.add(building.box());
+            }
+        }
+        ranked.sort(Map.Entry.<Building, Double>comparingByValue().reversed());
+        if (ranked.size() > 6) {
+            ranked = ranked.subList(0, 6);
+        }
         List<BlockPos> candidates = new ArrayList<>();
-        List<BoundingBox> buildings = buildings(level, record);
-        int used = 0;
-        for (BoundingBox box : buildings) {
-            if (used >= 6) {
-                break;
-            }
-            if (Math.sqrt(box.getCenter().distSqr(center)) > 64) {
-                continue;
-            }
-            used++;
-            for (int i = 0; i < 80; i++) {
+        for (Map.Entry<Building, Double> entry : ranked) {
+            BoundingBox box = entry.getKey().box();
+            for (int i = 0; i < 100; i++) {
                 candidates.add(new BlockPos(
                         box.minX() + 1 + random.nextInt(Math.max(1, box.getXSpan() - 2)),
                         box.minY() + random.nextInt(Math.max(1, box.getYSpan())),
                         box.minZ() + 1 + random.nextInt(Math.max(1, box.getZSpan() - 2))));
             }
         }
+        // Spots around the middle as well, found column by column so hillside and mountain villages work too.
         int reach = Math.min(32, Math.max(20, Math.max(record.bounds().getXSpan(), record.bounds().getZSpan()) / 4));
-        for (int i = 0; i < 400; i++) {
-            candidates.add(center.offset(random.nextInt(reach * 2 + 1) - reach, random.nextInt(17) - 8, random.nextInt(reach * 2 + 1) - reach));
+        for (int i = 0; i < 300; i++) {
+            int x = center.getX() + random.nextInt(reach * 2 + 1) - reach;
+            int z = center.getZ() + random.nextInt(reach * 2 + 1) - reach;
+            SpawnSpots.nearY(level, x, z, center.getY(), 12).ifPresent(candidates::add);
         }
         BlockPos best = null;
         double bestScore = Double.NEGATIVE_INFINITY;
@@ -101,8 +192,12 @@ public final class SitePlanner {
             if (isIndoors(level, pos)) {
                 score += 30;
             }
-            if (inAny(buildings, pos)) {
-                score += 15;
+            Optional<Double> building = buildingAt(ranked, pos);
+            if (building.isPresent()) {
+                score += 15 + building.get();
+            }
+            if (inAny(avoided, pos)) {
+                score -= 40;
             }
             if (nearBed(level, pos)) {
                 score += 10;
@@ -119,6 +214,25 @@ public final class SitePlanner {
             best = surface(level, center);
         }
         return best;
+    }
+
+    private static Optional<Double> buildingAt(List<Map.Entry<Building, Double>> ranked, BlockPos pos) {
+        for (Map.Entry<Building, Double> entry : ranked) {
+            if (entry.getKey().box().isInside(pos)) {
+                return Optional.of(entry.getValue());
+            }
+        }
+        return Optional.empty();
+    }
+
+    private static long volume(BoundingBox box) {
+        return (long) box.getXSpan() * box.getYSpan() * box.getZSpan();
+    }
+
+    private static int beds(ServerLevel level, BoundingBox box) {
+        int radius = (int) Math.ceil(Math.sqrt(box.getXSpan() * box.getXSpan() + box.getZSpan() * box.getZSpan()) / 2.0) + 1;
+        return (int) level.getPoiManager().getInRange(h -> h.is(PoiTypes.HOME), box.getCenter(), radius, PoiManager.Occupancy.ANY)
+                .filter(record -> box.isInside(record.getPos())).limit(8).count();
     }
 
     /** A free floor spot beside {@code home}, preferring one against a wall, for the coffer. */

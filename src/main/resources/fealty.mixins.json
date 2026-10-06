@@ -5,7 +5,10 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "VillagerMixin",
-    "MobAccessor"
+    "MobAccessor",
+    "SinglePoolElementAccessor",
+    "ListPoolElementAccessor",
+    "TemplateStructurePieceAccessor"
   ],
   "client": [],
   "injectors": {

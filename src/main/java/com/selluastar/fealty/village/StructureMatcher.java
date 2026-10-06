@@ -108,7 +108,8 @@ public final class StructureMatcher {
         return holder -> holder.is(id);
     }
 
-    private static Pattern glob(String glob) {
+    /** A glob where {@code *} matches anything, including {@code /} and {@code :}. */
+    public static Pattern glob(String glob) {
         StringBuilder regex = new StringBuilder();
         for (String part : glob.split("\\*", -1)) {
             if (!regex.isEmpty()) {
