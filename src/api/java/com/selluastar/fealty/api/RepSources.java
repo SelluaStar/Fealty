@@ -39,6 +39,8 @@ public final class RepSources {
     public static final ResourceLocation KILL_BANDIT = FealtyApi.id("kill_bandit");
     /** Killing raiders near a village. */
     public static final ResourceLocation KILL_RAIDER = FealtyApi.id("kill_raider");
+    /** Standing with a village while bandits raid it. */
+    public static final ResourceLocation DEFEND_BANDIT_RAID = FealtyApi.id("defend_bandit_raid");
     /** Paying a fine to the elder or a guard. */
     public static final ResourceLocation FINE = FealtyApi.id("fine");
     // Crimes

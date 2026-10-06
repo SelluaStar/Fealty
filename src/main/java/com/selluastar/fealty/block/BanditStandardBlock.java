@@ -3,9 +3,11 @@ package com.selluastar.fealty.block;
 import org.jetbrains.annotations.Nullable;
 
 import com.mojang.serialization.MapCodec;
+import com.selluastar.fealty.outlaw.BanditCamps;
 import com.selluastar.fealty.registry.ModBlockEntities;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
@@ -40,6 +42,15 @@ public class BanditStandardBlock extends BaseEntityBlock {
     @Override
     protected RenderShape getRenderShape(BlockState state) {
         return RenderShape.MODEL;
+    }
+
+    /** Breaking a camp's standard ends the camp, and a camp it kept empty nearby may take its place. */
+    @Override
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+        if (!state.is(newState.getBlock()) && level instanceof ServerLevel server) {
+            BanditCamps.get(server.getServer()).unregister(server, pos);
+        }
+        super.onRemove(state, level, pos, newState, movedByPiston);
     }
 
     @Nullable

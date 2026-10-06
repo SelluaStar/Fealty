@@ -16,8 +16,11 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.selluastar.fealty.Fealty;
 import com.selluastar.fealty.api.RepSources;
 import com.selluastar.fealty.api.RepTier;
+import com.selluastar.fealty.config.FealtyConfig;
 import com.selluastar.fealty.data.FealtyDataManager;
 import com.selluastar.fealty.lordship.LordshipManager;
+import com.selluastar.fealty.outlaw.BanditCamps;
+import com.selluastar.fealty.outlaw.BanditRaids;
 import com.selluastar.fealty.outlaw.HeatManager;
 import com.selluastar.fealty.quest.QuestManager;
 import com.selluastar.fealty.rep.Factions;
@@ -37,6 +40,7 @@ import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -103,6 +107,9 @@ public final class RepCommand {
                         .then(Commands.literal("restore")
                                 .then(Commands.argument("village", ResourceLocationArgument.id()).suggests(RepCommand::suggestVillages)
                                         .executes(RepCommand::restore)))
+                        .then(Commands.literal("raid")
+                                .then(Commands.argument("village", ResourceLocationArgument.id()).suggests(RepCommand::suggestVillages)
+                                        .executes(RepCommand::raid)))
                         .then(Commands.literal("lord")
                                 .then(Commands.argument("village", ResourceLocationArgument.id()).suggests(RepCommand::suggestVillages)
                                         .then(Commands.literal("clear").executes(RepCommand::clearLord))
@@ -299,6 +306,21 @@ public final class RepCommand {
         LordshipManager.clearLord(ctx.getSource().getServer(), record, null);
         ctx.getSource().sendSuccess(() -> Component.translatable("fealty.command.lord_cleared", record.name()), true);
         return 1;
+    }
+
+    /** Send a bandit raid against a village now, from the nearest manned camp if there is one in reach. */
+    private static int raid(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+        VillageRecord record = village(ctx);
+        ServerLevel level = ctx.getSource().getServer().getLevel(record.dimension());
+        int raiders = 0;
+        if (level != null) {
+            BlockPos camp = BanditCamps.get(ctx.getSource().getServer()).nearestActive(level, record.center(), FealtyConfig.RAID_RANGE.get()).orElse(null);
+            raiders = BanditRaids.start(level, record, camp);
+        }
+        int count = raiders;
+        ctx.getSource().sendSuccess(() -> Component.translatable(count > 0 ? "fealty.command.raid_started" : "fealty.command.raid_failed",
+                record.name(), count), true);
+        return count;
     }
 
     private static int lordTax(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {

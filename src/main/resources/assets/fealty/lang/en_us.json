@@ -1255,5 +1255,15 @@
   "fealty.lockpick.broke_spare": "Snap! The pick breaks. Take another in hand and try again.",
   "fealty.lockpick.heard": "Someone heard that!",
   "advancement.fealty.lock_picked": "Tumblers Fall",
-  "advancement.fealty.lock_picked.desc": "Pick a village lock"
+  "advancement.fealty.lock_picked.desc": "Pick a village lock",
+  "fealty.raid.bar": "Bandit raid on %s",
+  "fealty.raid.start": "Bandits!",
+  "fealty.raid.start.detail": "Raiders are coming for %s",
+  "fealty.raid.looting": "Bandits are looting the %s coffer!",
+  "fealty.raid.won": "Raid beaten",
+  "fealty.raid.won.detail": "%s is safe, and won't forget who stood with it",
+  "fealty.raid.withdrew": "The bandits pulled back from %s.",
+  "fealty.raid.withdrew_loot": "The bandits pulled back from %s, carrying what they took back to their camp.",
+  "fealty.command.raid_started": "Sent %2$s bandits against %1$s.",
+  "fealty.command.raid_failed": "Could not raid %s: it is already under attack, or there is no open ground for raiders to come from."
 }

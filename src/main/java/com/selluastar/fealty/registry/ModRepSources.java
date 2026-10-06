@@ -35,6 +35,7 @@ public final class ModRepSources {
         register(RepSources.KILL_BANDIT, RepSource.redemption(2));
         register(RepSources.KILL_RAIDER, RepSource.redemption(1));
         register(RepSources.FINE, RepSource.redemption(0));
+        register(RepSources.DEFEND_BANDIT_RAID, RepSource.redemption(15));
         // Crimes: need a witness and alert guards.
         register(RepSources.BREAK_BLOCK, RepSource.crime(-5));
         register(RepSources.STEAL, RepSource.crime(-15));

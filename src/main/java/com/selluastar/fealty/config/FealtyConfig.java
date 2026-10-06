@@ -99,6 +99,11 @@ public final class FealtyConfig {
     public static final ModConfigSpec.IntValue HEAT_MAX;
     public static final ModConfigSpec.IntValue BOUNTY_INTERVAL;
     public static final ModConfigSpec.BooleanValue ENABLE_TYRANT;
+    public static final ModConfigSpec.IntValue CAMP_EXCLUSION_RADIUS;
+    public static final ModConfigSpec.BooleanValue BANDIT_RAIDS;
+    public static final ModConfigSpec.IntValue RAID_RANGE;
+    public static final ModConfigSpec.IntValue RAID_MIN_DAYS;
+    public static final ModConfigSpec.IntValue RAID_MAX_DAYS;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -262,6 +267,12 @@ public final class FealtyConfig {
         HEAT_MAX = b.comment("Heat cap").defineInRange("heat_max", 100, 1, 100000);
         BOUNTY_INTERVAL = b.comment("Ticks between bounty hunter parties while wanted").defineInRange("bounty_interval", 12000, 200, 2400000);
         ENABLE_TYRANT = b.comment("Enable the Tyrant Lord boss event").define("enable_tyrant", true);
+        CAMP_EXCLUSION_RADIUS = b.comment("Only one bandit camp within this many blocks is manned; the others stand empty")
+                .defineInRange("camp_exclusion_radius", 768, 0, 100000);
+        BANDIT_RAIDS = b.comment("Manned bandit camps raid nearby villages while a player is there").define("bandit_raids", true);
+        RAID_RANGE = b.comment("Camps raid villages within this many blocks").defineInRange("raid_range", 640, 16, 100000);
+        RAID_MIN_DAYS = b.comment("Fewest days between raids on one village").defineInRange("raid_min_days", 3, 1, 1000);
+        RAID_MAX_DAYS = b.comment("Most days between raids on one village (while a player is there)").defineInRange("raid_max_days", 5, 1, 1000);
         b.pop();
 
         SPEC = b.build();

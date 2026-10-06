@@ -537,6 +537,7 @@ public final class GarrisonManager {
             BlockPos pos = spot.get();
             if (probe != null) {
                 probe.moveTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5);
+                probe.setOnGround(true); // not in the world yet, so not on the ground: paths are only made from the ground
                 Path path = probe.getNavigation().createPath(lord, 1);
                 if (path == null || !path.canReach()) {
                     continue;

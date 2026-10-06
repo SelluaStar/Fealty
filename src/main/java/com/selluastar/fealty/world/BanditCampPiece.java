@@ -1,6 +1,7 @@
 package com.selluastar.fealty.world;
 
 import com.selluastar.fealty.Fealty;
+import com.selluastar.fealty.block.BanditStandardBlockEntity;
 import com.selluastar.fealty.registry.ModBlocks;
 import com.selluastar.fealty.registry.ModStructures;
 
@@ -62,6 +63,10 @@ public class BanditCampPiece extends ScatteredFeaturePiece {
         b.fill(11, 0, 15, 13, 0, 15, logX);
         b.fill(9, 0, 11, 9, 0, 13, logZ);
         b.set(14, 0, 14, ModBlocks.BANDIT_STANDARD.get().defaultBlockState());
+        BlockPos flag = b.pos(14, 0, 14);
+        if (b.inChunk(flag) && level.getBlockEntity(flag) instanceof BanditStandardBlockEntity standard) {
+            standard.setNatural();
+        }
 
         tent(b, 3, 3, Blocks.BROWN_WOOL.defaultBlockState(), Blocks.BROWN_CARPET.defaultBlockState(), random, true);
         tent(b, 16, 3, Blocks.BLACK_WOOL.defaultBlockState(), Blocks.GRAY_CARPET.defaultBlockState(), random, false);
