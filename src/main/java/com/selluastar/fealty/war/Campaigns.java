@@ -67,7 +67,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
-import net.minecraft.world.entity.monster.PatrollingMonster;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
@@ -474,9 +473,6 @@ public final class Campaigns extends SavedData {
                 WarDefenders.enlist(mob);
                 WarDefenders.arm(mob);
                 mob.setPersistenceRequired();
-                if (mob instanceof PatrollingMonster patrolling) {
-                    patrolling.setPatrolling(false);
-                }
             }
             battle.defenders.add(defender.getUUID());
         }

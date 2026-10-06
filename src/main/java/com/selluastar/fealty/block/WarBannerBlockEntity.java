@@ -170,7 +170,6 @@ public class WarBannerBlockEntity extends BlockEntity {
         mob.setPersistenceRequired();
         mob.setData(ModAttachments.CAMP, banner.asLong());
         if (mob instanceof PatrollingMonster patrolling) {
-            patrolling.setPatrolling(false);
             patrolling.setPatrolLeader(captain);
             if (captain) {
                 HolderLookup.RegistryLookup<net.minecraft.world.level.block.entity.BannerPattern> patterns =
