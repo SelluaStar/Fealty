@@ -1245,7 +1245,7 @@
   "fealty.lockpick.uses": "Pick: %s uses left · %s spare",
   "fealty.lockpick.try": "Try the lock",
   "fealty.lockpick.leave": "Leave",
-  "fealty.lockpick.hint": "Move the mouse to set the pick, then click the lock (or press Space) to turn it. The further it turns, the closer you are.",
+  "fealty.lockpick.hint": "Drag the brass knob round the ring to set the pick (or scroll, or use the arrow keys). Click the lock or press Space to turn it: the further it turns, the closer you are. Each try leaves a mark on the ring.",
   "fealty.lockpick.close": "Almost! It turns a long way.",
   "fealty.lockpick.warm": "The lock gives a little.",
   "fealty.lockpick.cold": "It barely moves.",

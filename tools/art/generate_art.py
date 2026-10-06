@@ -906,10 +906,16 @@ def mailbox_textures():
 # ------------------------------------------------------------------------------------------------ GUIs
 
 def lockpick_gui():
-    """The lockpicking screen: an iron lock plate (112x112 at 0,0) and the brass cylinder that turns (64x64 at 128,0)."""
+    """The lockpicking screen sheet (256x128):
+    iron lock plate 112x112 at (0,0); brass cylinder 64x64 at (128,0); slider knob 18x18 at (192,0) and its lit
+    twin at (212,0); the pick 84x10 at (0,112), tip at the left; the tension wrench 48x8 at (96,112)."""
     sheet = Image.new("RGBA", (256, 128), (0, 0, 0, 0))
     rand = random.Random(91)
-    IRON, IRON_DARK, BRASS = hexc("#5A5F66"), hexc("#33373C"), hexc("#B8903A")
+    IRON, IRON_DARK, BRASS = hexc("#5A5F66"), hexc("#2B2F34"), hexc("#B8903A")
+
+    def lit(x, y, c):
+        # light from the upper left
+        return 1.12 - 0.22 * (((x - c) + (y - c)) / (2 * c) + 0.5)
 
     plate = Image.new("RGBA", (112, 112), (0, 0, 0, 0))
     pp = plate.load()
@@ -917,24 +923,33 @@ def lockpick_gui():
     for y in range(112):
         for x in range(112):
             d = ((x - c) ** 2 + (y - c) ** 2) ** 0.5
-            if d > 55:
+            if d > 55.5:
                 continue
-            if d > 52:
-                col = shade(IRON_DARK, 0.8)
-            elif d > 49:
-                col = shade(IRON, 1.15)
-            elif d > 34:
-                col = shade(IRON, 0.95 + 0.004 * (49 - d))
-            elif d > 32:
+            if d > 53:
                 col = shade(IRON_DARK, 0.7)
+            elif d > 50.5:
+                col = shade(IRON, 1.25 if (x + y) < 2 * c else 0.85)
+            elif d > 47 and d < 48:
+                col = shade(IRON, 0.7)  # engraved ring
+            elif d > 34:
+                ang = math.atan2(y - c, x - c)
+                col = shade(IRON, (0.96 + 0.03 * math.sin(ang * 24)) * lit(x, y, c))  # brushed
+            elif d > 32:
+                col = shade(IRON_DARK, 0.6)
             else:
                 continue  # the cylinder sits in the hole
-            pp[x, y] = shade(col, 1.0 + rand.uniform(-0.05, 0.05))
+            pp[x, y] = shade(col, 1.0 + rand.uniform(-0.04, 0.04))
     for angle in range(0, 360, 45):
-        rx = int(round(c + 42 * math.cos(math.radians(angle + 22.5))))
-        ry = int(round(c + 42 * math.sin(math.radians(angle + 22.5))))
-        for dx, dy in ((0, 0), (1, 0), (0, 1), (1, 1)):
-            pp[rx + dx, ry + dy] = shade(IRON, 1.45 if (dx, dy) == (0, 0) else 0.75)
+        rx = c + 41.5 * math.cos(math.radians(angle + 22.5))
+        ry = c + 41.5 * math.sin(math.radians(angle + 22.5))
+        for y in range(int(ry) - 3, int(ry) + 4):
+            for x in range(int(rx) - 3, int(rx) + 4):
+                d = ((x - rx) ** 2 + (y - ry) ** 2) ** 0.5
+                if d <= 2.6:
+                    hl = 1.5 if (x - rx) + (y - ry) < -1 else 1.1 if d < 1.6 else 0.8
+                    pp[x, y] = shade(IRON, hl)
+                elif d <= 3.4:
+                    pp[x, y] = shade(IRON_DARK, 0.8)
     sheet.paste(plate, (0, 0))
 
     cyl = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
@@ -943,16 +958,84 @@ def lockpick_gui():
     for y in range(64):
         for x in range(64):
             d = ((x - c) ** 2 + (y - c) ** 2) ** 0.5
-            if d > 31:
+            if d > 31.5:
                 continue
-            col = shade(BRASS, 0.75) if d > 29 else shade(BRASS, 1.1 - 0.008 * d)
-            # the keyhole: a round top and a slot below it
-            hole = ((x - c) ** 2 + (y - 26) ** 2) ** 0.5 <= 5 or (abs(x - c) <= 2.5 and 26 <= y <= 42)
+            if d > 29.5:
+                col = shade(BRASS, 0.62)
+            elif d > 27.5:
+                col = shade(BRASS, 1.3 if (x + y) < 2 * c else 0.85)
+            else:
+                col = shade(BRASS, lit(x, y, c) * (1.08 - 0.006 * d))
+            # the keyhole: a round top and a slot below it, with a lit lower lip
+            hole = ((x - c) ** 2 + (y - 25) ** 2) ** 0.5 <= 5.2 or (abs(x - c) <= 2.6 and 25 <= y <= 42)
+            lip = not hole and (((x - c) ** 2 + (y - 26) ** 2) ** 0.5 <= 6.4 or (abs(x - c) <= 3.8 and 25 <= y <= 43.5))
             if hole:
-                col = hexc("#120E0A")
-            cp[x, y] = shade(col, 1.0 + rand.uniform(-0.04, 0.04))
+                col = hexc("#0E0B08")
+            elif lip:
+                col = shade(BRASS, 0.7 if y < 25 else 1.35)
+            cp[x, y] = shade(col, 1.0 + rand.uniform(-0.03, 0.03))
     sheet.paste(cyl, (128, 0))
+
+    for i, glow in enumerate((False, True)):
+        knob = Image.new("RGBA", (18, 18), (0, 0, 0, 0))
+        kp = knob.load()
+        c = 8.5
+        for y in range(18):
+            for x in range(18):
+                d = ((x - c) ** 2 + (y - c) ** 2) ** 0.5
+                if d > 8.6:
+                    continue
+                base = hexc("#F2D675") if glow else BRASS
+                if d > 7.4:
+                    col = shade(hexc("#3B2A1A"), 1.0)
+                elif d > 5.6:
+                    ang = math.atan2(y - c, x - c)
+                    col = shade(base, (0.85 + 0.25 * (math.sin(ang * 8) > 0)) * lit(x, y, c))  # knurled rim
+                else:
+                    col = shade(base, lit(x, y, c) * (1.15 - 0.03 * d))
+                kp[x, y] = col
+        sheet.paste(knob, (192 + 20 * i, 0))
+
+    # The pick, tip at the left: hook, shaft, then a leather-wrapped grip.
+    pick = Image.new("RGBA", (84, 10), (0, 0, 0, 0))
+    kp = pick.load()
+    STEEL, STEEL_DARK, LEATHER = hexc("#C3C9D0"), hexc("#3A3F45"), hexc("#6D4C2F")
+    for x in range(2, 56):
+        kp[x, 4] = shade(STEEL_DARK, 1.0)
+        kp[x, 5] = shade(STEEL, 1.15)
+        kp[x, 6] = shade(STEEL, 0.8)
+        kp[x, 7] = shade(STEEL_DARK, 1.0)
+    for y in range(1, 6):  # the hook
+        kp[1, y] = STEEL_DARK
+        kp[2, y] = shade(STEEL, 1.1)
+        kp[3, y] = STEEL_DARK
+    kp[2, 0] = STEEL_DARK
+    for x in range(54, 84):
+        for y in range(1, 10):
+            edge = y in (1, 9) or x in (54, 83)
+            wrap = (x + y) % 5 == 0
+            col = shade(LEATHER, 0.55) if edge else shade(LEATHER, 0.8 if wrap else 1.05 - 0.04 * abs(y - 5))
+            kp[x, y] = col
+    for y in range(2, 9):  # brass ferrule
+        kp[55, y] = shade(BRASS, 1.2)
+        kp[56, y] = shade(BRASS, 0.85)
+    sheet.paste(pick, (0, 112))
+
+    # The tension wrench: an L of dark steel, the short leg at the left.
+    wrench = Image.new("RGBA", (48, 8), (0, 0, 0, 0))
+    wp = wrench.load()
+    for x in range(0, 48):
+        wp[x, 2] = STEEL_DARK
+        wp[x, 3] = shade(STEEL, 1.1)
+        wp[x, 4] = shade(STEEL, 0.75)
+        wp[x, 5] = STEEL_DARK
+    for y in range(0, 8):
+        wp[0, y] = STEEL_DARK
+        wp[1, y] = shade(STEEL, 1.0)
+        wp[2, y] = STEEL_DARK
+    sheet.paste(wrench, (96, 112))
     save(sheet, "gui", "lockpick.png")
+
 
 def parchment(w, h, seed, border="#5D4037"):
     p = Painter(w, h, seed)
