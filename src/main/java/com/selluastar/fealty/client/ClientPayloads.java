@@ -72,6 +72,16 @@ public final class ClientPayloads {
         com.selluastar.fealty.client.hud.RetinueLayer.set(payload.members());
     }
 
+    public static void openLockpick(com.selluastar.fealty.network.OpenLockpickPayload payload) {
+        Minecraft.getInstance().setScreen(new com.selluastar.fealty.client.screen.LockpickScreen(payload));
+    }
+
+    public static void lockpickResult(com.selluastar.fealty.network.LockpickResultPayload payload) {
+        if (Minecraft.getInstance().screen instanceof com.selluastar.fealty.client.screen.LockpickScreen screen) {
+            screen.result(payload);
+        }
+    }
+
     public static void openHorn(com.selluastar.fealty.network.OpenHornPayload payload) {
         Minecraft.getInstance().setScreen(new com.selluastar.fealty.client.screen.HornScreen(payload));
     }

@@ -17,6 +17,7 @@ Outputs:
 import base64
 import io
 import json
+import math
 import os
 import random
 import uuid
@@ -904,6 +905,55 @@ def mailbox_textures():
 
 # ------------------------------------------------------------------------------------------------ GUIs
 
+def lockpick_gui():
+    """The lockpicking screen: an iron lock plate (112x112 at 0,0) and the brass cylinder that turns (64x64 at 128,0)."""
+    sheet = Image.new("RGBA", (256, 128), (0, 0, 0, 0))
+    rand = random.Random(91)
+    IRON, IRON_DARK, BRASS = hexc("#5A5F66"), hexc("#33373C"), hexc("#B8903A")
+
+    plate = Image.new("RGBA", (112, 112), (0, 0, 0, 0))
+    pp = plate.load()
+    c = 55.5
+    for y in range(112):
+        for x in range(112):
+            d = ((x - c) ** 2 + (y - c) ** 2) ** 0.5
+            if d > 55:
+                continue
+            if d > 52:
+                col = shade(IRON_DARK, 0.8)
+            elif d > 49:
+                col = shade(IRON, 1.15)
+            elif d > 34:
+                col = shade(IRON, 0.95 + 0.004 * (49 - d))
+            elif d > 32:
+                col = shade(IRON_DARK, 0.7)
+            else:
+                continue  # the cylinder sits in the hole
+            pp[x, y] = shade(col, 1.0 + rand.uniform(-0.05, 0.05))
+    for angle in range(0, 360, 45):
+        rx = int(round(c + 42 * math.cos(math.radians(angle + 22.5))))
+        ry = int(round(c + 42 * math.sin(math.radians(angle + 22.5))))
+        for dx, dy in ((0, 0), (1, 0), (0, 1), (1, 1)):
+            pp[rx + dx, ry + dy] = shade(IRON, 1.45 if (dx, dy) == (0, 0) else 0.75)
+    sheet.paste(plate, (0, 0))
+
+    cyl = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
+    cp = cyl.load()
+    c = 31.5
+    for y in range(64):
+        for x in range(64):
+            d = ((x - c) ** 2 + (y - c) ** 2) ** 0.5
+            if d > 31:
+                continue
+            col = shade(BRASS, 0.75) if d > 29 else shade(BRASS, 1.1 - 0.008 * d)
+            # the keyhole: a round top and a slot below it
+            hole = ((x - c) ** 2 + (y - 26) ** 2) ** 0.5 <= 5 or (abs(x - c) <= 2.5 and 26 <= y <= 42)
+            if hole:
+                col = hexc("#120E0A")
+            cp[x, y] = shade(col, 1.0 + rand.uniform(-0.04, 0.04))
+    sheet.paste(cyl, (128, 0))
+    save(sheet, "gui", "lockpick.png")
+
 def parchment(w, h, seed, border="#5D4037"):
     p = Painter(w, h, seed)
     base = hexc("#E8D9B0")
@@ -1036,6 +1086,7 @@ def main():
     save(top, "block", "village_coffer_top.png")
     save(rubble_texture(), "block", "rubble.png")
     mailbox_textures()
+    lockpick_gui()
     pole, banner = standard_textures()
     save(pole, "block", "bandit_standard_pole.png")
     save(banner, "block", "bandit_standard_cloth.png")
@@ -1070,5 +1121,7 @@ if __name__ == "__main__":
         guard_textures()  # just the guards, leaving the other textures as they are
     elif sys.argv[1:] == ["mailbox"]:
         mailbox_textures()
+    elif sys.argv[1:] == ["lockpick"]:
+        lockpick_gui()
     else:
         main()

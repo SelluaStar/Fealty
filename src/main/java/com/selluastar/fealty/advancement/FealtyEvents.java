@@ -35,6 +35,7 @@ public final class FealtyEvents {
     public static final ResourceLocation PICKPOCKETED = Fealty.id("pickpocketed");
     public static final ResourceLocation UNSEEN_THEFT = Fealty.id("unseen_theft");
     public static final ResourceLocation VAULT_RAIDED = Fealty.id("vault_raided");
+    public static final ResourceLocation LOCK_PICKED = Fealty.id("lock_picked");
     public static final ResourceLocation FOLLOWER_HIRED = Fealty.id("follower_hired");
     public static final ResourceLocation WANTED = Fealty.id("wanted");
     public static final ResourceLocation BOUNTY_HUNTER_SLAIN = Fealty.id("bounty_hunter_slain");

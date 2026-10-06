@@ -1,8 +1,12 @@
 package com.selluastar.fealty.crime;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.function.Supplier;
 
 import com.selluastar.fealty.config.FealtyConfig;
 import com.selluastar.fealty.item.RogueArmorItem;
@@ -28,13 +32,35 @@ public final class WitnessService {
     private static final double NOTICE_DISTANCE = 2.5;
     /** Cosine of half the witness field of view (about 150 degrees). */
     private static final double FOV_COS = Math.cos(Math.toRadians(75));
+    private static final Set<UUID> SNEAKING = new HashSet<>();
 
     private WitnessService() {
     }
 
+    /**
+     * Whether the player counts as sneaking. Opening a screen lets go of the sneak key, so a player who was sneaking
+     * when they opened a chest or started picking a lock counts as sneaking until they are done.
+     */
+    public static boolean sneaking(ServerPlayer player) {
+        return player.isCrouching() || SNEAKING.contains(player.getUUID());
+    }
+
+    /** Run a witness check as if the player were (or were not) still sneaking. */
+    public static <T> T asSneaking(ServerPlayer player, boolean sneaking, Supplier<T> check) {
+        if (!sneaking || player.isCrouching()) {
+            return check.get();
+        }
+        SNEAKING.add(player.getUUID());
+        try {
+            return check.get();
+        } finally {
+            SNEAKING.remove(player.getUUID());
+        }
+    }
+
     public static double radius(ServerPlayer player) {
         double radius = FealtyConfig.WITNESS_RADIUS.get();
-        if (player.isCrouching() && RogueArmorItem.wearsFullSet(player)) {
+        if (sneaking(player) && RogueArmorItem.wearsFullSet(player)) {
             radius *= 0.5;
         }
         return radius;
@@ -43,7 +69,7 @@ public final class WitnessService {
     public static List<LivingEntity> witnesses(ServerLevel level, ServerPlayer player, BlockPos crimePos, ResourceLocation faction, boolean loud) {
         List<LivingEntity> result = new ArrayList<>();
         double radius = radius(player);
-        boolean playerHidden = SmokeClouds.inSmoke(level, player.getEyePosition()) || SmokeClouds.inSmoke(level, Vec3.atCenterOf(crimePos));
+        boolean playerHidden = SmokeClouds.hidden(player) || SmokeClouds.inSmoke(level, Vec3.atCenterOf(crimePos));
         if (playerHidden && !loud) {
             return result;
         }
@@ -81,7 +107,7 @@ public final class WitnessService {
         if (!witness.hasLineOfSight(player)) {
             return false;
         }
-        if (distance <= NOTICE_DISTANCE && !player.isCrouching()) {
+        if (distance <= NOTICE_DISTANCE && !sneaking(player)) {
             return true;
         }
         return isFacing(witness, player);

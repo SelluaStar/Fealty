@@ -65,6 +65,11 @@ public final class FealtyNetwork {
         registrar.playToClient(OpenHallPayload.TYPE, OpenHallPayload.STREAM_CODEC,
                 (payload, context) -> com.selluastar.fealty.client.ClientPayloads.openHall(payload));
         registrar.playToServer(HallActionPayload.TYPE, HallActionPayload.STREAM_CODEC, HallActionPayload::handle);
+        registrar.playToClient(OpenLockpickPayload.TYPE, OpenLockpickPayload.STREAM_CODEC,
+                (payload, context) -> com.selluastar.fealty.client.ClientPayloads.openLockpick(payload));
+        registrar.playToClient(LockpickResultPayload.TYPE, LockpickResultPayload.STREAM_CODEC,
+                (payload, context) -> com.selluastar.fealty.client.ClientPayloads.lockpickResult(payload));
+        registrar.playToServer(LockpickAttemptPayload.TYPE, LockpickAttemptPayload.STREAM_CODEC, LockpickAttemptPayload::handle);
         registrar.playToServer(DialogueChoicePayload.TYPE, DialogueChoicePayload.STREAM_CODEC, DialogueChoicePayload::handle);
         registrar.playToServer(HornCommandPayload.TYPE, HornCommandPayload.STREAM_CODEC, HornCommandPayload::handle);
         registrar.playToServer(QuestActionPayload.TYPE, QuestActionPayload.STREAM_CODEC, QuestActionPayload::handle);

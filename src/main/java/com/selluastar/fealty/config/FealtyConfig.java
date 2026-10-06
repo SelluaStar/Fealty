@@ -39,6 +39,7 @@ public final class FealtyConfig {
     public static final ModConfigSpec.DoubleValue WORD_TRAVELS_SHARE;
     public static final ModConfigSpec.IntValue WORD_TRAVELS_RADIUS;
     public static final ModConfigSpec.BooleanValue HATED_ARRIVAL;
+    public static final ModConfigSpec.BooleanValue LOCKED_VILLAGE_CHESTS;
     public static final ModConfigSpec.IntValue HORN_SUMMON_COUNT;
     public static final ModConfigSpec.IntValue HORN_ARRIVAL_SECONDS;
     public static final ModConfigSpec.BooleanValue VILLAGE_MAILBOXES;
@@ -154,6 +155,9 @@ public final class FealtyConfig {
                 .defineInRange("word_travels_radius", 1000, 0, 100000);
         HATED_ARRIVAL = b.comment("When a Hated player walks into a village, the bell tolls and villagers run for their homes")
                 .define("hated_arrival", true);
+        LOCKED_VILLAGE_CHESTS = b.comment("Village chests and barrels are locked to players the village does not yet trust; a lockpick opens them.",
+                        "The village coffer is always locked to everyone but the lord.")
+                .define("locked_village_chests", true);
         b.pop();
 
         b.comment("Threats, trades and gifts").push("trade");

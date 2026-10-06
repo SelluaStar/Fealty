@@ -1,0 +1,26 @@
+{
+  "display": {
+    "icon": {
+      "id": "fealty:lockpick"
+    },
+    "title": {
+      "translate": "advancement.fealty.lock_picked"
+    },
+    "description": {
+      "translate": "advancement.fealty.lock_picked.desc"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "picked": {
+      "trigger": "fealty:event",
+      "conditions": {
+        "event": "fealty:lock_picked"
+      }
+    }
+  },
+  "parent": "fealty:unseen_theft"
+}

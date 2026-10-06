@@ -11,7 +11,6 @@ import com.selluastar.fealty.api.FealtyTags;
 import com.selluastar.fealty.api.RepSources;
 import com.selluastar.fealty.block.VillageCofferBlockEntity;
 import com.selluastar.fealty.entity.VillageElderEntity;
-import com.selluastar.fealty.item.LockpickItem;
 import com.selluastar.fealty.quest.QuestEvents;
 import com.selluastar.fealty.data.TierManager;
 import com.selluastar.fealty.registry.ModBlocks;
@@ -29,9 +28,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.TamableAnimal;
@@ -45,6 +41,7 @@ import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.npc.WanderingTrader;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerListener;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -96,11 +93,31 @@ public final class CrimeHandlers {
     private CrimeHandlers() {
     }
 
-    private record Click(BlockPos pos, long time) {
+    private record Click(BlockPos pos, long time, boolean crouching) {
     }
 
-    private record OpenContainer(AbstractContainerMenu menu, BlockPos pos, ResourceLocation village, Map<Item, Integer> before,
-                                 boolean coffer, boolean loud) {
+    /** A village container a player has open. Theft is judged the moment the first item leaves it. */
+    private static final class OpenContainer {
+        final AbstractContainerMenu menu;
+        final BlockPos pos;
+        final ResourceLocation village;
+        final Map<Item, Integer> before;
+        final boolean coffer;
+        /** Whether the player was sneaking when they opened it (the screen lets go of the sneak key). */
+        final boolean crouching;
+        boolean judged;
+        boolean witnessed;
+        ContainerListener listener;
+
+        OpenContainer(AbstractContainerMenu menu, BlockPos pos, ResourceLocation village, Map<Item, Integer> before, boolean coffer,
+                      boolean crouching) {
+            this.menu = menu;
+            this.pos = pos;
+            this.village = village;
+            this.before = before;
+            this.coffer = coffer;
+            this.crouching = crouching;
+        }
     }
 
     // ---- Breaking and placing ----
@@ -324,8 +341,13 @@ public final class CrimeHandlers {
     @SubscribeEvent
     public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
         if (event.getEntity() instanceof ServerPlayer player) {
-            LAST_CLICK.put(player.getUUID(), new Click(event.getPos().immutable(), player.level().getGameTime()));
+            noteClick(player, event.getPos(), player.isCrouching());
         }
+    }
+
+    /** Remember the block the player is about to open (picked locks open through here too). */
+    public static void noteClick(ServerPlayer player, BlockPos pos, boolean crouching) {
+        LAST_CLICK.put(player.getUUID(), new Click(pos.immutable(), player.level().getGameTime(), crouching));
     }
 
     @SubscribeEvent
@@ -347,19 +369,45 @@ public final class CrimeHandlers {
         if (village.isEmpty() || village.get().lord().isLord(player.getUUID()) || PlacedBlockTracker.isPlaced(level, click.pos())) {
             return;
         }
-        boolean loud = false;
-        if (coffer) {
-            ItemStack pick = LockpickItem.held(player);
-            if (pick.isEmpty()) {
-                loud = true;
-                level.playSound(null, click.pos(), SoundEvents.IRON_DOOR_OPEN, SoundSource.BLOCKS, 1.0F, 0.5F);
-            } else {
-                EquipmentSlot slot = player.getMainHandItem() == pick ? EquipmentSlot.MAINHAND : EquipmentSlot.OFFHAND;
-                pick.hurtAndBreak(1, player, slot);
+        AbstractContainerMenu menu = event.getContainer();
+        OpenContainer open = new OpenContainer(menu, click.pos(), village.get().id(), count(menu, player), coffer, click.crouching());
+        open.listener = new ContainerListener() {
+            @Override
+            public void slotChanged(AbstractContainerMenu changed, int slot, ItemStack stack) {
+                if (!open.judged && slot >= 0 && slot < changed.slots.size() && changed.slots.get(slot).container != player.getInventory()) {
+                    judgeIfTaken(player, open);
+                }
+            }
+
+            @Override
+            public void dataChanged(AbstractContainerMenu changed, int id, int value) {
+            }
+        };
+        OPEN.put(player.getUUID(), open);
+        menu.addSlotListener(open.listener);
+    }
+
+    /** The first item out of the container: whoever sees it, sees a theft. */
+    private static void judgeIfTaken(ServerPlayer player, OpenContainer open) {
+        Map<Item, Integer> now = count(open.menu, player);
+        boolean taken = false;
+        for (Map.Entry<Item, Integer> entry : open.before.entrySet()) {
+            if (now.getOrDefault(entry.getKey(), 0) < entry.getValue()) {
+                taken = true;
+                break;
             }
         }
-        AbstractContainerMenu menu = event.getContainer();
-        OPEN.put(player.getUUID(), new OpenContainer(menu, click.pos(), village.get().id(), count(menu, player), coffer, loud));
+        if (!taken) {
+            return;
+        }
+        open.judged = true;
+        ResourceLocation crime = open.coffer ? RepSources.VAULT_RAID : RepSources.STEAL;
+        CrimeService.Result result = WitnessService.asSneaking(player, open.crouching,
+                () -> CrimeService.commit(player, open.village, crime, open.pos, null, false));
+        open.witnessed = result.witnessed();
+        if (!open.witnessed) {
+            player.displayClientMessage(Component.translatable("fealty.theft.unseen").withStyle(ChatFormatting.GRAY), true);
+        }
     }
 
     @SubscribeEvent
@@ -368,13 +416,16 @@ public final class CrimeHandlers {
             return;
         }
         OpenContainer open = OPEN.remove(player.getUUID());
-        if (open == null || open.menu() != event.getContainer()) {
+        if (open == null || open.menu != event.getContainer()) {
             return;
         }
-        Map<Item, Integer> after = count(open.menu(), player);
+        if (open.listener != null) {
+            open.menu.removeSlotListener(open.listener);
+        }
+        Map<Item, Integer> after = count(open.menu, player);
         Map<Item, Integer> stolen = new HashMap<>();
         int total = 0;
-        for (Map.Entry<Item, Integer> entry : open.before().entrySet()) {
+        for (Map.Entry<Item, Integer> entry : open.before.entrySet()) {
             int taken = entry.getValue() - after.getOrDefault(entry.getKey(), 0);
             if (taken > 0) {
                 stolen.put(entry.getKey(), taken);
@@ -384,15 +435,16 @@ public final class CrimeHandlers {
         if (total <= 0) {
             return;
         }
-        ResourceLocation crime = open.coffer() ? RepSources.VAULT_RAID : RepSources.STEAL;
-        CrimeService.Result result = CrimeService.commit(player, open.village(), crime, open.pos(), null, open.loud());
-        if (!result.witnessed()) {
+        if (!open.judged) {
+            judgeIfTaken(player, open);
+        }
+        if (!open.witnessed) {
             FealtyEvents.fire(player, FealtyEvents.UNSEEN_THEFT);
         }
-        if (open.coffer()) {
+        if (open.coffer) {
             FealtyEvents.fire(player, FealtyEvents.VAULT_RAIDED);
         }
-        QuestEvents.onTheft(player, open.village(), stolen, result.witnessed(), open.coffer());
+        QuestEvents.onTheft(player, open.village, stolen, open.witnessed, open.coffer);
     }
 
     private static Map<Item, Integer> count(AbstractContainerMenu menu, ServerPlayer player) {
