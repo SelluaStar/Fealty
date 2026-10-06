@@ -76,7 +76,7 @@ final class GuardDialogue {
         options.add(DialogueNode.Option.of(DialogueService.BYE, Component.translatable("fealty.dialogue.option.bye"), "door"));
         guard.getLookControl().setLookAt(player);
         Component rank = Component.translatable("fealty.guard.rank." + guard.rank().getSerializedName());
-        Component subtitle = village.map(v -> Component.translatable("fealty.guard.dialogue.subtitle", rank, v.name())).orElse(rank);
+        Component subtitle = village.<Component>map(v -> Component.translatable("fealty.guard.dialogue.subtitle", rank, v.name())).orElse(rank);
         return new DialogueNode(guard.getDisplayName(), subtitle, text, options);
     }
 
