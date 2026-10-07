@@ -99,6 +99,13 @@ public final class ClientPayloads {
         com.selluastar.fealty.client.hud.MailLayer.setUnread(payload.unread());
     }
 
+    public static void fineStatus(com.selluastar.fealty.network.FineStatusPayload payload) {
+        ClientRepCache.setFine(payload.pending(), payload.village(), payload.cost(), payload.secondsLeft());
+        if (Minecraft.getInstance().screen instanceof com.selluastar.fealty.client.screen.JournalScreen screen) {
+            screen.refreshFine();
+        }
+    }
+
     public static void openHall(com.selluastar.fealty.network.OpenHallPayload payload) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.screen instanceof com.selluastar.fealty.client.screen.LordshipScreen screen && screen.village().equals(payload.village())) {

@@ -57,7 +57,8 @@ public final class FealtyKeys {
             }
             while (JOURNAL.consumeClick()) {
                 if (minecraft.screen == null) {
-                    minecraft.setScreen(new JournalScreen(JournalScreen.Page.QUESTS));
+                    // A fine waiting to be paid is the first thing the Journal shows.
+                    minecraft.setScreen(new JournalScreen(ClientRepCache.fine() != null ? JournalScreen.Page.REPUTATION : JournalScreen.Page.QUESTS));
                 }
             }
             while (TOGGLE_TRACKER.consumeClick()) {

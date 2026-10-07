@@ -12,13 +12,13 @@ import com.selluastar.fealty.rep.PlayerRepData;
 import com.selluastar.fealty.rep.RepManager;
 import com.selluastar.fealty.village.VillageRecord;
 
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.OnDatapackSyncEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
@@ -65,6 +65,9 @@ public final class FealtyNetwork {
         registrar.playToClient(OpenHallPayload.TYPE, OpenHallPayload.STREAM_CODEC,
                 (payload, context) -> com.selluastar.fealty.client.ClientPayloads.openHall(payload));
         registrar.playToServer(HallActionPayload.TYPE, HallActionPayload.STREAM_CODEC, HallActionPayload::handle);
+        registrar.playToClient(FineStatusPayload.TYPE, FineStatusPayload.STREAM_CODEC,
+                (payload, context) -> com.selluastar.fealty.client.ClientPayloads.fineStatus(payload));
+        registrar.playToServer(FineActionPayload.TYPE, FineActionPayload.STREAM_CODEC, FineActionPayload::handle);
         registrar.playToClient(OpenLockpickPayload.TYPE, OpenLockpickPayload.STREAM_CODEC,
                 (payload, context) -> com.selluastar.fealty.client.ClientPayloads.openLockpick(payload));
         registrar.playToClient(LockpickResultPayload.TYPE, LockpickResultPayload.STREAM_CODEC,

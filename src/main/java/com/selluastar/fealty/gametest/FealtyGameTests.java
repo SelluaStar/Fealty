@@ -25,6 +25,7 @@ import com.selluastar.fealty.data.FealtyDataManager;
 import com.selluastar.fealty.data.TierManager;
 import com.selluastar.fealty.dialogue.DialogueNode;
 import com.selluastar.fealty.dialogue.DialogueService;
+import com.selluastar.fealty.dialogue.GuardDialogue;
 import com.selluastar.fealty.guard.Garrison;
 import com.selluastar.fealty.guard.GuardManager;
 import com.selluastar.fealty.lordship.LordshipManager;
@@ -77,6 +78,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.animal.IronGolem;
 import net.minecraft.world.entity.npc.Villager;
@@ -469,6 +471,65 @@ public final class FealtyGameTests {
         List<String> ids = DialogueService.ordered(node).options().stream().map(DialogueNode.Option::id).toList();
         check(helper, ids.equals(List.of("q:abc:deliver", "trade", "news", DialogueService.BYE)),
                 "quest business first, goodbye last, the rest as offered; got " + ids);
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void finesPayFromTheButtons(GameTestHelper helper) {
+        ServerPlayer player = player(helper);
+        VillageRecord village = testVillage(helper, BlockPos.ZERO, "Buttonford");
+        // A mob standing in for another mod's guard.
+        Mob guard = helper.spawn(EntityType.ZOMBIE, new BlockPos(1, 1, 1));
+        guard.setData(ModAttachments.FACTION, village.id());
+        guard.setNoAi(true);
+        try {
+            RepManager.meet(player, village.id());
+            check(helper, Fines.status(player).isEmpty(), "no fine is owed to begin with");
+            check(helper, Fines.issue(player, guard, village.id(), RepSources.HIT_VILLAGER, -10), "the guard demands a fine");
+            Optional<Fines.Status> status = Fines.status(player);
+            check(helper, status.isPresent() && status.get().cost() == 5 && status.get().secondsLeft() > 0, "the fine is owed: " + status);
+            check(helper, !Fines.payPending(player) && Fines.status(player).isPresent(), "short of emeralds, the fine stays");
+            player.getInventory().add(new ItemStack(Items.EMERALD, 5));
+            check(helper, Fines.payPending(player), "the button pays the fine without the guard");
+            check(helper, Fines.status(player).isEmpty() && player.getInventory().countItem(Items.EMERALD) == 0, "paid, and the emeralds are gone");
+            check(helper, !Fines.refusePending(player), "nothing left to refuse");
+
+            check(helper, Fines.issue(player, guard, village.id(), RepSources.HIT_VILLAGER, -10), "a second fine");
+            check(helper, Fines.refusePending(player), "the button refuses the fine");
+            check(helper, Fines.status(player).isEmpty() && RepManager.data(player).aggroUntil().containsKey(village.id()),
+                    "a refused fine turns the watch hostile");
+        } finally {
+            Fines.refusePending(player);
+            guard.discard();
+            forget(helper, village);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void otherGuardsTalkLikeGuards(GameTestHelper helper) {
+        ServerPlayer player = player(helper);
+        VillageRecord village = testVillage(helper, BlockPos.ZERO, "Guardford");
+        Mob guard = helper.spawn(EntityType.ZOMBIE, new BlockPos(1, 1, 1));
+        guard.setData(ModAttachments.FACTION, village.id());
+        guard.setNoAi(true);
+        Mob golem = helper.spawn(EntityType.IRON_GOLEM, new BlockPos(3, 1, 1));
+        try {
+            check(helper, !GuardManager.talksLikeGuard(golem), "iron golems have nothing to say");
+            check(helper, !GuardManager.talksLikeGuard(guard), "a mob outside #fealty:guards is no guard");
+            List<String> ids = GuardDialogue.node(player, guard, null).options().stream().map(DialogueNode.Option::id).toList();
+            check(helper, ids.contains("report") && ids.contains("open_pack") && ids.contains(DialogueService.BYE),
+                    "another mod's guard offers news, its own screen and goodbye; got " + ids);
+            RepManager.meet(player, village.id());
+            check(helper, Fines.issue(player, guard, village.id(), RepSources.HIT_VILLAGER, -10), "the guard demands a fine");
+            ids = GuardDialogue.node(player, guard, null).options().stream().map(DialogueNode.Option::id).toList();
+            check(helper, ids.equals(List.of("pay_fine", "refuse_fine")), "a guard waiting on a fine talks of nothing else; got " + ids);
+        } finally {
+            Fines.refusePending(player);
+            guard.discard();
+            golem.discard();
+            forget(helper, village);
+        }
         helper.succeed();
     }
 

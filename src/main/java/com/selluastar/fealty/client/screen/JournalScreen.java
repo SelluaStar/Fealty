@@ -28,6 +28,8 @@ public class JournalScreen extends Screen {
     private static final int WIDTH = 320;
     private static final int HEIGHT = 210;
     private static final int LIST_WIDTH = 116;
+    /** Room the Reputation page keeps for a fine waiting to be paid. */
+    private static final int FINE_HEIGHT = 36;
 
     private Page page;
     private int left;
@@ -65,7 +67,8 @@ public class JournalScreen extends Screen {
         if (questList.selected() < 0 && !questList.items().isEmpty()) {
             questList.select(0);
         }
-        standingList.setBounds(left + 12, top + 52, WIDTH - 24, HEIGHT - 64 - (page == Page.LORDSHIPS ? 26 : 0));
+        ClientRepCache.Fine fine = page == Page.REPUTATION ? ClientRepCache.fine() : null;
+        standingList.setBounds(left + 12, top + 52, WIDTH - 24, HEIGHT - 64 - (page == Page.LORDSHIPS ? 26 : 0) - (fine != null ? FINE_HEIGHT : 0));
         List<Standing> standings = page == Page.LORDSHIPS
                 ? ClientRepCache.sortedStandings().stream().filter(Standing::lord).toList()
                 : ClientRepCache.sortedStandings();
@@ -85,6 +88,18 @@ public class JournalScreen extends Screen {
                 }
             }).icon("crown").pageSound().tooltip(Component.translatable("fealty.journal.open_hall_hint")));
         }
+        if (fine != null) {
+            int y = top + HEIGHT - FINE_HEIGHT - 8;
+            boolean canPay = minecraft != null && minecraft.player != null
+                    && (minecraft.player.isCreative() || minecraft.player.getInventory().countItem(net.minecraft.world.item.Items.EMERALD) >= fine.cost());
+            addRenderableWidget(new FealtyButton(left + WIDTH - 164, y + 11, 78, 18, Component.translatable("fealty.fine.journal.pay", fine.cost()),
+                    b -> net.neoforged.neoforge.network.PacketDistributor.sendToServer(new com.selluastar.fealty.network.FineActionPayload("pay")))
+                    .icon("coin").enabled(canPay)
+                    .tooltip(canPay ? Component.translatable("fealty.fine.button.pay.hint", fine.cost()) : Component.translatable("fealty.fine.short", fine.cost())));
+            addRenderableWidget(new FealtyButton(left + WIDTH - 82, y + 11, 70, 18, Component.translatable("fealty.fine.journal.refuse"),
+                    b -> net.neoforged.neoforge.network.PacketDistributor.sendToServer(new com.selluastar.fealty.network.FineActionPayload("refuse")))
+                    .icon("sword").tooltip(Component.translatable("fealty.fine.button.refuse.hint")));
+        }
         if (page == Page.QUESTS) {
             trackButton = addRenderableWidget(new FealtyButton(left + WIDTH - 92, top + HEIGHT - 28, 80, 18,
                     Component.empty(), b -> toggleTrack()).icon("pin").pageSound());
@@ -92,6 +107,11 @@ public class JournalScreen extends Screen {
                     Component.empty(), b -> abandon()).icon("cross").tooltip(Component.translatable("fealty.screen.abandon_hint")));
             updateTrackButton();
         }
+    }
+
+    /** The fine the player owes changed: lay the page out again. */
+    public void refreshFine() {
+        rebuildWidgets();
     }
 
     @Override
@@ -158,6 +178,30 @@ public class JournalScreen extends Screen {
             case REPUTATION -> renderStandings(g, mouseX, mouseY, false);
             case LORDSHIPS -> renderStandings(g, mouseX, mouseY, true);
         }
+        renderFine(g);
+    }
+
+    /**
+     * A fine waiting to be paid: a panel with its buttons on the Reputation page, and a red reminder on the others
+     * (the Reputation page opens first while a fine is owed).
+     */
+    private void renderFine(GuiGraphics g) {
+        ClientRepCache.Fine fine = ClientRepCache.fine();
+        if (fine == null) {
+            return;
+        }
+        if (page != Page.REPUTATION) {
+            Component hint = Component.translatable("fealty.fine.journal.hint", fine.cost(), fine.secondsLeft());
+            g.drawString(font, hint, left + WIDTH - 8 - font.width(hint), top + 3, Ui.LIGHT_RED, true);
+            return;
+        }
+        int y = top + HEIGHT - FINE_HEIGHT - 8;
+        Ui.panel(g, left + 10, y, WIDTH - 20, FINE_HEIGHT);
+        Ui.icon(g, "coin", left + 16, y + 4, 12);
+        g.drawString(font, Component.translatable("fealty.fine.journal.title").copy().withStyle(st -> st.withBold(true)), left + 32, y + 6, Ui.RED, false);
+        Component text = Component.translatable("fealty.fine.journal.text", fine.village().isEmpty() ? Component.translatable("fealty.fine.journal.the_watch") : fine.village(),
+                fine.cost(), fine.secondsLeft());
+        Ui.wrapped(g, font, text, left + 16, y + 17, WIDTH - 190, 0.75F, Ui.INK, 2);
     }
 
     // ---- Quests ----

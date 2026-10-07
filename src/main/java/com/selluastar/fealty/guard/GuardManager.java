@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.selluastar.fealty.Fealty;
-import com.selluastar.fealty.advancement.FealtyEvents;
 import com.selluastar.fealty.api.FealtyTags;
 import com.selluastar.fealty.api.GuardStance;
 import com.selluastar.fealty.api.RepTier;
@@ -30,19 +29,16 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.animal.IronGolem;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.living.LivingChangeTargetEvent;
-import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 
 /**
  * Guards read the same tier table as villagers. Any mob in {@code #fealty:guards} (iron golems, Guard Villagers'
@@ -263,48 +259,14 @@ public final class GuardManager {
         }
     }
 
-    /** Using emeralds on any of the village's guards pays a fine one of them demanded. */
-    @SubscribeEvent
-    public static void onPayFine(PlayerInteractEvent.EntityInteract event) {
-        if (!(event.getEntity() instanceof ServerPlayer player) || !event.getItemStack().is(Items.EMERALD)
-                || !(event.getTarget() instanceof Mob guard) || !isGuard(guard) || Fines.owed(player, guard).isEmpty()) {
-            return;
+    /**
+     * Whether Fealty talks for this NPC as a guard: its own guards, and other mods' guards in {@code #fealty:guards}
+     * that belong to a village. Iron golems have nothing to say.
+     */
+    public static boolean talksLikeGuard(Entity npc) {
+        if (npc instanceof VillageGuardEntity) {
+            return true;
         }
-        event.setCanceled(true);
-        event.setCancellationResult(InteractionResult.SUCCESS);
-        if (Fines.payGuard(player, guard)) {
-            guard.getLookControl().setLookAt(player);
-            Speech.say(guard, Component.translatable("fealty.guard.reply.fine_paid"));
-        }
-    }
-
-    /** Sneak and use an empty hand on a guard to ask for (or dismiss) an escort. Honored players only. */
-    @SubscribeEvent
-    public static void onInteract(PlayerInteractEvent.EntityInteract event) {
-        if (!(event.getEntity() instanceof ServerPlayer player) || event.getHand() != InteractionHand.MAIN_HAND
-                || !player.isSecondaryUseActive() || !player.getMainHandItem().isEmpty()
-                || !(event.getTarget() instanceof Mob guard) || !isGuard(guard)) {
-            return;
-        }
-        Optional<ResourceLocation> faction = FactionResolver.factionOf(guard);
-        if (faction.isEmpty()) {
-            return;
-        }
-        event.setCanceled(true);
-        event.setCancellationResult(InteractionResult.SUCCESS);
-        GuardOrders orders = guard.getData(ModAttachments.GUARD_ORDERS);
-        long now = player.level().getGameTime();
-        if (orders.mode() == GuardOrders.Mode.ESCORT && player.getUUID().equals(orders.leader())) {
-            orders.clear();
-            player.displayClientMessage(Component.translatable("fealty.guard.escort_end", guard.getDisplayName()), true);
-            return;
-        }
-        if (stance(player, faction.get()) != GuardStance.ESCORT) {
-            player.displayClientMessage(Component.translatable("fealty.guard.escort_refused", guard.getDisplayName()), true);
-            return;
-        }
-        orders.set(GuardOrders.Mode.ESCORT, player.getUUID(), now + FealtyConfig.ESCORT_TICKS.get(), null);
-        player.displayClientMessage(Component.translatable("fealty.guard.escort_start", guard.getDisplayName()), true);
-        FealtyEvents.fire(player, FealtyEvents.ESCORTED);
+        return npc instanceof Mob mob && !(mob instanceof IronGolem) && isGuard(mob) && FactionResolver.factionOf(mob).isPresent();
     }
 }

@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.jetbrains.annotations.Nullable;
+
 import com.selluastar.fealty.Fealty;
 import com.selluastar.fealty.api.RepSources;
 import com.selluastar.fealty.api.event.FineEvent;
@@ -13,9 +15,10 @@ import com.selluastar.fealty.config.FealtyConfig;
 import com.selluastar.fealty.data.FealtyDataManager;
 import com.selluastar.fealty.data.SourceSettings;
 import com.selluastar.fealty.dialogue.Speech;
-import com.selluastar.fealty.entity.VillageGuardEntity;
 import com.selluastar.fealty.guard.GuardManager;
+import com.selluastar.fealty.network.FealtyNetwork;
 import com.selluastar.fealty.network.Feedback;
+import com.selluastar.fealty.network.FineStatusPayload;
 import com.selluastar.fealty.network.OpenQuestScreenPayload.ActionEntry;
 import com.selluastar.fealty.outlaw.HeatManager;
 import com.selluastar.fealty.rep.FactionResolver;
@@ -26,7 +29,9 @@ import com.selluastar.fealty.util.Inventories;
 import com.selluastar.fealty.village.VillageRecord;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -36,16 +41,16 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.NeutralMob;
 import net.minecraft.world.item.Items;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 /**
  * Paying for what you did. A guard who catches a player at a minor or moderate crime demands a fine: paying it (talk
- * to a Fealty guard, or use emeralds on any of the village's guards) wins back half of what the crime cost and calls
- * off the watch; refusing, or walking away until time runs out, turns the watch hostile. Elders let a player with a
+ * to the guard, or press the buttons in chat or the Journal) wins back half of what the crime cost and calls off the
+ * watch; refusing, or walking away until time runs out, turns the watch hostile. Elders let a player with a
  * bad name, or with the watch or bounty hunters after them, pay to clear it, a little each day.
  */
 @EventBusSubscriber(modid = Fealty.MOD_ID)
@@ -93,10 +98,11 @@ public final class Fines {
         guard.getNavigation().moveTo(player, 1.0);
         guard.getLookControl().setLookAt(player);
         Speech.say(guard, Component.translatable("fealty.fine.demand", cost));
-        // Fealty's guards take it in conversation; golems and other mods' guards take emeralds handed to them.
-        String how = guard instanceof VillageGuardEntity ? "fealty.fine.issued" : "fealty.fine.issued_other";
-        player.sendSystemMessage(Component.translatable(how, guard.getDisplayName(), cost, FealtyConfig.GUARD_FINE_SECONDS.get())
+        // Pay in conversation with the guard, from these buttons, or in the Journal.
+        player.sendSystemMessage(Component.translatable("fealty.fine.issued", guard.getDisplayName(), cost, FealtyConfig.GUARD_FINE_SECONDS.get())
                 .withStyle(ChatFormatting.GOLD));
+        player.sendSystemMessage(buttons(cost));
+        sync(player);
         Feedback.sound(player, SoundEvents.VILLAGER_NO, 0.8F, 0.7F);
         return true;
     }
@@ -115,32 +121,86 @@ public final class Fines {
         return player.isCreative() || Inventories.count(player, Items.EMERALD) >= cost;
     }
 
+    /** What a player owes, for the Journal: the village, the cost and the seconds left to pay. */
+    public record Status(String village, int cost, int secondsLeft) {
+    }
+
+    /** The fine the player owes, wherever the guard who demanded it is. */
+    public static Optional<Status> status(ServerPlayer player) {
+        Pending fine = PENDING.get(player.getUUID());
+        if (fine == null) {
+            return Optional.empty();
+        }
+        String village = FealtyWorldData.get(player.server).village(fine.faction()).map(VillageRecord::name).orElse("");
+        int seconds = (int) Math.max(0, (fine.deadline() - player.level().getGameTime() + 19) / 20);
+        return Optional.of(new Status(village, fine.cost(), seconds));
+    }
+
+    /** Tell the player's client what they owe (nothing, once paid or refused). */
+    private static void sync(ServerPlayer player) {
+        Optional<Status> status = status(player);
+        FealtyNetwork.send(player, new FineStatusPayload(status.isPresent(), status.map(Status::village).orElse(""),
+                status.map(Status::cost).orElse(0), status.map(Status::secondsLeft).orElse(0)));
+    }
+
+    /** The chat buttons under a demand for a fine. */
+    private static Component buttons(int cost) {
+        Component pay = Component.translatable("fealty.fine.button.pay", cost).withStyle(st -> st.withColor(ChatFormatting.GREEN).withBold(true)
+                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/fealty fine pay"))
+                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("fealty.fine.button.pay.hint", cost))));
+        Component refuse = Component.translatable("fealty.fine.button.refuse").withStyle(st -> st.withColor(ChatFormatting.RED).withBold(true)
+                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/fealty fine refuse"))
+                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("fealty.fine.button.refuse.hint"))));
+        return Component.literal("  ").append(pay).append("  ").append(refuse);
+    }
+
     /** @return whether the fine was paid */
     public static boolean payGuard(ServerPlayer player, Entity guard) {
         Optional<Pending> fine = owed(player, guard);
-        if (fine.isEmpty()) {
+        return fine.isPresent() && pay(player, fine.get(), guard);
+    }
+
+    /** Pay the fine the player owes, wherever the guard is (the Journal's and the chat's buttons). @return whether it was paid */
+    public static boolean payPending(ServerPlayer player) {
+        Pending fine = PENDING.get(player.getUUID());
+        if (fine == null) {
             return false;
         }
-        if (!player.isCreative() && !Inventories.take(player, Items.EMERALD, fine.get().cost())) {
-            player.displayClientMessage(Component.translatable("fealty.fine.short", fine.get().cost()).withStyle(ChatFormatting.RED), true);
+        return pay(player, fine, player.serverLevel().getEntity(fine.guard()));
+    }
+
+    private static boolean pay(ServerPlayer player, Pending fine, @Nullable Entity guard) {
+        if (!player.isCreative() && !Inventories.take(player, Items.EMERALD, fine.cost())) {
+            player.displayClientMessage(Component.translatable("fealty.fine.short", fine.cost()).withStyle(ChatFormatting.RED), true);
             return false;
         }
         PENDING.remove(player.getUUID());
-        pardon(player, fine.get().faction(), fine.get().restore(), fine.get().heat(), false);
-        NeoForge.EVENT_BUS.post(new FineEvent.Paid(player, fine.get().faction(), guard, fine.get().cost(), false));
+        pardon(player, fine.faction(), fine.restore(), fine.heat(), false);
+        NeoForge.EVENT_BUS.post(new FineEvent.Paid(player, fine.faction(), guard, fine.cost(), false));
         Feedback.sound(player, SoundEvents.CHAIN_PLACE, 0.8F, 1.6F);
+        sync(player);
         return true;
     }
 
     /** The player will not pay: the watch comes for them. */
     public static void refuse(ServerPlayer player, Entity guard) {
-        owed(player, guard).ifPresent(fine -> {
-            PENDING.remove(player.getUUID());
-            turnHostile(player, fine);
-        });
+        if (owed(player, guard).isPresent()) {
+            refusePending(player);
+        }
+    }
+
+    /** Refuse the fine the player owes (the Journal's and the chat's buttons). @return whether there was one */
+    public static boolean refusePending(ServerPlayer player) {
+        Pending fine = PENDING.remove(player.getUUID());
+        if (fine == null) {
+            return false;
+        }
+        turnHostile(player, fine);
+        return true;
     }
 
     private static void turnHostile(ServerPlayer player, Pending fine) {
+        sync(player);
         NeoForge.EVENT_BUS.post(new FineEvent.Refused(player, fine.faction()));
         ServerLevel level = player.serverLevel();
         PlayerRepData data = RepManager.data(player);
@@ -224,6 +284,7 @@ public final class Fines {
             return;
         }
         PENDING.remove(player.getUUID());
+        sync(player);
         pardon(player, village.id(), quote.get().restore(), 0, quote.get().callsOffWatch());
         NeoForge.EVENT_BUS.post(new FineEvent.Paid(player, village.id(), elder, quote.get().cost(), true));
         Speech.say(elder, Component.translatable("fealty.fine.elder_paid"));

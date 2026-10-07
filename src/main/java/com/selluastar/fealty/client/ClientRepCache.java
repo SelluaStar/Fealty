@@ -18,6 +18,7 @@ public final class ClientRepCache {
     private static List<RepTier> tiers = List.of();
     private static final Map<ResourceLocation, Standing> STANDINGS = new LinkedHashMap<>();
     private static int renown;
+    private static Fine fine;
     private static List<TradeView> villageTrades = List.of();
     private static final List<Runnable> TRADE_LISTENERS = new ArrayList<>();
 
@@ -64,6 +65,23 @@ public final class ClientRepCache {
         STANDINGS.clear();
         tiers = List.of();
         renown = 0;
+        fine = null;
+    }
+
+    /** A guard's fine the player owes: the village's name, the cost and when the time to pay runs out (client clock). */
+    public record Fine(String village, int cost, long endsAtMillis) {
+        public int secondsLeft() {
+            return (int) Math.max(0, (endsAtMillis - System.currentTimeMillis() + 999) / 1000);
+        }
+    }
+
+    public static void setFine(boolean pending, String village, int cost, int secondsLeft) {
+        fine = pending ? new Fine(village, cost, System.currentTimeMillis() + secondsLeft * 1000L) : null;
+    }
+
+    /** The fine the player owes, or null. */
+    public static Fine fine() {
+        return fine != null && fine.secondsLeft() > 0 ? fine : null;
     }
 
     public static int renown() {

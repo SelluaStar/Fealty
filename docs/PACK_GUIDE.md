@@ -37,7 +37,10 @@ to rely on golems and guard mods alone.
 
 Anything in `#fealty:guards` also acts as a guard, and is part of its village's watch: it shows on the Village
 Hall's roster (with you, on duty, away or fallen), answers the Lord's Horn (follow, hold, guard, and walk home on
-Return), and can demand a fine (golems excepted; pay by using emeralds on any of the village's guards). The default tag holds Fealty's guard, iron golems and, if
+Return), and can demand a fine (golems excepted). Right-clicking one (golems excepted) opens Fealty's dialogue box, as
+with a villager: news, orders for a lord, an escort for an Honored player, and paying the fine. Crouching leaves the guard to its
+own mod, and the box has a "Look at their gear" reply that opens the mod's own screen. A fine is also paid or refused with
+the buttons in chat or in the Journal's Reputation tab. The default tag holds Fealty's guard, iron golems and, if
 installed, Guard Villagers' `guardvillagers:guard`. Add your guard mod's entities to the tag. Fealty gives them its
 targeting goals when they spawn, so the guard mod needs no compile dependency. Guards attack Hated and wanted
 players, watch Distrusted ones, help Trusted ones, and escort Honored ones. A witnessed crime alerts guards within
