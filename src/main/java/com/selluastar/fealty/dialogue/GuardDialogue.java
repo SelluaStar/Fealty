@@ -161,7 +161,7 @@ public final class GuardDialogue {
             case DISMISS -> {
                 if (lord) {
                     boolean nearPost = guard instanceof VillageGuardEntity own && own.post() != null && guard.level() instanceof ServerLevel level
-                            && GarrisonManager.inHomeDimension(level, guard) && guard.blockPosition().distSqr(own.post()) < 48 * 48;
+                            && GarrisonManager.inHomeDimension(level, own) && guard.blockPosition().distSqr(own.post()) < 48 * 48;
                     if (nearPost || !(guard instanceof VillageGuardEntity own) || own.slot() < 0) {
                         orders.clear();
                     } else {
