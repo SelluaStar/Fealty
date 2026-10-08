@@ -121,39 +121,35 @@ public final class DialogueService {
         return node.isPresent();
     }
 
-    /** A node, with the replies other mods added and the conversations offered in it. */
-    private record Built(DialogueNode node, Map<String, DialogueBuildEvent.Handler> contributed, List<ResourceLocation> offered) {
+    /** A node, with the replies other mods added ({@link DialogueBuildEvent}) and the conversations offered in it. */
+    record Built(DialogueNode node, Map<String, DialogueBuildEvent.Handler> contributed, List<ResourceLocation> offered) {
     }
 
     private static Optional<Built> build(ServerPlayer player, Entity npc, @Nullable Component reply) {
-        Optional<DialogueNode> node;
+        Optional<Built> built;
         if (npc instanceof Villager villager) {
-            node = Optional.of(VillagerDialogue.node(player, villager, reply));
+            built = Optional.of(VillagerDialogue.node(player, villager, reply));
         } else if (npc instanceof Mob guard && GuardManager.talksLikeGuard(npc)) {
-            node = Optional.of(GuardDialogue.node(player, guard, reply));
+            built = Optional.of(contribute(player, guard, GuardDialogue.node(player, guard, reply), reply != null));
         } else {
-            node = QuestGivers.forEntity(npc).map(g -> GiverDialogue.node(player, npc, g, reply));
+            built = QuestGivers.forEntity(npc).map(g -> GiverDialogue.node(player, npc, g, reply));
         }
-        if (node.isEmpty() && !Conversations.offers(player, npc).isEmpty()) {
+        if (built.isEmpty() && !Conversations.offers(player, npc).isEmpty()) {
             // Someone with nothing to say but the conversations offered.
-            node = Optional.of(new DialogueNode(npc.getDisplayName(), subtitle(player, npc),
+            built = Optional.of(contribute(player, npc, new DialogueNode(npc.getDisplayName(), subtitle(player, npc),
                     reply != null ? reply : Component.translatable("fealty.dialogue.fallback"),
-                    List.of(DialogueNode.Option.of(BYE, Component.translatable("fealty.dialogue.option.bye"), "door"))));
+                    List.of(DialogueNode.Option.of(BYE, Component.translatable("fealty.dialogue.option.bye"), "door"))), reply != null));
         }
-        return node.map(n -> contribute(player, npc, n, reply != null));
+        return built.map(b -> withOffers(player, npc, b));
     }
 
     /**
-     * Add the conversations this NPC offers and what other mods add ({@link DialogueBuildEvent}) to a villager's, quest
-     * giver's or guard's usual dialogue.
+     * Fire {@link DialogueBuildEvent} for an NPC's usual dialogue (from {@code VillagerDialogue.node},
+     * {@code GiverDialogue.node} and for guards): the lines other mods add go under what the NPC says, their replies
+     * among the NPC's, remembered with the handler to call when one is picked.
      */
-    private static Built contribute(ServerPlayer player, Entity npc, DialogueNode node, boolean answer) {
+    static Built contribute(ServerPlayer player, Entity npc, DialogueNode node, boolean answer) {
         List<DialogueNode.Option> options = new ArrayList<>(node.options());
-        List<ResourceLocation> offered = new ArrayList<>();
-        for (Map.Entry<ResourceLocation, Conversation> entry : Conversations.offers(player, npc)) {
-            options.add(Conversations.offerOption(player, npc, entry.getValue(), Conversations.OFFER_PREFIX + offered.size()));
-            offered.add(entry.getKey());
-        }
         DialogueBuildEvent event = NeoForge.EVENT_BUS.post(new DialogueBuildEvent(player, npc, answer));
         Map<String, DialogueBuildEvent.Handler> contributed = new HashMap<>();
         for (DialogueBuildEvent.Contribution contribution : event.getOptions()) {
@@ -167,7 +163,23 @@ public final class DialogueService {
         for (Component line : event.getLines()) {
             text = Component.empty().append(text).append("\n").append(line);
         }
-        return new Built(new DialogueNode(node.name(), node.subtitle(), text, options), contributed, offered);
+        return new Built(new DialogueNode(node.name(), node.subtitle(), text, options), contributed, List.of());
+    }
+
+    /** Add the conversations this NPC offers ({@code fealty/conversations/} with a {@code label}) as replies. */
+    private static Built withOffers(ServerPlayer player, Entity npc, Built built) {
+        List<Map.Entry<ResourceLocation, Conversation>> offers = Conversations.offers(player, npc);
+        if (offers.isEmpty()) {
+            return built;
+        }
+        List<DialogueNode.Option> options = new ArrayList<>(built.node().options());
+        List<ResourceLocation> offered = new ArrayList<>();
+        for (Map.Entry<ResourceLocation, Conversation> entry : offers) {
+            options.add(Conversations.offerOption(player, npc, entry.getValue(), Conversations.OFFER_PREFIX + offered.size()));
+            offered.add(entry.getKey());
+        }
+        DialogueNode node = built.node();
+        return new Built(new DialogueNode(node.name(), node.subtitle(), node.text(), options), built.contributed(), offered);
     }
 
     /** What the box shows under an NPC's name: their faction and the player's standing with it, if they have one. */

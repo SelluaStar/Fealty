@@ -170,6 +170,80 @@ public static final DeferredHolder<RepSource, RepSource> RESCUED_CAT =
 FealtyApi.get().applySource(player, village, ResourceLocation.fromNamespaceAndPath(MODID, "rescued_cat"));
 ```
 
+## Registries
+
+Register entries with a `DeferredRegister` on these keys (all in the API jar). None is synced to clients.
+
+| Registry | Key | Entry |
+|---|---|---|
+| `fealty:rep_source` | `RepSource.REGISTRY_KEY` | `RepSource` |
+| `fealty:quest_type` | `QuestType.REGISTRY_KEY` (1.3.0; `FealtyRegistries.QUEST_TYPE_KEY` is the same key) | `QuestType<?>` |
+| `fealty:quest_giver` | `QuestGiver.REGISTRY_KEY` (1.3.0) | `QuestGiver` |
+| `fealty:chain_kind` | `ChainHandler.REGISTRY_KEY` (1.3.0) | `ChainHandler` |
+| `fealty:dialogue_condition` | `DialogueConditionType.REGISTRY_KEY` (1.3.0) | `DialogueConditionType<?>` |
+| `fealty:dialogue_effect` | `DialogueEffectType.REGISTRY_KEY` (1.3.0) | `DialogueEffectType<?>` |
+
+## New types (API 1.3.0)
+
+| Type | Package | What it is |
+|---|---|---|
+| `QuestType`, `QuestObjective`, `QuestContext`, `QuestGiver` (with `Board`, `Action`) | `api.quest` | Quest types and quest givers (below) |
+| `ChainHandler`, `ChainContext` | `api.chain` | Kinds of quest chain (below) |
+| `DialogueCondition`, `DialogueConditionType`, `DialogueEffect`, `DialogueEffectType` | `api.dialogue` | Conditions and effects for rumours, conversations and chain steps |
+| `DialogueContext(player, npc)` | `api.dialogue` | Who a condition or effect is for; `npc` is empty when no NPC is involved (an effect another mod applies itself, say) |
+| `DialogueOption(id, label, icon, enabled, hint)` | `api.dialogue` | A reply in the dialogue box (`of`, `disabled`); used by `DialogueBuildEvent` and `QuestObjective.dialogueReplies` |
+| `DialogueReply` | `api.dialogue` | What happens after a contributed reply is picked: `say(text)`, `refresh()`, `close()`, `end()` |
+| `KeyedCodec.of(registryKey, typeOf, codecOf, what)` | `api.dialogue` | The codec behind `{"<type>": <value>}` objects (`DialogueCondition.CODEC`, `DialogueEffect.CODEC`); a key without a namespace is Fealty's |
+| `VillageInfo(id, name, dimension, center, bounds, hasElder, lord, broken)` | `api` | A village, from `getVillage` / `findVillage`; `position()` is its centre as a `GlobalPos` |
+| `RepSources.DIALOGUE` (`fealty:dialogue`) | `api` | The default reason of the `add_rep` effect (cannot raise standing below zero) |
+| `RumourEvent.Heard`, `DialogueEvent`, `DialogueBuildEvent`, `ChainStageEvent` | `api.event` | See the events above |
+
+## Data formats (API 1.3.0)
+
+Full field tables are in [DATAPACKS.md](DATAPACKS.md); this is the shape of each.
+
+**Quest chains** (`data/<ns>/fealty/quest_chains/<id>.json`) gain `kind` as any `fealty:chain_kind` id (a name without
+a namespace is Fealty's: `rare_villager`, `guild`, `story`), `giver` (`per_step` by default, or `single`), `giver_role`
+(default `giver`) and `giver_title` (a translation key or text component), and per step `unlock` (a condition),
+`unlock_hint` and `text`. Files without them load and play exactly as before.
+
+```json
+{"kind": "story", "giver": "single", "giver_role": "stranger", "giver_title": "example.role.stranger",
+ "steps": [{"quest": "example:stranger/firewood", "unlock": {"flag": "example:met_stranger"}, "unlock_hint": "example.hint.show_letter"}],
+ "final_reward": {"id": "minecraft:compass"}}
+```
+
+**Rumours** (`data/<ns>/fealty/rumours/<id>.json`): `chain` and `stage` (1 starts the chain; 2 to 4 move a running one
+on if its kind allows), `min_tier` (default `fealty:neutral`), `weight`, `professions`, `told_by` (`villagers`,
+`elders` or `any`), `lines` (one is said), `requires` (a condition) and `grants` (effects).
+
+```json
+{"chain": "example:stranger_tale", "stage": 1, "min_tier": "fealty:trusted", "weight": 5, "professions": [],
+ "lines": ["example.rumour.stranger"], "requires": {"dimension": "minecraft:overworld"}, "grants": [{"give_item": "minecraft:paper"}]}
+```
+
+The server config's `rumours` section sets the villagers' daily roll: `rumour_chance` (0.03), `pity_step` (0.01),
+`pity_cap` (0.12) and `guarantee_after` (30).
+
+**Conversations** (`data/<ns>/fealty/conversations/<id>.json`): `speaker` (a chain role `<chain namespace>:<role>`, an
+entity type or a villager profession), optional `if`, `label` and `priority`, `start`, and `nodes` of `text`,
+`effects` and up to 6 `replies` (`label`, `if`, `hint`, `goto`, `end`, `effects`, `icon`). Texts are translation keys
+(with the player's name as `%1$s` and the speaker's as `%2$s`) or text components.
+
+```json
+{"speaker": "example:stranger", "start": "greet", "nodes": {
+  "greet": {"text": "example.dialogue.greet", "replies": [
+    {"label": "example.reply.show_letter", "if": {"has_item": "minecraft:paper"}, "hint": "example.hint.need_letter", "goto": "letter"},
+    {"label": "example.reply.bye", "end": true}]},
+  "letter": {"text": "example.dialogue.letter", "effects": [{"take_item": "minecraft:paper"}, {"set_flag": "example:met"}],
+    "replies": [{"label": "example.reply.ready", "goto": "greet"}]}}}
+```
+
+**Player flags** are kept in the `fealty:player_flags` attachment on the player (copied on death, saved with the
+player). Read and change them with `RepApi.getFlag` / `setFlag` / `clearFlag`, the `flag` condition and the
+`set_flag` / `clear_flag` effects, or `/fealty flag <player> get|set|clear <flag> [value]` and
+`/fealty flag <player> list` (operators).
+
 ## New quest types
 
 `com.selluastar.fealty.api.quest` (since 1.3.0; in the main jar before) has what a quest type needs:

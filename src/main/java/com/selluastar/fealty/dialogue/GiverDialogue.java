@@ -34,7 +34,8 @@ final class GiverDialogue {
     private GiverDialogue() {
     }
 
-    static DialogueNode node(ServerPlayer player, Entity npc, QuestGiver giver, @Nullable Component reply) {
+    /** The giver's dialogue, with what other mods add to it ({@code DialogueBuildEvent}). */
+    static DialogueService.Built node(ServerPlayer player, Entity npc, QuestGiver giver, @Nullable Component reply) {
         OpenQuestScreenPayload screen = giver.screen(player, npc);
         Component subtitle = screen.subtitle();
         if (screen.showRep()) {
@@ -70,7 +71,7 @@ final class GiverDialogue {
         if (npc instanceof Mob mob) {
             mob.getLookControl().setLookAt(player);
         }
-        return new DialogueNode(screen.title(), subtitle, text, options);
+        return DialogueService.contribute(player, npc, new DialogueNode(screen.title(), subtitle, text, options), reply != null);
     }
 
     static void handle(ServerPlayer player, Entity npc, QuestGiver giver, String option) {

@@ -55,7 +55,8 @@ final class VillagerDialogue {
                 tier.displayName().copy().withColor(tier.color()), rep);
     }
 
-    static DialogueNode node(ServerPlayer player, Villager villager, @Nullable Component reply) {
+    /** The villager's usual dialogue, with what other mods add to it ({@code DialogueBuildEvent}). */
+    static DialogueService.Built node(ServerPlayer player, Villager villager, @Nullable Component reply) {
         ChainManager.checkRole(villager);
         Component text = reply != null ? reply
                 : DialogueLines.pick("greet", SpeakerContext.of(villager, player), villager.getRandom(), player.getDisplayName())
@@ -86,7 +87,8 @@ final class VillagerDialogue {
         }
         options.add(DialogueNode.Option.of(DialogueService.BYE, Component.translatable("fealty.dialogue.option.bye"), "door"));
         villager.getLookControl().setLookAt(player);
-        return new DialogueNode(villager.getDisplayName(), subtitle(player, villager), text, options);
+        return DialogueService.contribute(player, villager, new DialogueNode(villager.getDisplayName(), subtitle(player, villager), text, options),
+                reply != null);
     }
 
     /** "Need a hand?", or the state of a favor the player is doing for this villager. */
