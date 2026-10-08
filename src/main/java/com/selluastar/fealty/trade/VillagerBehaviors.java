@@ -10,6 +10,7 @@ import com.selluastar.fealty.Fealty;
 import com.selluastar.fealty.advancement.FealtyEvents;
 import com.selluastar.fealty.api.RepSources;
 import com.selluastar.fealty.api.RepTier;
+import com.selluastar.fealty.chatter.Chatter;
 import com.selluastar.fealty.config.FealtyConfig;
 import com.selluastar.fealty.data.TierData;
 import com.selluastar.fealty.data.TierManager;
@@ -62,6 +63,7 @@ public final class VillagerBehaviors {
             return;
         }
         greet(player, village);
+        Chatter.tickNearPlayer(player, village);
         if (player.isCreative()) {
             return;
         }
@@ -105,7 +107,7 @@ public final class VillagerBehaviors {
         Villager nearest = null;
         double best = 36.0;
         for (Villager villager : player.serverLevel().getEntitiesOfClass(Villager.class, player.getBoundingBox().inflate(6),
-                v -> v.isAlive() && !v.isSleeping() && !v.isTrading() && v.hasLineOfSight(player))) {
+                v -> v.isAlive() && !v.isSleeping() && !v.isTrading() && !Chatter.isChatting(v) && v.hasLineOfSight(player))) {
             double d = villager.distanceToSqr(player);
             if (d < best && Speech.sinceLastSpoke(villager) > 600) {
                 best = d;

@@ -8,18 +8,17 @@ import org.jetbrains.annotations.Nullable;
 
 import com.selluastar.fealty.api.RepTier;
 import com.selluastar.fealty.chain.ChainManager;
+import com.selluastar.fealty.chatter.Chatter;
+import com.selluastar.fealty.chatter.Rumours;
 import com.selluastar.fealty.data.FealtyDataManager;
-import com.selluastar.fealty.outlaw.HeatManager;
 import com.selluastar.fealty.quest.FavorManager;
 import com.selluastar.fealty.quest.QuestContext;
 import com.selluastar.fealty.quest.QuestManager;
 import com.selluastar.fealty.quest.RepQuestDefinition;
 import com.selluastar.fealty.rep.FactionResolver;
 import com.selluastar.fealty.rep.Factions;
-import com.selluastar.fealty.rep.FealtyWorldData;
 import com.selluastar.fealty.rep.RepManager;
 import com.selluastar.fealty.trade.VillagerInteractions;
-import com.selluastar.fealty.village.VillageRecord;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -67,7 +66,9 @@ final class VillagerDialogue {
                 Component.translatable("fealty.dialogue.no_trades")));
         options.add(workOption(player, villager));
         options.addAll(DialogueService.questOptions(player, villager));
-        options.add(DialogueNode.Option.of(NEWS, Component.translatable("fealty.dialogue.option.news"), "talk"));
+        // "What's up?", or, if they were in the middle of a chat with another villager, what it was about.
+        options.add(DialogueNode.Option.of(NEWS, Component.translatable(Chatter.tellable(villager).isPresent()
+                ? "fealty.dialogue.option.news_chat" : "fealty.dialogue.option.news"), "talk"));
         ItemStack held = player.getMainHandItem();
         if (VillagerInteractions.isGift(held)) {
             options.add(DialogueNode.Option.of(GIFT, Component.translatable("fealty.dialogue.option.gift", held.getHoverName()), "gift"));
@@ -129,7 +130,7 @@ final class VillagerDialogue {
                         Component.translatable("fealty.favor.given_up")));
             }
             case NEWS -> {
-                Component news = news(player, villager, faction);
+                Component news = Rumours.ask(player, villager).text();
                 Speech.say(villager, news);
                 DialogueService.reply(player, villager, news);
             }
@@ -191,29 +192,5 @@ final class VillagerDialogue {
         }
         DialogueService.reply(player, villager, VillagerInteractions.speak(player, villager, "work_none",
                 Component.translatable("fealty.dialogue.work_none")));
-    }
-
-    /** Village gossip: who rules, how the elder is, what the village thinks of the player, and one rumour. */
-    private static Component news(ServerPlayer player, Villager villager, ResourceLocation faction) {
-        SpeakerContext context = SpeakerContext.of(villager, player);
-        Component flavour = DialogueLines.pick("news", context, villager.getRandom(), player.getDisplayName()).orElse(Component.empty());
-        Optional<VillageRecord> village = Factions.isVillage(faction) ? FealtyWorldData.get(player.server).village(faction) : Optional.empty();
-        Component fact;
-        if (village.isEmpty()) {
-            fact = Component.translatable("fealty.news.wanderer");
-        } else if (HeatManager.wantedLevel(player, faction) > 0) {
-            fact = Component.translatable("fealty.news.wanted", player.getDisplayName());
-        } else if (village.get().isBroken()) {
-            fact = Component.translatable("fealty.news.broken", village.get().elder().name());
-        } else if (village.get().lord().uuid() != null) {
-            fact = village.get().lord().isLord(player.getUUID())
-                    ? Component.translatable("fealty.news.your_lordship")
-                    : Component.translatable("fealty.news.lord", village.get().lord().name());
-        } else if (village.get().hasElder() && !village.get().elder().name().isEmpty()) {
-            fact = Component.translatable("fealty.news.elder", village.get().elder().name());
-        } else {
-            fact = Component.translatable("fealty.news.quiet");
-        }
-        return flavour.getString().isEmpty() ? fact : Component.empty().append(fact).append(" ").append(flavour);
     }
 }

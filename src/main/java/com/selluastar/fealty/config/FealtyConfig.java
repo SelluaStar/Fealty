@@ -76,6 +76,11 @@ public final class FealtyConfig {
     public static final ModConfigSpec.IntValue GIFT_COOLDOWN;
     public static final ModConfigSpec.IntValue HONORED_GIFT_COOLDOWN;
     public static final ModConfigSpec.BooleanValue VILLAGER_DIALOGUE;
+    public static final ModConfigSpec.BooleanValue VILLAGER_CHATTER;
+    public static final ModConfigSpec.IntValue CHATTER_CHANCE;
+    public static final ModConfigSpec.IntValue CHATTER_MAX_ACTIVE;
+    public static final ModConfigSpec.BooleanValue RUMOURS;
+    public static final ModConfigSpec.IntValue RUMOUR_RANGE;
 
     // Villages
     public static final ModConfigSpec.IntValue VILLAGE_MARGIN;
@@ -214,6 +219,18 @@ public final class FealtyConfig {
         VILLAGER_DIALOGUE = b.comment("Right-clicking a villager opens the dialogue box (trade, work, news, gifts).",
                         "Sneak-right-click still trades straight away. Off: right-click trades as in vanilla.")
                 .define("villager_dialogue", true);
+        VILLAGER_CHATTER = b.comment("Villagers now and then walk up to each other and chat in speech bubbles; ask one \"What's up?\"",
+                        "to hear what they were talking about")
+                .define("villager_chatter", true);
+        CHATTER_CHANCE = b.comment("Chance (percent) each second that a pair of villagers near a player in a village start chatting")
+                .defineInRange("chatter_chance", 6, 0, 100);
+        CHATTER_MAX_ACTIVE = b.comment("Most chats going on at once near one player")
+                .defineInRange("chatter_max_active", 2, 1, 16);
+        RUMOURS = b.comment("Asking a villager \"What's up?\" can get you real news: strongholds nearby, who needs help, what a",
+                        "villager sells, how the village fares. Off: they only make small talk.")
+                .define("rumours", true);
+        RUMOUR_RANGE = b.comment("How far (blocks) from the village a rumour of a stronghold or bandit camp can reach")
+                .defineInRange("rumour_range", 500, 50, 5000);
         b.pop();
 
         b.comment("Village detection and the trusting elder").push("villages");

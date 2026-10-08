@@ -85,6 +85,16 @@ and `CampaignEvent.Won`'s spoils, peace and raze days already include the threat
 | `CaptiveEvent.Taken` / `.Freed` | A captive is put in a camp's cage / freed (`getRescuer()` empty when a raid did it) | Cancel `Taken` |
 | `MenaceRaidEvent` | A stronghold is about to send a (vanilla) raid against a village | Cancel, `setOmenLevel` |
 
+### Villager gossip (API 1.3.0)
+
+| Event | Fires when | You can |
+|---|---|---|
+| `VillagerChatEvent.Started` | Two villagers are about to chat (`getFirst()`, `getSecond()`, `getTopic()`) | Cancel it |
+| `RumourEvent.Gather` | A villager is about to tell a trusted-enough player real news | `add(id, tell, weight)`: your own rumours join the pool |
+| `RumourEvent.Told` | A villager told a player something (`getTopic()`, `getText()`, `isUseful()`, `isFromChat()`) | React |
+
+`StrongholdEvent.Discovered.How` also has `RUMOURED` now: a villager's tip put a stronghold on a Trusted player's War tab.
+
 ### Other systems
 
 | Event | Fires when | You can |

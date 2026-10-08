@@ -355,9 +355,33 @@ village), `professions`, `entities` (the speaker's type), `lord` (the listener r
 village has lost its elder), `night`. In a `translate` line, `%s` is the listener's name. One line is picked at random
 by `weight`.
 
-Contexts Fealty uses include `greet`, `greet_child`, `farewell`, `news`, `work_none`, the `favor_*` set, the `gift_*`
+Contexts Fealty uses include `greet`, `greet_child`, `farewell`, `rumour_trivia`, `rumour_refuse`, `chatter_hush`, `work_none`, the `favor_*` set, the `gift_*`
 set, `threat_cower`, `threat_refuse`, `refuse_hated`, `refuse_threats`, `crime`, `crime_theft`, `crime_violence`,
 `crime_vandalism`, `guard_greet`, `guard_hostile`, `thanks_rescue`, `thanks_healed` and `hated_arrival`.
+
+## chatter/
+
+`data/<ns>/fealty/chatter/<name>.json` is one thing two villagers can chat about: a few lines they say in speech
+bubbles, taking turns (the one who walks up speaks first), and what either tells a player who asks "What's up?".
+Say too little in the lines and leave the news for the `tell`.
+
+```json
+{
+  "weight": 2,
+  "lines": [{"translate": "mypack.chatter.pie.0"}, "Who ate the pie on the windowsill?", "Not me."],
+  "tell": "A pie vanished from a windowsill. Everybody denies it. I blame the cat.",
+  "professions": ["minecraft:farmer"],
+  "night": false
+}
+```
+
+`lines` has two to six entries, each a text component or a plain string. `professions` (optional): at least one of
+the two villagers has one of them. `night` (optional): only at night (true) or only by day (false). `tell` should
+read as said by either of the two, so say "we". `weight` defaults to 1.
+
+The small talk a villager answers with when not chatting, and how they refuse, are `dialogue/` contexts:
+`rumour_trivia` (the usual conditions apply, including `tiers` of the player's standing), `rumour_refuse` and
+`chatter_hush` (what the other villager says when you make one tell).
 
 ## village_trades/
 

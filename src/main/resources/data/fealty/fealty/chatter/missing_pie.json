@@ -1,0 +1,14 @@
+{
+  "weight": 2,
+  "lines": [
+    {
+      "translate": "fealty.chatter.missing_pie.0"
+    },
+    {
+      "translate": "fealty.chatter.missing_pie.1"
+    }
+  ],
+  "tell": {
+    "translate": "fealty.chatter.missing_pie.tell"
+  }
+}

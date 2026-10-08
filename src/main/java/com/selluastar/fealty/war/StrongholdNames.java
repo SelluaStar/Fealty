@@ -17,9 +17,12 @@ public final class StrongholdNames {
     private StrongholdNames() {
     }
 
-    /** A name such as "Blackfang", seeded by the stronghold's position. */
+    /**
+     * A name such as "Blackfang", seeded by the stronghold's place on the map (not its height, so a rumour and the
+     * stronghold it later becomes agree on the name).
+     */
     public static String stem(BlockPos pos) {
-        RandomSource random = RandomSource.create(pos.asLong() * 31L + 7L);
+        RandomSource random = RandomSource.create(pos.getX() * 341873128712L + pos.getZ() * 132897987541L + 7L);
         String first = FIRST[random.nextInt(FIRST.length)];
         return first + SECOND[random.nextInt(SECOND.length)];
     }

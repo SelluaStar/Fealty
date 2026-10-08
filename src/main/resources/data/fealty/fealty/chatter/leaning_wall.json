@@ -1,0 +1,17 @@
+{
+  "weight": 2,
+  "lines": [
+    {
+      "translate": "fealty.chatter.leaning_wall.0"
+    },
+    {
+      "translate": "fealty.chatter.leaning_wall.1"
+    }
+  ],
+  "tell": {
+    "translate": "fealty.chatter.leaning_wall.tell"
+  },
+  "professions": [
+    "minecraft:mason"
+  ]
+}

@@ -43,7 +43,9 @@ public abstract class StrongholdEvent extends Event {
             /** A player came near it. */
             APPROACHED,
             /** A lord's scouts found it. */
-            SCOUTED
+            SCOUTED,
+            /** A villager told a trusted player of it (since API 1.3.0). */
+            RUMOURED
         }
     }
 

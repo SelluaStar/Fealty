@@ -1,0 +1,314 @@
+{
+  "context": "rumour_trivia",
+  "lines": [
+    {
+      "text": {
+        "translate": "fealty.rumour.trivia.0"
+      },
+      "weight": 3
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.trivia.1"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.trivia.2"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.trivia.3"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.trivia.4"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.trivia.5"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.trivia.6"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.trivia.7"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.trivia.8"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.trivia.9"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.trivia.10"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.trivia.11"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.trivia.12"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.trivia.13"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.trivia.14"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.trivia.15"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.trivia.16"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.trivia.17"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.trivia.18"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.trivia.19"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.trivia.20"
+      },
+      "night": true
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.trivia.21"
+      },
+      "night": true
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.trivia.22"
+      },
+      "night": true
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.trivia.23"
+      },
+      "night": false
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.trivia.24"
+      },
+      "night": false
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.trivia.25"
+      },
+      "professions": [
+        "minecraft:farmer"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.trivia.26"
+      },
+      "professions": [
+        "minecraft:farmer"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.trivia.27"
+      },
+      "professions": [
+        "minecraft:librarian"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.trivia.28"
+      },
+      "professions": [
+        "minecraft:librarian"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.trivia.29"
+      },
+      "professions": [
+        "minecraft:cleric"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.trivia.30"
+      },
+      "professions": [
+        "minecraft:butcher"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.trivia.31"
+      },
+      "professions": [
+        "minecraft:shepherd"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.trivia.32"
+      },
+      "professions": [
+        "minecraft:fisherman"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.trivia.33"
+      },
+      "professions": [
+        "minecraft:toolsmith",
+        "minecraft:weaponsmith",
+        "minecraft:armorer"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.trivia.34"
+      },
+      "professions": [
+        "minecraft:mason"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.trivia.35"
+      },
+      "professions": [
+        "minecraft:fletcher"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.trivia.36"
+      },
+      "professions": [
+        "minecraft:leatherworker"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.trivia.37"
+      },
+      "professions": [
+        "minecraft:cartographer"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.trivia.38"
+      },
+      "professions": [
+        "minecraft:nitwit"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.trivia.39"
+      },
+      "tiers": [
+        "fealty:distrusted"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.trivia.40"
+      },
+      "tiers": [
+        "fealty:distrusted"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.trivia.41"
+      },
+      "tiers": [
+        "fealty:distrusted"
+      ]
+    },
+    {
+      "text": {
+        "translate": "fealty.line.news.any.0"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.news.any.1"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.news.any.2"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.news.any.3"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.news.any.4"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.news.any.5"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.news.any.6"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.news.any.7"
+      }
+    }
+  ]
+}

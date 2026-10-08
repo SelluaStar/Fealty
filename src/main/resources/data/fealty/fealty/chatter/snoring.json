@@ -1,0 +1,14 @@
+{
+  "weight": 2,
+  "lines": [
+    {
+      "translate": "fealty.chatter.snoring.0"
+    },
+    {
+      "translate": "fealty.chatter.snoring.1"
+    }
+  ],
+  "tell": {
+    "translate": "fealty.chatter.snoring.tell"
+  }
+}

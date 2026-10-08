@@ -17,7 +17,7 @@ import net.minecraft.resources.ResourceLocation;
 public final class FealtyApi {
     public static final String MOD_ID = "fealty";
     /** Semantic version of this API. Breaking changes bump the major version. */
-    public static final String API_VERSION = "1.2.0";
+    public static final String API_VERSION = "1.3.0";
 
     private static volatile RepApi instance;
 

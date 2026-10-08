@@ -13,8 +13,16 @@ import com.selluastar.fealty.api.Severity;
 import com.selluastar.fealty.api.Stronghold;
 import com.selluastar.fealty.api.event.BanditRaidEvent;
 import com.selluastar.fealty.api.event.CampaignEvent;
+import com.selluastar.fealty.api.event.RumourEvent;
 import com.selluastar.fealty.api.event.StrongholdEvent;
+import com.selluastar.fealty.api.event.VillagerChatEvent;
 import com.selluastar.fealty.chain.ChainManager;
+import com.selluastar.fealty.chatter.Chatter;
+import com.selluastar.fealty.chatter.ChatterTopic;
+import com.selluastar.fealty.chatter.ChatterTopics;
+import com.selluastar.fealty.chatter.LiveTopics;
+import com.selluastar.fealty.chatter.Rumours;
+import com.selluastar.fealty.chatter.Topic;
 import com.selluastar.fealty.config.FealtyConfig;
 import com.selluastar.fealty.crime.CrimeHandlers;
 import com.selluastar.fealty.crime.CrimeService;
@@ -23,6 +31,7 @@ import com.selluastar.fealty.crime.Gossip;
 import com.selluastar.fealty.crime.Locks;
 import com.selluastar.fealty.data.FealtyDataManager;
 import com.selluastar.fealty.data.TierManager;
+import com.selluastar.fealty.dialogue.DialogueLines;
 import com.selluastar.fealty.dialogue.DialogueNode;
 import com.selluastar.fealty.dialogue.DialogueService;
 import com.selluastar.fealty.dialogue.GuardDialogue;
@@ -47,6 +56,7 @@ import com.selluastar.fealty.rep.RepManager;
 import com.selluastar.fealty.trade.TradeHooks;
 import com.selluastar.fealty.trade.VillagerInteractions;
 import com.selluastar.fealty.trade.VillagerMemory;
+import com.selluastar.fealty.util.Compass;
 import com.selluastar.fealty.village.SitePlanner;
 import com.selluastar.fealty.village.StructureMatcher;
 import com.selluastar.fealty.village.VillageLayout;
@@ -71,6 +81,7 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -471,6 +482,165 @@ public final class FealtyGameTests {
         List<String> ids = DialogueService.ordered(node).options().stream().map(DialogueNode.Option::id).toList();
         check(helper, ids.equals(List.of("q:abc:deliver", "trade", "news", DialogueService.BYE)),
                 "quest business first, goodbye last, the rest as offered; got " + ids);
+        helper.succeed();
+    }
+
+    private static boolean chatVeto;
+    private static boolean extraRumour;
+    private static boolean chatListening;
+
+    /** Test-only listeners for chats and rumours, switched by flags (the event bus has no easy way to remove a lambda). */
+    private static void listenForChatter() {
+        if (!chatListening) {
+            chatListening = true;
+            NeoForge.EVENT_BUS.addListener((VillagerChatEvent.Started e) -> {
+                if (chatVeto) {
+                    e.setCanceled(true);
+                }
+            });
+            NeoForge.EVENT_BUS.addListener((RumourEvent.Gather e) -> {
+                if (extraRumour) {
+                    e.add(Fealty.id("test/extra"), Component.literal("extra"), 1_000_000);
+                }
+            });
+        }
+    }
+
+    @GameTest(template = "empty")
+    public static void chatterTopicsLoad(GameTestHelper helper) {
+        check(helper, ChatterTopics.all().size() >= 20, "villagers should have things to chat about, got " + ChatterTopics.all().size());
+        ChatterTopics.all().forEach((id, topic) -> check(helper, topic.lines().size() >= 2 && !topic.tell().getString().isEmpty(),
+                id + " needs two lines and something to tell"));
+        for (String context : List.of("rumour_trivia", "rumour_refuse", "chatter_hush")) {
+            check(helper, DialogueLines.has(context), "the " + context + " lines should load");
+        }
+        check(helper, Compass.point(BlockPos.ZERO, new BlockPos(100, 0, 0)).equals("e"), "east");
+        check(helper, Compass.point(BlockPos.ZERO, new BlockPos(100, 0, -100)).equals("ne"), "north is -z");
+        check(helper, Compass.roughDistance(BlockPos.ZERO, new BlockPos(120, 0, 0)) == 100
+                && Compass.roughDistance(BlockPos.ZERO, new BlockPos(130, 0, 0)) == 150, "distances round to 50");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void villagersChatThenTell(GameTestHelper helper) {
+        listenForChatter();
+        ServerPlayer player = player(helper);
+        VillageRecord village = testVillage(helper, BlockPos.ZERO, "Gossipton");
+        MinecraftServer server = helper.getLevel().getServer();
+        Villager a = helper.spawn(EntityType.VILLAGER, new BlockPos(1, 1, 1));
+        Villager b = helper.spawn(EntityType.VILLAGER, new BlockPos(2, 1, 1));
+        ChatterTopic file = ChatterTopics.all().get(Fealty.id("bagel"));
+        Chatter.reset();
+        try {
+            check(helper, file != null, "the bagel topic should load");
+            Topic topic = new Topic(Fealty.id("bagel"), file.lines(), file.tell(), false, 1, null);
+            chatVeto = true;
+            check(helper, !Chatter.start(helper.getLevel(), a, b, topic), "a listener can veto a chat");
+            chatVeto = false;
+            check(helper, Chatter.start(helper.getLevel(), a, b, topic), "two villagers close by can start chatting");
+            check(helper, Chatter.isChatting(a) && Chatter.isChatting(b) && Chatter.active() == 1, "both are chatting");
+            check(helper, !Chatter.start(helper.getLevel(), b, a, topic), "a villager chats with one other at a time");
+            check(helper, Chatter.tellable(a).isEmpty(), "before a word is said there is nothing to tell");
+            Chatter.fastForward(server);
+            check(helper, Chatter.tellable(b).isPresent(), "once they have spoken, either can be asked what it was about");
+            RepManager.meet(player, village.id());
+            Rumours.Told told = Rumours.ask(player, b);
+            check(helper, told.fromChat() && told.topic().equals(topic.id()) && told.text().equals(topic.tell()),
+                    "they tell what the chat was about");
+            check(helper, !Chatter.isChatting(a) && Chatter.tellable(a).isEmpty(), "the chat is over once told");
+            check(helper, !Rumours.ask(player, a).fromChat(), "asked again, they have other news");
+        } finally {
+            chatVeto = false;
+            Chatter.reset();
+            a.discard();
+            b.discard();
+            forget(helper, village);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void rumoursFollowStanding(GameTestHelper helper) {
+        listenForChatter();
+        ServerPlayer player = player(helper);
+        VillageRecord village = testVillage(helper, BlockPos.ZERO, "Hearsay");
+        Villager villager = helper.spawn(EntityType.VILLAGER, new BlockPos(1, 1, 1));
+        try {
+            RepManager.meet(player, village.id());
+            RepManager.set(player, village.id(), TierManager.hated().min(), RepSources.COMMAND);
+            check(helper, Rumours.ask(player, villager).topic().equals(Rumours.REFUSED), "a village that hates you tells you nothing");
+
+            RepManager.set(player, village.id(), TierManager.distrusted().min(), RepSources.COMMAND);
+            for (int i = 0; i < 25; i++) {
+                check(helper, !Rumours.ask(player, villager).useful(), "distrust gets you small talk only");
+            }
+
+            RepManager.set(player, village.id(), TierManager.neutral().min(), RepSources.COMMAND);
+            int useful = 0;
+            for (int i = 0; i < 40; i++) {
+                if (Rumours.ask(player, villager).useful()) {
+                    useful++;
+                }
+            }
+            check(helper, useful == 1, "a villager tells real news once a day, got " + useful);
+        } finally {
+            villager.discard();
+            forget(helper, village);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void otherModsAddRumours(GameTestHelper helper) {
+        listenForChatter();
+        ServerPlayer player = player(helper);
+        VillageRecord village = testVillage(helper, BlockPos.ZERO, "Extraford");
+        Villager villager = helper.spawn(EntityType.VILLAGER, new BlockPos(1, 1, 1));
+        extraRumour = true;
+        try {
+            RepManager.meet(player, village.id());
+            RepManager.set(player, village.id(), TierManager.neutral().min(), RepSources.COMMAND);
+            Rumours.Told told = null;
+            for (int i = 0; i < 40 && (told == null || !told.useful()); i++) {
+                told = Rumours.ask(player, villager);
+            }
+            check(helper, told != null && told.topic().equals(Fealty.id("test/extra")), "a listener's rumour joins the pool");
+        } finally {
+            extraRumour = false;
+            villager.discard();
+            forget(helper, village);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void villagersChatAboutStrongholds(GameTestHelper helper) {
+        VillageRecord village = testVillage(helper, BlockPos.ZERO, "Smokewatch");
+        ServerLevel level = helper.getLevel();
+        Villager a = helper.spawn(EntityType.VILLAGER, new BlockPos(1, 1, 1));
+        Villager b = helper.spawn(EntityType.VILLAGER, new BlockPos(2, 1, 1));
+        Strongholds strongholds = Strongholds.get(level.getServer());
+        Strongholds.Entry camp = strongholds.register(level, village.center().offset(200, 0, 0), Stronghold.Kind.OUTPOST,
+                ResourceLocation.withDefaultNamespace("pillager_outpost"), 24, StrongholdEvent.Discovered.How.SCOUTED);
+        try {
+            Topic found = null;
+            for (int i = 0; i < 80 && found == null; i++) {
+                Optional<Topic> topic = LiveTopics.forChat(level, village, a, b, level.getRandom());
+                if (topic.isPresent() && topic.get().id().equals(LiveTopics.STRONGHOLD)) {
+                    found = topic.get();
+                }
+            }
+            check(helper, found != null, "villagers near a known stronghold gossip about it");
+            check(helper, found.lines().size() == 2, "the bubbles only hint at it");
+            check(helper, found.tell().getContents() instanceof TranslatableContents tell && tell.getKey().equals("fealty.rumour.stronghold")
+                    && tell.getArgs()[1].equals(200) && ((Component) tell.getArgs()[2]).getContents() instanceof TranslatableContents dir
+                    && dir.getKey().equals("fealty.compass.e"), "the tale gives the distance and the direction");
+        } finally {
+            strongholds.remove(camp);
+            a.discard();
+            b.discard();
+            forget(helper, village);
+        }
         helper.succeed();
     }
 

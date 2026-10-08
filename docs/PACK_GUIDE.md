@@ -184,6 +184,32 @@ Vanilla and modded pillager outposts are targets too (add yours to `#fealty:pill
 are the mobs in `#fealty:stronghold_defenders` on the outpost's ground when the battle starts, so illager mods whose
 mobs are in `#minecraft:raiders` work as they are. Commands: `/rep war list|scout <village>|declare <village>|win|cancel|menace <village>`.
 
+## Gossip and rumours
+
+Villagers chat with each other. Near a player in a village, with `chatter_chance` percent each second (up to
+`chatter_max_active` chats at once near one player), a villager walks up to another and they trade a few lines in
+speech bubbles, then go back to their day. Each villager then rests one to three minutes, and sleeping, trading, frightened or
+chain-quest villagers never join. `villager_chatter` turns it off.
+
+The bubbles only hint at the topic. Ask either villager "What's up?" in the dialogue box (the button reads "What are
+you two talking about?" while a chat is fresh) and they tell you what it was about. A chat is about small talk
+(`fealty/chatter/`, see DATAPACKS.md) or, about three chats in ten, real news.
+
+A villager you ask when they are not chatting answers by how much they trust you:
+
+| Standing | They say |
+|---|---|
+| Hated | Nothing: they refuse |
+| Distrusted | Small talk only |
+| Neutral or better | Small talk about a third of the time, otherwise real news, once a day per villager |
+| Trusted or better | The same, and the news is acted on: a stronghold is noted on the Village Hall's War tab, and a villager they point at glows for ten seconds |
+
+Real news (`rumours`) is read from the world: pillager strongholds and bandit camps within `rumour_range` blocks (a stronghold
+you have not met is found with one cheap search per village per day), a nearby villager with a favor for you, a
+nearby villager selling an enchanted book, enchanted gear or diamond or netherite, who leads the village, how the
+lord's taxes are taken, how many guards have fallen, pillagers who menace the village, and the days of peace left
+after a raid.
+
 ## Compatibility notes
 
 - **Oh The Biomes We've Gone:** its six village kinds (Skyris, Salem, Red Rock, Pumpkin Patch, Forgotten, Swamp)

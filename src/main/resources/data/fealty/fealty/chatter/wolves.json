@@ -1,0 +1,15 @@
+{
+  "weight": 2,
+  "lines": [
+    {
+      "translate": "fealty.chatter.wolves.0"
+    },
+    {
+      "translate": "fealty.chatter.wolves.1"
+    }
+  ],
+  "tell": {
+    "translate": "fealty.chatter.wolves.tell"
+  },
+  "night": true
+}

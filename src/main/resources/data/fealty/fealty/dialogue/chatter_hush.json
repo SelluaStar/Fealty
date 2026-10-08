@@ -1,0 +1,35 @@
+{
+  "context": "chatter_hush",
+  "lines": [
+    {
+      "text": {
+        "translate": "fealty.chatter.hush.0"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.chatter.hush.1"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.chatter.hush.2"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.chatter.hush.3"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.chatter.hush.4"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.chatter.hush.5"
+      }
+    }
+  ]
+}

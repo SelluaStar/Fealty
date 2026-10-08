@@ -1,0 +1,17 @@
+{
+  "weight": 2,
+  "lines": [
+    {
+      "translate": "fealty.chatter.cleric_brew.0"
+    },
+    {
+      "translate": "fealty.chatter.cleric_brew.1"
+    }
+  ],
+  "tell": {
+    "translate": "fealty.chatter.cleric_brew.tell"
+  },
+  "professions": [
+    "minecraft:cleric"
+  ]
+}

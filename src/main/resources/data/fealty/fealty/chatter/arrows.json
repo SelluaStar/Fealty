@@ -1,0 +1,17 @@
+{
+  "weight": 2,
+  "lines": [
+    {
+      "translate": "fealty.chatter.arrows.0"
+    },
+    {
+      "translate": "fealty.chatter.arrows.1"
+    }
+  ],
+  "tell": {
+    "translate": "fealty.chatter.arrows.tell"
+  },
+  "professions": [
+    "minecraft:fletcher"
+  ]
+}

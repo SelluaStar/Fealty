@@ -14,6 +14,7 @@ import java.util.UUID;
 import org.jetbrains.annotations.Nullable;
 
 import com.selluastar.fealty.Fealty;
+import com.selluastar.fealty.chatter.Chatter;
 import com.selluastar.fealty.guard.GuardManager;
 import com.selluastar.fealty.network.FealtyNetwork;
 import com.selluastar.fealty.network.OpenDialoguePayload;
@@ -126,6 +127,10 @@ public final class DialogueService {
 
     /** Open (or carry on) a session with the NPC, letting go of any other NPC the player was talking to. */
     private static Session begin(ServerPlayer player, Entity npc) {
+        if (npc instanceof Villager chatting) {
+            // A chat they were in stops; they can still be asked what it was about.
+            Chatter.interrupt(chatting);
+        }
         Session session = SESSIONS.get(player.getUUID());
         if (session == null || session.entityId != npc.getId() || !session.dimension.equals(npc.level().dimension())) {
             if (session != null) {

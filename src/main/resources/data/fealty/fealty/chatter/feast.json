@@ -1,0 +1,14 @@
+{
+  "weight": 2,
+  "lines": [
+    {
+      "translate": "fealty.chatter.feast.0"
+    },
+    {
+      "translate": "fealty.chatter.feast.1"
+    }
+  ],
+  "tell": {
+    "translate": "fealty.chatter.feast.tell"
+  }
+}

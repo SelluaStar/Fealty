@@ -34,14 +34,18 @@ public final class Speech {
         if (!(speaker.level() instanceof ServerLevel level)) {
             return;
         }
-        int ticks = Math.min(200, 50 + text.getString().length() * 2);
-        SpeechBubblePayload payload = new SpeechBubblePayload(speaker.getId(), text, ticks);
+        SpeechBubblePayload payload = new SpeechBubblePayload(speaker.getId(), text, bubbleTicks(text));
         for (ServerPlayer player : level.players()) {
             if (player.distanceToSqr(speaker) <= HEARING * HEARING) {
                 FealtyNetwork.send(player, payload);
             }
         }
         LAST_BARK.put(speaker.getUUID(), level.getGameTime());
+    }
+
+    /** How long a speech bubble with this text stays up. */
+    public static int bubbleTicks(Component text) {
+        return Math.min(200, 50 + text.getString().length() * 2);
     }
 
     /**

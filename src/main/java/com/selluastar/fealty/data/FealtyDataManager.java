@@ -48,6 +48,8 @@ public final class FealtyDataManager {
                 com.selluastar.fealty.war.StrongholdKinds::apply));
         event.addListener(new CodecDataLoader<>("fealty/village_layouts", com.selluastar.fealty.village.VillageLayout.CODEC, registries,
                 com.selluastar.fealty.village.VillageLayouts::apply));
+        event.addListener(new CodecDataLoader<>("fealty/chatter", com.selluastar.fealty.chatter.ChatterTopic.CODEC, registries,
+                com.selluastar.fealty.chatter.ChatterTopics::apply));
         event.addListener(new CodecDataLoader<>("fealty/dialogue", com.selluastar.fealty.dialogue.DialogueLine.File.CODEC, registries,
                 com.selluastar.fealty.dialogue.DialogueLines::apply));
     }

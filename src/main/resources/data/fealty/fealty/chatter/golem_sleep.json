@@ -1,0 +1,14 @@
+{
+  "weight": 2,
+  "lines": [
+    {
+      "translate": "fealty.chatter.golem_sleep.0"
+    },
+    {
+      "translate": "fealty.chatter.golem_sleep.1"
+    }
+  ],
+  "tell": {
+    "translate": "fealty.chatter.golem_sleep.tell"
+  }
+}

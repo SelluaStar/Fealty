@@ -1,0 +1,17 @@
+{
+  "weight": 2,
+  "lines": [
+    {
+      "translate": "fealty.chatter.bad_map.0"
+    },
+    {
+      "translate": "fealty.chatter.bad_map.1"
+    }
+  ],
+  "tell": {
+    "translate": "fealty.chatter.bad_map.tell"
+  },
+  "professions": [
+    "minecraft:cartographer"
+  ]
+}

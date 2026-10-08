@@ -62,6 +62,13 @@ treasury fast and costs you their love; light taxes bring less, but a village th
 gift of love), collect the treasury, hold feasts, recruit guards. Golems and other mods' guards are on the roster too. Blow the **Lord's Horn**
 anywhere to call your guards to you; a bar at the top of the screen shows who follows you.
 
+### Gossip
+Villagers chat with each other in speech bubbles now and then: one walks up to another, they trade a few lines and
+go back to their day. The bubbles only hint at it. Ask "What's up?" and they tell you what it was about, or, away
+from a chat, something they know: a pillager camp or bandit camp nearby, who needs help, who sells an enchanted book,
+how the lord's taxes are taken, how many guards have fallen. Or something silly. The more a village trusts you, the
+more it tells you (and Trusted players get strongholds noted on the War tab). Data-driven small talk in `chatter/`.
+
 ### War
 Pillager strongholds dot the land: scout camps, palisaded camps, walled forts and stone castles with dungeon cells,
 each rated one to five skulls, and pillager outposts count too. From the Village Hall's **War** tab a lord sends scouts, picks a stronghold and raises the warband: a war map
