@@ -1,0 +1,17 @@
+{
+  "weight": 2,
+  "lines": [
+    {
+      "translate": "fealty.chatter.librarian_book.0"
+    },
+    {
+      "translate": "fealty.chatter.librarian_book.1"
+    }
+  ],
+  "tell": {
+    "translate": "fealty.chatter.librarian_book.tell"
+  },
+  "professions": [
+    "minecraft:librarian"
+  ]
+}

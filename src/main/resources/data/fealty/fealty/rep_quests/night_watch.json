@@ -1,0 +1,29 @@
+{
+  "title": {
+    "translate": "quest.fealty.night_watch"
+  },
+  "description": {
+    "translate": "quest.fealty.night_watch.desc"
+  },
+  "pool": "fealty:redemption",
+  "tiers": {
+    "fealty:distrusted": 8,
+    "fealty:neutral": 8,
+    "fealty:trusted": 6
+  },
+  "difficulty": 2,
+  "reward": {
+    "rep": 10,
+    "loot_table": "fealty:quest_rewards/common"
+  },
+  "objective": {
+    "type": "fealty:kill",
+    "targets": "#minecraft:undead",
+    "count": 10,
+    "label": {
+      "translate": "fealty.label.undead"
+    },
+    "near_village": true,
+    "night_only": true
+  }
+}

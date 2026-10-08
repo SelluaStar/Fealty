@@ -1,0 +1,26 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:stone_bricks"
+    },
+    "title": {
+      "translate": "advancement.fealty.castle_stormed"
+    },
+    "description": {
+      "translate": "advancement.fealty.castle_stormed.desc"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "fealty:event",
+      "conditions": {
+        "event": "fealty:castle_stormed"
+      }
+    }
+  },
+  "parent": "fealty:stronghold_razed"
+}

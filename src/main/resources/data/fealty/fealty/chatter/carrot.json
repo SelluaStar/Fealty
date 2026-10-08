@@ -1,0 +1,17 @@
+{
+  "weight": 2,
+  "lines": [
+    {
+      "translate": "fealty.chatter.carrot.0"
+    },
+    {
+      "translate": "fealty.chatter.carrot.1"
+    }
+  ],
+  "tell": {
+    "translate": "fealty.chatter.carrot.tell"
+  },
+  "professions": [
+    "minecraft:farmer"
+  ]
+}

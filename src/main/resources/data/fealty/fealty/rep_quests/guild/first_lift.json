@@ -1,0 +1,18 @@
+{
+  "title": {
+    "translate": "quest.fealty.guild.first_lift"
+  },
+  "description": {
+    "translate": "quest.fealty.guild.first_lift.desc"
+  },
+  "tiers": {},
+  "difficulty": 2,
+  "reward": {
+    "rep": 10
+  },
+  "objective": {
+    "type": "fealty:pickpocket",
+    "count": 3
+  },
+  "pool": "fealty:none"
+}

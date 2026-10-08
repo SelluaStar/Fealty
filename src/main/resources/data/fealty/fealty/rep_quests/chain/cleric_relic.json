@@ -1,0 +1,38 @@
+{
+  "title": {
+    "translate": "quest.fealty.chain.cleric_relic"
+  },
+  "description": {
+    "translate": "quest.fealty.chain.cleric_relic.desc"
+  },
+  "tiers": {},
+  "difficulty": 3,
+  "reward": {
+    "rep": 6,
+    "renown": 2,
+    "experience": 40,
+    "loot_table": "fealty:quest_rewards/common"
+  },
+  "objective": {
+    "type": "fealty:hunt",
+    "targets": [
+      {
+        "entity": "minecraft:zombie_villager",
+        "name": {
+          "translate": "fealty.hunt.hollow_prior"
+        },
+        "health_multiplier": 4.0,
+        "damage_bonus": 3.0,
+        "equipment": {
+          "head": {
+            "id": "minecraft:golden_helmet",
+            "count": 1
+          }
+        }
+      }
+    ],
+    "min_distance": 60,
+    "max_distance": 140
+  },
+  "pool": "fealty:none"
+}

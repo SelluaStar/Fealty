@@ -1,0 +1,27 @@
+{
+  "title": {
+    "translate": "quest.fealty.chain.cleric_vigil"
+  },
+  "description": {
+    "translate": "quest.fealty.chain.cleric_vigil.desc"
+  },
+  "tiers": {},
+  "difficulty": 3,
+  "reward": {
+    "rep": 6,
+    "renown": 2,
+    "experience": 40,
+    "loot_table": "fealty:quest_rewards/common"
+  },
+  "objective": {
+    "type": "fealty:kill",
+    "targets": "#minecraft:undead",
+    "count": 12,
+    "label": {
+      "translate": "fealty.label.undead"
+    },
+    "near_village": true,
+    "night_only": true
+  },
+  "pool": "fealty:none"
+}

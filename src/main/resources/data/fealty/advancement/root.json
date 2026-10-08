@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "id": "fealty:ledger"
+    },
+    "title": {
+      "translate": "advancement.fealty.root"
+    },
+    "description": {
+      "translate": "advancement.fealty.root.desc"
+    },
+    "frame": "task",
+    "show_toast": false,
+    "announce_to_chat": false,
+    "hidden": false,
+    "background": "minecraft:textures/block/dark_oak_planks.png"
+  },
+  "criteria": {
+    "tick": {
+      "trigger": "minecraft:tick"
+    }
+  }
+}

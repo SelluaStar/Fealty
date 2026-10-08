@@ -1,0 +1,47 @@
+{
+  "title": {
+    "translate": "quest.fealty.chain.keeper_trial"
+  },
+  "description": {
+    "translate": "quest.fealty.chain.keeper_trial.desc"
+  },
+  "tiers": {},
+  "difficulty": 5,
+  "reward": {
+    "rep": 10,
+    "renown": 5,
+    "experience": 200,
+    "loot_table": "fealty:quest_rewards/rare"
+  },
+  "objective": {
+    "type": "fealty:hunt",
+    "targets": [
+      {
+        "entity": "minecraft:wither_skeleton",
+        "name": {
+          "translate": "fealty.hunt.oathbreaker"
+        },
+        "health_multiplier": 6.0,
+        "damage_bonus": 6.0,
+        "armor_bonus": 8.0,
+        "equipment": {
+          "mainhand": {
+            "id": "minecraft:netherite_sword",
+            "count": 1
+          },
+          "chest": {
+            "id": "minecraft:iron_chestplate",
+            "count": 1
+          },
+          "head": {
+            "id": "minecraft:iron_helmet",
+            "count": 1
+          }
+        }
+      }
+    ],
+    "min_distance": 20,
+    "max_distance": 40
+  },
+  "pool": "fealty:none"
+}

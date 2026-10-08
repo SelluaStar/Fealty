@@ -1,0 +1,40 @@
+{
+  "title": {
+    "translate": "quest.fealty.chain.butcher_feast"
+  },
+  "description": {
+    "translate": "quest.fealty.chain.butcher_feast.desc"
+  },
+  "tiers": {},
+  "difficulty": 2,
+  "reward": {
+    "rep": 6,
+    "renown": 2,
+    "experience": 40,
+    "loot_table": "fealty:quest_rewards/common"
+  },
+  "objective": {
+    "type": "fealty:fetch",
+    "items": [
+      {
+        "ingredient": {
+          "item": "minecraft:beef"
+        },
+        "count": 8
+      },
+      {
+        "ingredient": {
+          "item": "minecraft:porkchop"
+        },
+        "count": 8
+      },
+      {
+        "ingredient": {
+          "item": "minecraft:mutton"
+        },
+        "count": 8
+      }
+    ]
+  },
+  "pool": "fealty:none"
+}

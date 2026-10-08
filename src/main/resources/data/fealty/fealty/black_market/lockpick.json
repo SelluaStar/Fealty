@@ -1,0 +1,12 @@
+{
+  "buy": {
+    "id": "minecraft:emerald",
+    "count": 3
+  },
+  "sell": {
+    "id": "fealty:lockpick",
+    "count": 1
+  },
+  "max_uses": 6,
+  "weight": 12
+}

@@ -1,0 +1,26 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:goat_horn"
+    },
+    "title": {
+      "translate": "advancement.fealty.war_declared"
+    },
+    "description": {
+      "translate": "advancement.fealty.war_declared.desc"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "fealty:event",
+      "conditions": {
+        "event": "fealty:war_declared"
+      }
+    }
+  },
+  "parent": "fealty:sworn_lord"
+}

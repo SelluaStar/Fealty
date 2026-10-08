@@ -1,0 +1,34 @@
+{
+  "title": {
+    "translate": "quest.fealty.chain.drifter_boots"
+  },
+  "description": {
+    "translate": "quest.fealty.chain.drifter_boots.desc"
+  },
+  "tiers": {},
+  "difficulty": 1,
+  "reward": {
+    "rep": 6,
+    "renown": 2,
+    "experience": 25,
+    "loot_table": "fealty:quest_rewards/common"
+  },
+  "objective": {
+    "type": "fealty:fetch",
+    "items": [
+      {
+        "ingredient": {
+          "item": "minecraft:leather_boots"
+        },
+        "count": 1
+      },
+      {
+        "ingredient": {
+          "item": "minecraft:bread"
+        },
+        "count": 4
+      }
+    ]
+  },
+  "pool": "fealty:none"
+}

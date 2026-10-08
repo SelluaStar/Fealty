@@ -1,0 +1,26 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:bell"
+    },
+    "title": {
+      "translate": "advancement.fealty.met_elder"
+    },
+    "description": {
+      "translate": "advancement.fealty.met_elder.desc"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "met": {
+      "trigger": "fealty:event",
+      "conditions": {
+        "event": "fealty:met_elder"
+      }
+    }
+  },
+  "parent": "fealty:root"
+}

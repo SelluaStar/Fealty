@@ -1,0 +1,78 @@
+package com.selluastar.fealty.quest;
+
+import java.util.List;
+import java.util.Map;
+
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.selluastar.fealty.Fealty;
+import com.selluastar.fealty.api.quest.QuestType;
+import com.selluastar.fealty.registry.FealtyRegistries;
+
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentSerialization;
+import net.minecraft.resources.ResourceLocation;
+
+/**
+ * A quest from {@code data/<ns>/fealty/rep_quests/<id>.json}.
+ *
+ * <pre>{@code
+ * {
+ *   "title": {"translate": "quest.fealty.bread_for_the_hall"},
+ *   "description": {"translate": "quest.fealty.bread_for_the_hall.desc"},
+ *   "pool": "fealty:redemption",
+ *   "tiers": { "fealty:distrusted": 10, "fealty:neutral": 10 },
+ *   "difficulty": 1,
+ *   "reward": { "rep": 6, "loot_table": "fealty:quest_rewards/common" },
+ *   "time_limit": 0,
+ *   "objective": { "type": "fealty:fetch", "items": [ { "ingredient": {"item": "minecraft:bread"}, "count": 24 } ] }
+ * }
+ * }</pre>
+ * {@code tiers} maps the tiers the quest is offered at to its weight there (higher is more likely). An empty
+ * map offers it at every tier with weight 10. Quests in pool {@code fealty:none} are only used by chains.
+ */
+public record RepQuestDefinition(Component title, Component description, ResourceLocation pool, Map<ResourceLocation, Integer> tiers,
+                                 int difficulty, QuestReward reward, int timeLimit, int failRep, QuestObjective objective,
+                                 List<ResourceLocation> professions) {
+    public static final ResourceLocation REDEMPTION = Fealty.id("redemption");
+    /** Small daily requests from ordinary villagers, filtered by {@code professions}. */
+    public static final ResourceLocation FAVOR = Fealty.id("favor");
+    public static final ResourceLocation RESTORE = Fealty.id("restore");
+    public static final ResourceLocation NONE = Fealty.id("none");
+
+    /** Any registered objective type; ones other mods register through the API are wrapped in an {@link ApiObjective}. */
+    public static final Codec<QuestObjective> OBJECTIVE_CODEC = FealtyRegistries.QUEST_TYPES.byNameCodec()
+            .<com.selluastar.fealty.api.quest.QuestObjective>dispatch(com.selluastar.fealty.api.quest.QuestObjective::type, QuestType::codec)
+            .xmap(ApiObjective::wrap, ApiObjective::unwrap);
+
+    public static final Codec<RepQuestDefinition> CODEC = RecordCodecBuilder.create(i -> i.group(
+            ComponentSerialization.CODEC.fieldOf("title").forGetter(RepQuestDefinition::title),
+            ComponentSerialization.CODEC.optionalFieldOf("description", Component.empty()).forGetter(RepQuestDefinition::description),
+            ResourceLocation.CODEC.optionalFieldOf("pool", REDEMPTION).forGetter(RepQuestDefinition::pool),
+            Codec.unboundedMap(ResourceLocation.CODEC, Codec.intRange(0, 10000)).optionalFieldOf("tiers", Map.of()).forGetter(RepQuestDefinition::tiers),
+            Codec.intRange(1, 5).optionalFieldOf("difficulty", 1).forGetter(RepQuestDefinition::difficulty),
+            QuestReward.CODEC.optionalFieldOf("reward", QuestReward.NONE).forGetter(RepQuestDefinition::reward),
+            Codec.intRange(0, Integer.MAX_VALUE).optionalFieldOf("time_limit", 0).forGetter(RepQuestDefinition::timeLimit),
+            Codec.INT.optionalFieldOf("fail_rep", 0).forGetter(RepQuestDefinition::failRep),
+            OBJECTIVE_CODEC.fieldOf("objective").forGetter(RepQuestDefinition::objective),
+            ResourceLocation.CODEC.listOf().optionalFieldOf("professions", List.of()).forGetter(RepQuestDefinition::professions)
+    ).apply(i, RepQuestDefinition::new));
+
+    /** Whether a villager with this profession may ask this quest (an empty list allows any). */
+    public boolean suits(ResourceLocation profession) {
+        return professions.isEmpty() || professions.contains(profession);
+    }
+
+    /** Weight of this quest at a tier, or 0 if it is not offered there. */
+    public int weightAt(ResourceLocation tier) {
+        if (tiers.isEmpty()) {
+            return 10;
+        }
+        return tiers.getOrDefault(tier, 0);
+    }
+
+    public ResourceLocation typeId() {
+        ResourceLocation id = FealtyRegistries.QUEST_TYPES.getKey(objective.type());
+        return id != null ? id : Fealty.id("unknown");
+    }
+}

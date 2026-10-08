@@ -1,0 +1,29 @@
+{
+  "title": {
+    "translate": "quest.fealty.bread_for_the_hall"
+  },
+  "description": {
+    "translate": "quest.fealty.bread_for_the_hall.desc"
+  },
+  "tiers": {
+    "fealty:distrusted": 10,
+    "fealty:neutral": 10,
+    "fealty:trusted": 6
+  },
+  "difficulty": 1,
+  "reward": {
+    "rep": 6,
+    "loot_table": "fealty:quest_rewards/common"
+  },
+  "objective": {
+    "type": "fealty:fetch",
+    "items": [
+      {
+        "ingredient": {
+          "item": "minecraft:bread"
+        },
+        "count": 24
+      }
+    ]
+  }
+}

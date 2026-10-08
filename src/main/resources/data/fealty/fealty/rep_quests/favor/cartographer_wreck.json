@@ -1,0 +1,38 @@
+{
+  "title": {
+    "translate": "quest.fealty.favor.cartographer_wreck"
+  },
+  "description": {
+    "translate": "quest.fealty.favor.cartographer_wreck.desc"
+  },
+  "pool": "fealty:favor",
+  "tiers": {
+    "fealty:distrusted": 6,
+    "fealty:neutral": 10,
+    "fealty:trusted": 10,
+    "fealty:honored": 8
+  },
+  "difficulty": 2,
+  "reward": {
+    "rep": 3,
+    "experience": 30,
+    "items": [
+      {
+        "id": "minecraft:emerald",
+        "count": 4
+      }
+    ]
+  },
+  "time_limit": 48000,
+  "professions": [
+    "minecraft:cartographer"
+  ],
+  "objective": {
+    "type": "fealty:explore",
+    "structure": "#minecraft:shipwreck",
+    "search": 100,
+    "label": {
+      "translate": "fealty.label.shipwreck"
+    }
+  }
+}

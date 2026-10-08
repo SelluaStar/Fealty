@@ -1,0 +1,25 @@
+{
+  "title": {
+    "translate": "quest.fealty.chain.librarian_ruins"
+  },
+  "description": {
+    "translate": "quest.fealty.chain.librarian_ruins.desc"
+  },
+  "tiers": {},
+  "difficulty": 2,
+  "reward": {
+    "rep": 6,
+    "renown": 2,
+    "experience": 50,
+    "loot_table": "fealty:quest_rewards/common"
+  },
+  "objective": {
+    "type": "fealty:explore",
+    "structure": "#minecraft:ruined_portal",
+    "search": 60,
+    "label": {
+      "translate": "fealty.label.ruined_portal"
+    }
+  },
+  "pool": "fealty:none"
+}

@@ -1,0 +1,8 @@
+{
+  "structures": ["minecraft:village_plains", "minecraft:village_desert", "minecraft:village_savanna", "minecraft:village_snowy", "minecraft:village_taiga"],
+  "mods": ["mr_epic_structuresvillages"],
+  "priority": 20,
+  "reach": 96,
+  "elder": ["*/town_centers/*", "*temple*", "*library*"],
+  "avoid": ["*/streets/*", "*/terminators/*", "*/decor/*", "*/villagers/*", "*animal_pen*", "*farm*", "*big_house*"]
+}

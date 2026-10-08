@@ -1,0 +1,11 @@
+{
+  "chain": "example:stranger_tale",
+  "stage": 1,
+  "min_tier": "fealty:neutral",
+  "weight": 5,
+  "told_by": "villagers",
+  "professions": [],
+  "lines": ["example.rumour.stranger.0", "example.rumour.stranger.1"],
+  "requires": {"dimension": "minecraft:overworld"},
+  "grants": [{"give_item": "minecraft:paper"}]
+}

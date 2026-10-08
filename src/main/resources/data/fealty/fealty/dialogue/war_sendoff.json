@@ -1,0 +1,25 @@
+{
+  "context": "war_sendoff",
+  "lines": [
+    {
+      "text": {
+        "translate": "fealty.line.war_sendoff.0"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.war_sendoff.1"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.war_sendoff.2"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.war_sendoff.3"
+      }
+    }
+  ]
+}

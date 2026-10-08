@@ -1,0 +1,51 @@
+{
+  "title": {
+    "translate": "quest.fealty.beast_of_the_fen"
+  },
+  "description": {
+    "translate": "quest.fealty.beast_of_the_fen.desc"
+  },
+  "tiers": {
+    "fealty:distrusted": 6,
+    "fealty:neutral": 8,
+    "fealty:trusted": 8
+  },
+  "difficulty": 3,
+  "reward": {
+    "rep": 10,
+    "loot_table": "fealty:quest_rewards/rare"
+  },
+  "objective": {
+    "type": "fealty:hunt",
+    "targets": [
+      {
+        "entity": "minecraft:zombie",
+        "equipment": {
+          "mainhand": {
+            "id": "minecraft:iron_axe",
+            "count": 1
+          },
+          "head": {
+            "id": "minecraft:leather_helmet",
+            "count": 1
+          }
+        }
+      },
+      {
+        "entity": "minecraft:skeleton",
+        "equipment": {
+          "mainhand": {
+            "id": "minecraft:bow",
+            "count": 1
+          }
+        }
+      },
+      {
+        "entity": "minecraft:spider",
+        "health_multiplier": 4.0
+      }
+    ],
+    "min_distance": 80,
+    "max_distance": 180
+  }
+}

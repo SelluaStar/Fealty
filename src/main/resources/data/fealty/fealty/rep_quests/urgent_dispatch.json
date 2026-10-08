@@ -1,0 +1,22 @@
+{
+  "title": {
+    "translate": "quest.fealty.urgent_dispatch"
+  },
+  "description": {
+    "translate": "quest.fealty.urgent_dispatch.desc"
+  },
+  "tiers": {
+    "fealty:trusted": 6,
+    "fealty:honored": 8
+  },
+  "difficulty": 3,
+  "reward": {
+    "rep": 12,
+    "renown": 5,
+    "loot_table": "fealty:quest_rewards/rare"
+  },
+  "objective": {
+    "type": "fealty:courier"
+  },
+  "time_limit": 48000
+}

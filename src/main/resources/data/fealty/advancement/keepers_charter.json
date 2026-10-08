@@ -1,0 +1,26 @@
+{
+  "display": {
+    "icon": {
+      "id": "fealty:keepers_charter"
+    },
+    "title": {
+      "translate": "advancement.fealty.keepers_charter"
+    },
+    "description": {
+      "translate": "advancement.fealty.keepers_charter.desc"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "charter": {
+      "trigger": "fealty:event",
+      "conditions": {
+        "event": "fealty:charter_earned"
+      }
+    }
+  },
+  "parent": "fealty:hidden_hamlet"
+}

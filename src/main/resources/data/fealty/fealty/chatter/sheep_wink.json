@@ -1,0 +1,17 @@
+{
+  "weight": 2,
+  "lines": [
+    {
+      "translate": "fealty.chatter.sheep_wink.0"
+    },
+    {
+      "translate": "fealty.chatter.sheep_wink.1"
+    }
+  ],
+  "tell": {
+    "translate": "fealty.chatter.sheep_wink.tell"
+  },
+  "professions": [
+    "minecraft:shepherd"
+  ]
+}

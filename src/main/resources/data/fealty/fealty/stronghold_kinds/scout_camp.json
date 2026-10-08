@@ -1,0 +1,29 @@
+{
+  "structures": [
+    "fealty:pillager_scout_camp"
+  ],
+  "name": "fealty.stronghold.scout_camp",
+  "threat": 1,
+  "garrison": [
+    {
+      "entity": "minecraft:pillager",
+      "min": 2,
+      "max": 3
+    }
+  ],
+  "captain": "minecraft:pillager",
+  "captives_min": 1,
+  "captives_max": 1,
+  "spoils": 1,
+  "peace_days": 4,
+  "raze_days": 6,
+  "menace_range": 400,
+  "menace_omen": 1,
+  "traits": {
+    "none": 6,
+    "veterans": 2,
+    "evoker": 1,
+    "beasts": 1
+  },
+  "radius": 10
+}

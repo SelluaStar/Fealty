@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:pillager_outpost",
+    {
+      "id": "#c:pillager_outposts",
+      "required": false
+    }
+  ]
+}

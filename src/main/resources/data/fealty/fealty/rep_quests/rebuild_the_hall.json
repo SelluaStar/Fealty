@@ -1,0 +1,20 @@
+{
+  "title": {
+    "translate": "quest.fealty.rebuild_the_hall"
+  },
+  "description": {
+    "translate": "quest.fealty.rebuild_the_hall.desc"
+  },
+  "tiers": {
+    "fealty:hated": 8
+  },
+  "difficulty": 4,
+  "reward": {
+    "rep": 12
+  },
+  "objective": {
+    "type": "fealty:rebuild",
+    "count": 24,
+    "radius": 32
+  }
+}

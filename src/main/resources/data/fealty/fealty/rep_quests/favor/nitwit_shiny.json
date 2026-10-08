@@ -1,0 +1,35 @@
+{
+  "title": {
+    "translate": "quest.fealty.favor.nitwit_shiny"
+  },
+  "description": {
+    "translate": "quest.fealty.favor.nitwit_shiny.desc"
+  },
+  "pool": "fealty:favor",
+  "tiers": {
+    "fealty:distrusted": 6,
+    "fealty:neutral": 10,
+    "fealty:trusted": 10,
+    "fealty:honored": 8
+  },
+  "difficulty": 1,
+  "reward": {
+    "rep": 2,
+    "experience": 5
+  },
+  "time_limit": 48000,
+  "professions": [
+    "minecraft:nitwit"
+  ],
+  "objective": {
+    "type": "fealty:fetch",
+    "items": [
+      {
+        "ingredient": {
+          "item": "minecraft:gold_nugget"
+        },
+        "count": 3
+      }
+    ]
+  }
+}

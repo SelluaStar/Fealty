@@ -1,0 +1,26 @@
+{
+  "title": {
+    "translate": "quest.fealty.guild.light_fingers"
+  },
+  "description": {
+    "translate": "quest.fealty.guild.light_fingers.desc"
+  },
+  "tiers": {},
+  "difficulty": 3,
+  "reward": {
+    "rep": 10
+  },
+  "objective": {
+    "type": "fealty:steal",
+    "items": [
+      {
+        "ingredient": {
+          "item": "minecraft:emerald"
+        },
+        "count": 8
+      }
+    ],
+    "unseen": true
+  },
+  "pool": "fealty:none"
+}

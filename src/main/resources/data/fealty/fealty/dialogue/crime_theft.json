@@ -1,0 +1,20 @@
+{
+  "context": "crime_theft",
+  "lines": [
+    {
+      "text": {
+        "translate": "fealty.line.crime_theft.any.0"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.crime_theft.any.1"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.crime_theft.any.2"
+      }
+    }
+  ]
+}

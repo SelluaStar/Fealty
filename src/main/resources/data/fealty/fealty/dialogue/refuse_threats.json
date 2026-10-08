@@ -1,0 +1,15 @@
+{
+  "context": "refuse_threats",
+  "lines": [
+    {
+      "text": {
+        "translate": "fealty.line.refuse_threats.any.0"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.refuse_threats.any.1"
+      }
+    }
+  ]
+}

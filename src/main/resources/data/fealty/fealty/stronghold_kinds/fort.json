@@ -1,0 +1,39 @@
+{
+  "structures": [
+    "fealty:pillager_fort"
+  ],
+  "name": "fealty.stronghold.fort",
+  "threat": 3,
+  "garrison": [
+    {
+      "entity": "minecraft:pillager",
+      "min": 5,
+      "max": 7
+    },
+    {
+      "entity": "minecraft:vindicator",
+      "min": 3,
+      "max": 4
+    },
+    {
+      "entity": "minecraft:evoker",
+      "min": 1,
+      "max": 1
+    }
+  ],
+  "captain": "minecraft:pillager",
+  "captives_min": 4,
+  "captives_max": 6,
+  "spoils": 4,
+  "peace_days": 10,
+  "raze_days": 14,
+  "menace_range": 800,
+  "menace_omen": 2,
+  "traits": {
+    "none": 4,
+    "veterans": 3,
+    "evoker": 1,
+    "beasts": 2
+  },
+  "radius": 24
+}

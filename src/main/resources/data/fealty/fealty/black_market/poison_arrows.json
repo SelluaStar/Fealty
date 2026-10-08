@@ -1,0 +1,17 @@
+{
+  "buy": {
+    "id": "minecraft:emerald",
+    "count": 6
+  },
+  "sell": {
+    "id": "minecraft:tipped_arrow",
+    "count": 8,
+    "components": {
+      "minecraft:potion_contents": {
+        "potion": "minecraft:strong_poison"
+      }
+    }
+  },
+  "max_uses": 4,
+  "weight": 8
+}

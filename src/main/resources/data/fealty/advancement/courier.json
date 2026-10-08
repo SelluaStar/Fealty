@@ -1,0 +1,26 @@
+{
+  "display": {
+    "icon": {
+      "id": "fealty:sealed_letter"
+    },
+    "title": {
+      "translate": "advancement.fealty.courier"
+    },
+    "description": {
+      "translate": "advancement.fealty.courier.desc"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "delivered": {
+      "trigger": "fealty:event",
+      "conditions": {
+        "event": "fealty:courier_delivered"
+      }
+    }
+  },
+  "parent": "fealty:met_elder"
+}

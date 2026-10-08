@@ -1,0 +1,39 @@
+{
+  "title": {
+    "translate": "quest.fealty.favor.cleric_undead"
+  },
+  "description": {
+    "translate": "quest.fealty.favor.cleric_undead.desc"
+  },
+  "pool": "fealty:favor",
+  "tiers": {
+    "fealty:distrusted": 6,
+    "fealty:neutral": 10,
+    "fealty:trusted": 10,
+    "fealty:honored": 8
+  },
+  "difficulty": 2,
+  "reward": {
+    "rep": 3,
+    "experience": 20,
+    "items": [
+      {
+        "id": "minecraft:emerald",
+        "count": 2
+      }
+    ]
+  },
+  "time_limit": 48000,
+  "professions": [
+    "minecraft:cleric"
+  ],
+  "objective": {
+    "type": "fealty:kill",
+    "targets": "#minecraft:undead",
+    "count": 6,
+    "label": {
+      "translate": "fealty.label.undead"
+    },
+    "near_village": true
+  }
+}

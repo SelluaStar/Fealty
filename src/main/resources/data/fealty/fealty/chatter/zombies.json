@@ -1,0 +1,15 @@
+{
+  "weight": 2,
+  "lines": [
+    {
+      "translate": "fealty.chatter.zombies.0"
+    },
+    {
+      "translate": "fealty.chatter.zombies.1"
+    }
+  ],
+  "tell": {
+    "translate": "fealty.chatter.zombies.tell"
+  },
+  "night": true
+}

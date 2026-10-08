@@ -1,0 +1,26 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:lantern"
+    },
+    "title": {
+      "translate": "advancement.fealty.hidden_hamlet"
+    },
+    "description": {
+      "translate": "advancement.fealty.hidden_hamlet.desc"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "found": {
+      "trigger": "fealty:event",
+      "conditions": {
+        "event": "fealty:hamlet_found"
+      }
+    }
+  },
+  "parent": "fealty:rumours"
+}

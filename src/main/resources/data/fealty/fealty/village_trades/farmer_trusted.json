@@ -1,0 +1,33 @@
+{
+  "professions": [
+    "minecraft:farmer"
+  ],
+  "min_tier": "fealty:trusted",
+  "min_level": 1,
+  "offers": [
+    {
+      "buy": {
+        "id": "minecraft:emerald",
+        "count": 3
+      },
+      "sell": {
+        "id": "minecraft:golden_carrot",
+        "count": 8
+      },
+      "max_uses": 8,
+      "xp": 4
+    },
+    {
+      "buy": {
+        "id": "minecraft:emerald",
+        "count": 4
+      },
+      "sell": {
+        "id": "minecraft:cake",
+        "count": 1
+      },
+      "max_uses": 4,
+      "xp": 4
+    }
+  ]
+}

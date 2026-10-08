@@ -1,0 +1,58 @@
+{
+  "kind": "guild",
+  "steps": [
+    {
+      "quest": "fealty:guild/first_lift",
+      "rewards": [
+        {
+          "id": "fealty:rogue_boots",
+          "count": 1
+        },
+        {
+          "id": "fealty:lockpick",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "quest": "fealty:guild/light_fingers",
+      "rewards": [
+        {
+          "id": "fealty:rogue_leggings",
+          "count": 1
+        },
+        {
+          "id": "fealty:smoke_bomb",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "quest": "fealty:guild/the_strongbox",
+      "rewards": [
+        {
+          "id": "fealty:rogue_cloak",
+          "count": 1
+        },
+        {
+          "id": "fealty:lockpick",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "quest": "fealty:guild/masterwork",
+      "rewards": [
+        {
+          "id": "fealty:rogue_hood",
+          "count": 1
+        }
+      ]
+    }
+  ],
+  "final_reward": {
+    "id": "fealty:smoke_bomb",
+    "count": 8
+  },
+  "repeatable": false
+}

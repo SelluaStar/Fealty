@@ -1,0 +1,23 @@
+# Gradle
+.gradle/
+build/
+out/
+repo/
+run/
+runs/
+# IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.classpath
+.project
+.settings/
+bin/
+# OS
+.DS_Store
+Thumbs.db
+# Python
+__pycache__/
+*.pyc

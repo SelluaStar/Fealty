@@ -1,0 +1,15 @@
+{
+  "context": "gift_refused",
+  "lines": [
+    {
+      "text": {
+        "translate": "fealty.line.gift_refused.any.0"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.gift_refused.any.1"
+      }
+    }
+  ]
+}

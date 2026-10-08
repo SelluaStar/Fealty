@@ -1,0 +1,40 @@
+{
+  "title": {
+    "translate": "quest.fealty.chain.farmer_harvest"
+  },
+  "description": {
+    "translate": "quest.fealty.chain.farmer_harvest.desc"
+  },
+  "tiers": {},
+  "difficulty": 2,
+  "reward": {
+    "rep": 6,
+    "renown": 2,
+    "experience": 40,
+    "loot_table": "fealty:quest_rewards/common"
+  },
+  "objective": {
+    "type": "fealty:fetch",
+    "items": [
+      {
+        "ingredient": {
+          "item": "minecraft:wheat"
+        },
+        "count": 32
+      },
+      {
+        "ingredient": {
+          "item": "minecraft:carrot"
+        },
+        "count": 16
+      },
+      {
+        "ingredient": {
+          "item": "minecraft:potato"
+        },
+        "count": 16
+      }
+    ]
+  },
+  "pool": "fealty:none"
+}

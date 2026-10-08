@@ -1,0 +1,17 @@
+{
+  "weight": 2,
+  "lines": [
+    {
+      "translate": "fealty.chatter.butcher_trade.0"
+    },
+    {
+      "translate": "fealty.chatter.butcher_trade.1"
+    }
+  ],
+  "tell": {
+    "translate": "fealty.chatter.butcher_trade.tell"
+  },
+  "professions": [
+    "minecraft:butcher"
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "title": {
+    "translate": "quest.fealty.bandit_menace"
+  },
+  "description": {
+    "translate": "quest.fealty.bandit_menace.desc"
+  },
+  "tiers": {
+    "fealty:distrusted": 6,
+    "fealty:neutral": 8,
+    "fealty:trusted": 8,
+    "fealty:honored": 6
+  },
+  "difficulty": 4,
+  "reward": {
+    "rep": 12,
+    "loot_table": "fealty:quest_rewards/rare"
+  },
+  "objective": {
+    "type": "fealty:clear_camp",
+    "give_map": true
+  }
+}

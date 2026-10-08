@@ -1,0 +1,6 @@
+{
+  "amount": -2,
+  "severity": "moderate",
+  "requires_witness": false,
+  "alerts_guards": false
+}

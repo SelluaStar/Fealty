@@ -1,0 +1,14 @@
+{
+  "name": {
+    "translate": "fealty.tier.trusted"
+  },
+  "min": 21,
+  "max": 60,
+  "price_multiplier": 0.85,
+  "color": "#4CAF50",
+  "guard_stance": "assist",
+  "trade_policy": "standard",
+  "locked_trade_level": 0,
+  "villagers_hide": false,
+  "villager_gifts": false
+}

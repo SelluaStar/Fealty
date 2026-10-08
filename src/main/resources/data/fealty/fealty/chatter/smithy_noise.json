@@ -1,0 +1,19 @@
+{
+  "weight": 2,
+  "lines": [
+    {
+      "translate": "fealty.chatter.smithy_noise.0"
+    },
+    {
+      "translate": "fealty.chatter.smithy_noise.1"
+    }
+  ],
+  "tell": {
+    "translate": "fealty.chatter.smithy_noise.tell"
+  },
+  "professions": [
+    "minecraft:toolsmith",
+    "minecraft:weaponsmith",
+    "minecraft:armorer"
+  ]
+}

@@ -1,0 +1,180 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "fealty:block/bandit_standard_pole",
+    "pole": "fealty:block/bandit_standard_pole",
+    "cloth": "fealty:block/bandit_standard_cloth"
+  },
+  "elements": [
+    {
+      "from": [
+        7,
+        0,
+        7
+      ],
+      "to": [
+        9,
+        16,
+        9
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            2,
+            16
+          ],
+          "texture": "#pole"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            2,
+            16
+          ],
+          "texture": "#pole"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            2,
+            16
+          ],
+          "texture": "#pole"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            2,
+            16
+          ],
+          "texture": "#pole"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            2,
+            2
+          ],
+          "texture": "#pole"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            2,
+            2
+          ],
+          "texture": "#pole",
+          "cullface": "down"
+        }
+      }
+    },
+    {
+      "from": [
+        2,
+        14,
+        7.5
+      ],
+      "to": [
+        14,
+        15,
+        8.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            12,
+            1
+          ],
+          "texture": "#pole"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            12,
+            1
+          ],
+          "texture": "#pole"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            1,
+            1
+          ],
+          "texture": "#pole"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            1,
+            1
+          ],
+          "texture": "#pole"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            12,
+            1
+          ],
+          "texture": "#pole"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            12,
+            1
+          ],
+          "texture": "#pole"
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        2,
+        9.05
+      ],
+      "to": [
+        13,
+        14,
+        9.05
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            3,
+            0,
+            13,
+            15
+          ],
+          "texture": "#cloth"
+        },
+        "south": {
+          "uv": [
+            3,
+            0,
+            13,
+            15
+          ],
+          "texture": "#cloth"
+        }
+      }
+    }
+  ]
+}

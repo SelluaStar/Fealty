@@ -1,0 +1,20 @@
+{
+  "context": "refuse_hated",
+  "lines": [
+    {
+      "text": {
+        "translate": "fealty.line.refuse_hated.any.0"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.refuse_hated.any.1"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.refuse_hated.any.2"
+      }
+    }
+  ]
+}

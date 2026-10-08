@@ -1,0 +1,35 @@
+{
+  "title": {
+    "translate": "quest.fealty.ore_for_the_smithy"
+  },
+  "description": {
+    "translate": "quest.fealty.ore_for_the_smithy.desc"
+  },
+  "tiers": {
+    "fealty:distrusted": 8,
+    "fealty:neutral": 8,
+    "fealty:trusted": 8
+  },
+  "difficulty": 2,
+  "reward": {
+    "rep": 10,
+    "loot_table": "fealty:quest_rewards/common"
+  },
+  "objective": {
+    "type": "fealty:fetch",
+    "items": [
+      {
+        "ingredient": {
+          "item": "minecraft:iron_ingot"
+        },
+        "count": 16
+      },
+      {
+        "ingredient": {
+          "item": "minecraft:coal"
+        },
+        "count": 32
+      }
+    ]
+  }
+}

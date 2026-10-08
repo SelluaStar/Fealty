@@ -1,0 +1,33 @@
+{
+  "title": {
+    "translate": "quest.fealty.scout_the_pillagers"
+  },
+  "description": {
+    "translate": "quest.fealty.scout_the_pillagers.desc"
+  },
+  "tiers": {
+    "fealty:neutral": 6,
+    "fealty:trusted": 7,
+    "fealty:honored": 5
+  },
+  "difficulty": 2,
+  "reward": {
+    "rep": 6,
+    "experience": 40,
+    "items": [
+      {
+        "id": "minecraft:emerald",
+        "count": 6
+      }
+    ]
+  },
+  "time_limit": 72000,
+  "objective": {
+    "type": "fealty:explore",
+    "structure": "#fealty:pillager_strongholds",
+    "search": 60,
+    "label": {
+      "translate": "fealty.label.pillager_stronghold"
+    }
+  }
+}

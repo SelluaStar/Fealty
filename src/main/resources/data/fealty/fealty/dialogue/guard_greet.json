@@ -1,0 +1,215 @@
+{
+  "context": "guard_greet",
+  "lines": [
+    {
+      "text": {
+        "translate": "fealty.line.guard_greet.lord.0"
+      },
+      "lord": true
+    },
+    {
+      "text": {
+        "translate": "fealty.line.guard_greet.lord.1"
+      },
+      "lord": true
+    },
+    {
+      "text": {
+        "translate": "fealty.line.guard_greet.lord.2"
+      },
+      "lord": true
+    },
+    {
+      "text": {
+        "translate": "fealty.line.guard_greet.lord.3"
+      },
+      "lord": true
+    },
+    {
+      "text": {
+        "translate": "fealty.line.guard_greet.lord.4"
+      },
+      "lord": true
+    },
+    {
+      "text": {
+        "translate": "fealty.line.guard_greet.honored.0"
+      },
+      "tiers": [
+        "fealty:honored"
+      ],
+      "lord": false
+    },
+    {
+      "text": {
+        "translate": "fealty.line.guard_greet.honored.1"
+      },
+      "tiers": [
+        "fealty:honored"
+      ],
+      "lord": false
+    },
+    {
+      "text": {
+        "translate": "fealty.line.guard_greet.honored.2"
+      },
+      "tiers": [
+        "fealty:honored"
+      ],
+      "lord": false
+    },
+    {
+      "text": {
+        "translate": "fealty.line.guard_greet.honored.3"
+      },
+      "tiers": [
+        "fealty:honored"
+      ],
+      "lord": false
+    },
+    {
+      "text": {
+        "translate": "fealty.line.guard_greet.trusted.0"
+      },
+      "tiers": [
+        "fealty:trusted"
+      ],
+      "lord": false
+    },
+    {
+      "text": {
+        "translate": "fealty.line.guard_greet.trusted.1"
+      },
+      "tiers": [
+        "fealty:trusted"
+      ],
+      "lord": false
+    },
+    {
+      "text": {
+        "translate": "fealty.line.guard_greet.trusted.2"
+      },
+      "tiers": [
+        "fealty:trusted"
+      ],
+      "lord": false
+    },
+    {
+      "text": {
+        "translate": "fealty.line.guard_greet.trusted.3"
+      },
+      "tiers": [
+        "fealty:trusted"
+      ],
+      "lord": false
+    },
+    {
+      "text": {
+        "translate": "fealty.line.guard_greet.neutral.0"
+      },
+      "tiers": [
+        "fealty:neutral"
+      ],
+      "lord": false
+    },
+    {
+      "text": {
+        "translate": "fealty.line.guard_greet.neutral.1"
+      },
+      "tiers": [
+        "fealty:neutral"
+      ],
+      "lord": false
+    },
+    {
+      "text": {
+        "translate": "fealty.line.guard_greet.neutral.2"
+      },
+      "tiers": [
+        "fealty:neutral"
+      ],
+      "lord": false
+    },
+    {
+      "text": {
+        "translate": "fealty.line.guard_greet.neutral.3"
+      },
+      "tiers": [
+        "fealty:neutral"
+      ],
+      "lord": false
+    },
+    {
+      "text": {
+        "translate": "fealty.line.guard_greet.distrusted.0"
+      },
+      "tiers": [
+        "fealty:distrusted"
+      ],
+      "lord": false
+    },
+    {
+      "text": {
+        "translate": "fealty.line.guard_greet.distrusted.1"
+      },
+      "tiers": [
+        "fealty:distrusted"
+      ],
+      "lord": false
+    },
+    {
+      "text": {
+        "translate": "fealty.line.guard_greet.distrusted.2"
+      },
+      "tiers": [
+        "fealty:distrusted"
+      ],
+      "lord": false
+    },
+    {
+      "text": {
+        "translate": "fealty.line.guard_greet.distrusted.3"
+      },
+      "tiers": [
+        "fealty:distrusted"
+      ],
+      "lord": false
+    },
+    {
+      "text": {
+        "translate": "fealty.line.guard_greet.night.0"
+      },
+      "night": true,
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ],
+      "lord": false
+    },
+    {
+      "text": {
+        "translate": "fealty.line.guard_greet.night.1"
+      },
+      "night": true,
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ],
+      "lord": false
+    },
+    {
+      "text": {
+        "translate": "fealty.line.guard_greet.night.2"
+      },
+      "night": true,
+      "tiers": [
+        "fealty:neutral",
+        "fealty:trusted",
+        "fealty:honored"
+      ],
+      "lord": false
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "title": {
+    "translate": "quest.fealty.chain.fisherman_wreck"
+  },
+  "description": {
+    "translate": "quest.fealty.chain.fisherman_wreck.desc"
+  },
+  "tiers": {},
+  "difficulty": 2,
+  "reward": {
+    "rep": 6,
+    "renown": 2,
+    "experience": 60,
+    "loot_table": "fealty:quest_rewards/common"
+  },
+  "objective": {
+    "type": "fealty:explore",
+    "structure": "#minecraft:shipwreck",
+    "search": 100,
+    "label": {
+      "translate": "fealty.label.shipwreck"
+    }
+  },
+  "pool": "fealty:none"
+}

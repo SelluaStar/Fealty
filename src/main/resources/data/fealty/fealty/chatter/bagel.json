@@ -1,0 +1,14 @@
+{
+  "weight": 3,
+  "lines": [
+    {
+      "translate": "fealty.chatter.bagel.0"
+    },
+    {
+      "translate": "fealty.chatter.bagel.1"
+    }
+  ],
+  "tell": {
+    "translate": "fealty.chatter.bagel.tell"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "title": {
+    "translate": "quest.fealty.errand_for_the_elder"
+  },
+  "description": {
+    "translate": "quest.fealty.errand_for_the_elder.desc"
+  },
+  "pool": "fealty:redemption",
+  "tiers": {
+    "fealty:distrusted": 10,
+    "fealty:neutral": 6
+  },
+  "difficulty": 1,
+  "reward": {
+    "rep": 5
+  },
+  "objective": {
+    "type": "fealty:talk_to",
+    "message": {
+      "translate": "fealty.talk.errand"
+    },
+    "reply": {
+      "translate": "fealty.talk.errand.reply"
+    },
+    "profession": "minecraft:armorer"
+  }
+}

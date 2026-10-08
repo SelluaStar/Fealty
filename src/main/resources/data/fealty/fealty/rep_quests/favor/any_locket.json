@@ -1,0 +1,38 @@
+{
+  "title": {
+    "translate": "quest.fealty.favor.any_locket"
+  },
+  "description": {
+    "translate": "quest.fealty.favor.any_locket.desc"
+  },
+  "pool": "fealty:favor",
+  "tiers": {
+    "fealty:distrusted": 6,
+    "fealty:neutral": 10,
+    "fealty:trusted": 10,
+    "fealty:honored": 8
+  },
+  "difficulty": 2,
+  "reward": {
+    "rep": 3,
+    "experience": 25,
+    "items": [
+      {
+        "id": "minecraft:emerald",
+        "count": 3
+      }
+    ]
+  },
+  "time_limit": 48000,
+  "professions": [],
+  "objective": {
+    "type": "fealty:retrieve",
+    "item_name": {
+      "translate": "fealty.item.locket"
+    },
+    "item": "minecraft:gold_nugget",
+    "site": "cache",
+    "min_distance": 50,
+    "max_distance": 110
+  }
+}

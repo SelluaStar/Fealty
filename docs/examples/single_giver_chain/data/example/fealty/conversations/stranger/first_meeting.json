@@ -1,0 +1,25 @@
+{
+  "id": "example:stranger/first_meeting",
+  "speaker": "example:stranger",
+  "if": {"not": {"flag": "example:met_stranger"}},
+  "start": "greet",
+  "nodes": {
+    "greet": {
+      "text": "example.dialogue.greet",
+      "replies": [
+        {"label": "example.reply.show_letter", "if": {"has_item": "minecraft:paper"}, "hint": "example.hint.need_letter", "goto": "letter"},
+        {"label": "example.reply.who", "goto": "who"},
+        {"label": "example.reply.bye", "end": true}
+      ]
+    },
+    "who": {
+      "text": "example.dialogue.who",
+      "replies": [{"label": "example.reply.back", "goto": "greet"}]
+    },
+    "letter": {
+      "text": "example.dialogue.letter",
+      "effects": [{"take_item": "minecraft:paper"}, {"set_flag": "example:met_stranger"}, {"add_rep": 2}],
+      "replies": [{"label": "example.reply.ready", "end": true}]
+    }
+  }
+}

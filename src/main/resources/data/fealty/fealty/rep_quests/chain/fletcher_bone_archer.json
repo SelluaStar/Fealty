@@ -1,0 +1,43 @@
+{
+  "title": {
+    "translate": "quest.fealty.chain.fletcher_bone_archer"
+  },
+  "description": {
+    "translate": "quest.fealty.chain.fletcher_bone_archer.desc"
+  },
+  "tiers": {},
+  "difficulty": 2,
+  "reward": {
+    "rep": 6,
+    "renown": 2,
+    "experience": 40,
+    "loot_table": "fealty:quest_rewards/common"
+  },
+  "objective": {
+    "type": "fealty:hunt",
+    "targets": [
+      {
+        "entity": "minecraft:skeleton",
+        "name": {
+          "translate": "fealty.hunt.bone_archer"
+        },
+        "health_multiplier": 4.0,
+        "damage_bonus": 2.0,
+        "armor_bonus": 4.0,
+        "equipment": {
+          "mainhand": {
+            "id": "minecraft:bow",
+            "count": 1
+          },
+          "head": {
+            "id": "minecraft:chainmail_helmet",
+            "count": 1
+          }
+        }
+      }
+    ],
+    "min_distance": 60,
+    "max_distance": 140
+  },
+  "pool": "fealty:none"
+}

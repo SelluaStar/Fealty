@@ -1,0 +1,38 @@
+{
+  "display": {
+    "icon": {
+      "id": "fealty:lords_horn"
+    },
+    "title": {
+      "translate": "advancement.fealty.sworn_lord"
+    },
+    "description": {
+      "translate": "advancement.fealty.sworn_lord.desc"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "sworn": {
+      "trigger": "fealty:event",
+      "conditions": {
+        "event": "fealty:sworn_lord"
+      }
+    },
+    "usurped": {
+      "trigger": "fealty:event",
+      "conditions": {
+        "event": "fealty:usurped"
+      }
+    }
+  },
+  "parent": "fealty:royal_writ",
+  "requirements": [
+    [
+      "sworn",
+      "usurped"
+    ]
+  ]
+}

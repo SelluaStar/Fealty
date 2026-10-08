@@ -1,0 +1,27 @@
+{
+  "title": {
+    "translate": "quest.fealty.kind_words"
+  },
+  "description": {
+    "translate": "quest.fealty.kind_words.desc"
+  },
+  "pool": "fealty:redemption",
+  "tiers": {
+    "fealty:distrusted": 6,
+    "fealty:neutral": 6
+  },
+  "difficulty": 1,
+  "reward": {
+    "rep": 6
+  },
+  "objective": {
+    "type": "fealty:talk_to",
+    "message": {
+      "translate": "fealty.talk.bread"
+    },
+    "reply": {
+      "translate": "fealty.talk.bread.reply"
+    },
+    "profession": "minecraft:farmer"
+  }
+}

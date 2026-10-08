@@ -1,0 +1,40 @@
+{
+  "title": {
+    "translate": "quest.fealty.chain.cartographer_survey"
+  },
+  "description": {
+    "translate": "quest.fealty.chain.cartographer_survey.desc"
+  },
+  "tiers": {},
+  "difficulty": 2,
+  "reward": {
+    "rep": 6,
+    "renown": 2,
+    "experience": 40,
+    "loot_table": "fealty:quest_rewards/common"
+  },
+  "objective": {
+    "type": "fealty:fetch",
+    "items": [
+      {
+        "ingredient": {
+          "item": "minecraft:compass"
+        },
+        "count": 1
+      },
+      {
+        "ingredient": {
+          "item": "minecraft:paper"
+        },
+        "count": 16
+      },
+      {
+        "ingredient": {
+          "item": "minecraft:ink_sac"
+        },
+        "count": 4
+      }
+    ]
+  },
+  "pool": "fealty:none"
+}

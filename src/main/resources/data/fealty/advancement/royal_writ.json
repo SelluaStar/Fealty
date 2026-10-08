@@ -1,0 +1,26 @@
+{
+  "display": {
+    "icon": {
+      "id": "fealty:royal_writ"
+    },
+    "title": {
+      "translate": "advancement.fealty.royal_writ"
+    },
+    "description": {
+      "translate": "advancement.fealty.royal_writ.desc"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "writ": {
+      "trigger": "fealty:event",
+      "conditions": {
+        "event": "fealty:writ_forged"
+      }
+    }
+  },
+  "parent": "fealty:keepers_charter"
+}

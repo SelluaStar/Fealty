@@ -1,0 +1,26 @@
+{
+  "display": {
+    "icon": {
+      "id": "fealty:war_banner"
+    },
+    "title": {
+      "translate": "advancement.fealty.warlord"
+    },
+    "description": {
+      "translate": "advancement.fealty.warlord.desc"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "fealty:event",
+      "conditions": {
+        "event": "fealty:warlord"
+      }
+    }
+  },
+  "parent": "fealty:war_declared"
+}

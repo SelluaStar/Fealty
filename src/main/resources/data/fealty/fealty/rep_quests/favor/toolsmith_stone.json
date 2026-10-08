@@ -1,0 +1,41 @@
+{
+  "title": {
+    "translate": "quest.fealty.favor.toolsmith_stone"
+  },
+  "description": {
+    "translate": "quest.fealty.favor.toolsmith_stone.desc"
+  },
+  "pool": "fealty:favor",
+  "tiers": {
+    "fealty:distrusted": 6,
+    "fealty:neutral": 10,
+    "fealty:trusted": 10,
+    "fealty:honored": 8
+  },
+  "difficulty": 1,
+  "reward": {
+    "rep": 2,
+    "experience": 10
+  },
+  "time_limit": 48000,
+  "professions": [
+    "minecraft:toolsmith"
+  ],
+  "objective": {
+    "type": "fealty:fetch",
+    "items": [
+      {
+        "ingredient": {
+          "item": "minecraft:stick"
+        },
+        "count": 16
+      },
+      {
+        "ingredient": {
+          "item": "minecraft:cobblestone"
+        },
+        "count": 16
+      }
+    ]
+  }
+}

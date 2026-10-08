@@ -1,0 +1,20 @@
+{
+  "context": "threat_cower",
+  "lines": [
+    {
+      "text": {
+        "translate": "fealty.line.threat_cower.any.0"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.threat_cower.any.1"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.threat_cower.any.2"
+      }
+    }
+  ]
+}

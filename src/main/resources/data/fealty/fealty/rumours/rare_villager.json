@@ -1,0 +1,7 @@
+{
+  "chain": "fealty:rare_villager",
+  "stage": 1,
+  "min_tier": "fealty:trusted",
+  "told_by": "elders",
+  "weight": 10
+}

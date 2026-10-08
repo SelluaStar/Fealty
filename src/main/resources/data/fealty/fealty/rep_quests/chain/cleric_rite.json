@@ -1,0 +1,40 @@
+{
+  "title": {
+    "translate": "quest.fealty.chain.cleric_rite"
+  },
+  "description": {
+    "translate": "quest.fealty.chain.cleric_rite.desc"
+  },
+  "tiers": {},
+  "difficulty": 2,
+  "reward": {
+    "rep": 6,
+    "renown": 2,
+    "experience": 40,
+    "loot_table": "fealty:quest_rewards/common"
+  },
+  "objective": {
+    "type": "fealty:fetch",
+    "items": [
+      {
+        "ingredient": {
+          "item": "minecraft:golden_apple"
+        },
+        "count": 1
+      },
+      {
+        "ingredient": {
+          "item": "minecraft:candle"
+        },
+        "count": 6
+      },
+      {
+        "ingredient": {
+          "item": "minecraft:glowstone_dust"
+        },
+        "count": 4
+      }
+    ]
+  },
+  "pool": "fealty:none"
+}

@@ -1,0 +1,40 @@
+{
+  "kind": "village",
+  "name": {"translate": "fealty.faction.village"},
+  "structures": [
+    "#minecraft:village",
+    "ctov:*",
+    "*:*village*",
+    "*:*town*",
+    "*:*castle*",
+    "*:*city*",
+    "*:*settlement*",
+    "*:*burg*",
+    "*:*hamlet*",
+    "*:*citadel*"
+  ],
+  "exclude": [
+    "fealty:*",
+    "minecraft:ancient_city",
+    "minecraft:stronghold",
+    "minecraft:trial_chambers",
+    "minecraft:woodland_mansion",
+    "*:*fortress*",
+    "*:*ruin*",
+    "*:*abandoned*",
+    "*:*outpost*",
+    "*:*pillager*",
+    "*:*illager*",
+    "*:*undead*",
+    "*:*ocean*",
+    "*:*underwater*",
+    "*:*sunken*",
+    "*:*dungeon*",
+    "*:*end_city*"
+  ],
+  "elder": true,
+  "renown_share": 0.1,
+  "renown_start_factor": 0.25,
+  "priority": 0,
+  "members": "#fealty:village_members"
+}

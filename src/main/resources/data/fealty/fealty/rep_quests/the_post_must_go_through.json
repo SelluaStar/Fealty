@@ -1,0 +1,23 @@
+{
+  "title": {
+    "translate": "quest.fealty.the_post_must_go_through"
+  },
+  "description": {
+    "translate": "quest.fealty.the_post_must_go_through.desc"
+  },
+  "pool": "fealty:redemption",
+  "tiers": {
+    "fealty:distrusted": 6,
+    "fealty:neutral": 8,
+    "fealty:trusted": 6
+  },
+  "difficulty": 2,
+  "reward": {
+    "rep": 8,
+    "loot_table": "fealty:quest_rewards/common"
+  },
+  "objective": {
+    "type": "fealty:courier",
+    "recipient": "mailbox"
+  }
+}

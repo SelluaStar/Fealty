@@ -1,0 +1,22 @@
+{
+  "title": {
+    "translate": "quest.fealty.restock_workshops"
+  },
+  "description": {
+    "translate": "quest.fealty.restock_workshops.desc"
+  },
+  "tiers": {
+    "fealty:distrusted": 8,
+    "fealty:neutral": 10,
+    "fealty:trusted": 6
+  },
+  "difficulty": 2,
+  "reward": {
+    "rep": 8,
+    "loot_table": "fealty:quest_rewards/common"
+  },
+  "objective": {
+    "type": "fealty:restock",
+    "count": 3
+  }
+}

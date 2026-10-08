@@ -1,0 +1,8 @@
+{
+  "structures": ["*"],
+  "priority": -100,
+  "elder": ["*town_hall*", "*townhall*", "*guildhall*", "*manor*", "*mansion*", "*/keep*", "*_keep*", "*castle*", "*tavern*",
+            "*temple*", "*church*", "*chapel*", "*library*", "*big_house*", "*large_house*", "*medium_house*", "*hall*", "*house*", "*home*"],
+  "avoid": ["*street*", "*road*", "*/path*", "*wall*", "*tower*", "*gate*", "*bridge*", "*terminator*", "*/decor/*", "*/villagers/*",
+            "*farm*", "*animal_pen*", "*stable*", "*market*", "*stall*", "*lamp*", "*fountain*"]
+}

@@ -1,0 +1,15 @@
+{
+  "context": "favor_not_yet",
+  "lines": [
+    {
+      "text": {
+        "translate": "fealty.line.favor_not_yet.any.0"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.favor_not_yet.any.1"
+      }
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:emerald"
+    },
+    "title": {
+      "translate": "advancement.fealty.trusted"
+    },
+    "description": {
+      "translate": "advancement.fealty.trusted.desc"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "trusted": {
+      "trigger": "fealty:rep_tier",
+      "conditions": {
+        "villages_only": true,
+        "min_tier": "fealty:trusted"
+      }
+    }
+  },
+  "parent": "fealty:met_elder"
+}

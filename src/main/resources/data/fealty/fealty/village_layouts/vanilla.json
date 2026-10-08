@@ -1,0 +1,6 @@
+{
+  "structures": ["minecraft:village_plains", "minecraft:village_desert", "minecraft:village_savanna", "minecraft:village_snowy", "minecraft:village_taiga"],
+  "priority": 0,
+  "elder": ["*big_house*", "*medium_house*", "*library*", "*temple*", "*house*"],
+  "avoid": ["*/town_centers/*", "*/streets/*", "*/terminators/*", "*/decor/*", "*/villagers/*", "*animal_pen*", "*farm*", "*accessory*"]
+}

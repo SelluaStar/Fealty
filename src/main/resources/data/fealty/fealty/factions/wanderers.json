@@ -1,0 +1,8 @@
+{
+  "kind": "static",
+  "name": {
+    "translate": "fealty.faction.wanderers"
+  },
+  "renown_share": 0.1,
+  "renown_start_factor": 0.25
+}

@@ -1,0 +1,17 @@
+{
+  "weight": 2,
+  "lines": [
+    {
+      "translate": "fealty.chatter.best_dressed.0"
+    },
+    {
+      "translate": "fealty.chatter.best_dressed.1"
+    }
+  ],
+  "tell": {
+    "translate": "fealty.chatter.best_dressed.tell"
+  },
+  "professions": [
+    "minecraft:nitwit"
+  ]
+}

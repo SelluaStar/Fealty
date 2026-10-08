@@ -1,0 +1,171 @@
+{
+  "kind": "rare_villager",
+  "start_tier": "fealty:trusted",
+  "steps_count": 3,
+  "step_pool": [
+    {
+      "role": "smith",
+      "professions": [
+        "minecraft:armorer",
+        "minecraft:weaponsmith",
+        "minecraft:toolsmith"
+      ],
+      "variants": [
+        "fealty:chain/smith_ore",
+        "fealty:chain/smith_forge",
+        "fealty:chain/smith_die"
+      ]
+    },
+    {
+      "role": "cartographer",
+      "professions": [
+        "minecraft:cartographer"
+      ],
+      "variants": [
+        "fealty:chain/cartographer_survey",
+        "fealty:chain/cartographer_outpost",
+        "fealty:chain/cartographer_lost_chart"
+      ]
+    },
+    {
+      "role": "cleric",
+      "professions": [
+        "minecraft:cleric"
+      ],
+      "variants": [
+        "fealty:chain/cleric_relic",
+        "fealty:chain/cleric_vigil",
+        "fealty:chain/cleric_rite"
+      ]
+    },
+    {
+      "role": "librarian",
+      "professions": [
+        "minecraft:librarian"
+      ],
+      "variants": [
+        "fealty:chain/librarian_chronicle",
+        "fealty:chain/librarian_ruins",
+        "fealty:chain/librarian_stolen_book"
+      ]
+    },
+    {
+      "role": "farmer",
+      "professions": [
+        "minecraft:farmer"
+      ],
+      "variants": [
+        "fealty:chain/farmer_harvest",
+        "fealty:chain/farmer_blight",
+        "fealty:chain/farmer_seed_box"
+      ]
+    },
+    {
+      "role": "fisherman",
+      "professions": [
+        "minecraft:fisherman"
+      ],
+      "variants": [
+        "fealty:chain/fisherman_wreck",
+        "fealty:chain/fisherman_drowned",
+        "fealty:chain/fisherman_catch"
+      ]
+    },
+    {
+      "role": "shepherd",
+      "professions": [
+        "minecraft:shepherd"
+      ],
+      "variants": [
+        "fealty:chain/shepherd_alpha",
+        "fealty:chain/shepherd_banner",
+        "fealty:chain/shepherd_bell"
+      ]
+    },
+    {
+      "role": "butcher",
+      "professions": [
+        "minecraft:butcher"
+      ],
+      "variants": [
+        "fealty:chain/butcher_feast",
+        "fealty:chain/butcher_thief",
+        "fealty:chain/butcher_debt"
+      ]
+    },
+    {
+      "role": "mason",
+      "professions": [
+        "minecraft:mason"
+      ],
+      "variants": [
+        "fealty:chain/mason_mark",
+        "fealty:chain/mason_shafts",
+        "fealty:chain/mason_quarry"
+      ]
+    },
+    {
+      "role": "fletcher",
+      "professions": [
+        "minecraft:fletcher"
+      ],
+      "variants": [
+        "fealty:chain/fletcher_feathers",
+        "fealty:chain/fletcher_bone_archer",
+        "fealty:chain/fletcher_bow"
+      ]
+    },
+    {
+      "role": "tanner",
+      "professions": [
+        "minecraft:leatherworker"
+      ],
+      "variants": [
+        "fealty:chain/tanner_hides",
+        "fealty:chain/tanner_satchel",
+        "fealty:chain/tanner_seal"
+      ]
+    },
+    {
+      "role": "fool",
+      "professions": [
+        "minecraft:nitwit"
+      ],
+      "variants": [
+        "fealty:chain/fool_riddle",
+        "fealty:chain/fool_shiny",
+        "fealty:chain/fool_troll"
+      ]
+    },
+    {
+      "role": "drifter",
+      "professions": [
+        "minecraft:none"
+      ],
+      "variants": [
+        "fealty:chain/drifter_bundle",
+        "fealty:chain/drifter_robber",
+        "fealty:chain/drifter_boots"
+      ]
+    }
+  ],
+  "steps_reward": {
+    "id": "fealty:signet_of_the_old_crown",
+    "count": 1
+  },
+  "map_structure": "#fealty:hidden_hamlets",
+  "trial_quests": [
+    "fealty:chain/keeper_trial",
+    "fealty:chain/keeper_trial_shard",
+    "fealty:chain/keeper_trial_usurper"
+  ],
+  "trial_reward": {
+    "id": "fealty:keepers_charter",
+    "count": 1
+  },
+  "final_reward": {
+    "id": "fealty:royal_writ",
+    "count": 1
+  },
+  "repeatable": true
+}

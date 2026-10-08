@@ -1,0 +1,14 @@
+{
+  "name": {
+    "translate": "fealty.tier.distrusted"
+  },
+  "min": -60,
+  "max": -21,
+  "price_multiplier": 1.5,
+  "color": "#E67E22",
+  "guard_stance": "watch",
+  "trade_policy": "standard",
+  "locked_trade_level": 5,
+  "villagers_hide": false,
+  "villager_gifts": false
+}

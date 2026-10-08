@@ -1,0 +1,33 @@
+{
+  "professions": [
+    "minecraft:cleric"
+  ],
+  "min_tier": "fealty:honored",
+  "min_level": 2,
+  "offers": [
+    {
+      "buy": {
+        "id": "minecraft:emerald",
+        "count": 10
+      },
+      "sell": {
+        "id": "minecraft:golden_apple",
+        "count": 2
+      },
+      "max_uses": 4,
+      "xp": 10
+    },
+    {
+      "buy": {
+        "id": "minecraft:emerald",
+        "count": 3
+      },
+      "sell": {
+        "id": "minecraft:experience_bottle",
+        "count": 4
+      },
+      "max_uses": 8,
+      "xp": 4
+    }
+  ]
+}

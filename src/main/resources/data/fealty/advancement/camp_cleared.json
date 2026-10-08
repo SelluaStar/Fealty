@@ -1,0 +1,26 @@
+{
+  "display": {
+    "icon": {
+      "id": "fealty:bandit_standard"
+    },
+    "title": {
+      "translate": "advancement.fealty.camp_cleared"
+    },
+    "description": {
+      "translate": "advancement.fealty.camp_cleared.desc"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "cleared": {
+      "trigger": "fealty:event",
+      "conditions": {
+        "event": "fealty:camp_cleared"
+      }
+    }
+  },
+  "parent": "fealty:defender"
+}

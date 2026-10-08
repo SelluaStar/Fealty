@@ -1,0 +1,11 @@
+{
+  "title": {"translate": "quest.example.stranger.firewood"},
+  "description": {"translate": "quest.example.stranger.firewood.desc"},
+  "pool": "fealty:none",
+  "difficulty": 1,
+  "reward": {"rep": 3},
+  "objective": {
+    "type": "fealty:fetch",
+    "items": [{"ingredient": {"tag": "minecraft:logs"}, "count": 16}]
+  }
+}

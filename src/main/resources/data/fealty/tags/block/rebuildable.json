@@ -1,0 +1,21 @@
+{
+  "replace": false,
+  "values": [
+    "#minecraft:planks",
+    "#minecraft:logs",
+    "minecraft:cobblestone",
+    "minecraft:mossy_cobblestone",
+    "minecraft:stone_bricks",
+    "minecraft:bricks",
+    "minecraft:white_terracotta",
+    "minecraft:terracotta",
+    "minecraft:sandstone",
+    "minecraft:cut_sandstone",
+    "minecraft:smooth_sandstone",
+    "minecraft:mud_bricks",
+    "minecraft:packed_mud",
+    "minecraft:glass",
+    "minecraft:glass_pane",
+    "#minecraft:wool"
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "title": {
+    "translate": "quest.fealty.chain.smith_die"
+  },
+  "description": {
+    "translate": "quest.fealty.chain.smith_die.desc"
+  },
+  "tiers": {},
+  "difficulty": 3,
+  "reward": {
+    "rep": 6,
+    "renown": 2,
+    "experience": 40,
+    "loot_table": "fealty:quest_rewards/common"
+  },
+  "objective": {
+    "type": "fealty:retrieve",
+    "item_name": {
+      "translate": "fealty.item.crown_die"
+    },
+    "item": "minecraft:iron_ingot",
+    "site": "cart",
+    "min_distance": 70,
+    "max_distance": 150
+  },
+  "pool": "fealty:none"
+}

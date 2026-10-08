@@ -1,0 +1,39 @@
+{
+  "professions": [
+    "minecraft:armorer",
+    "minecraft:weaponsmith",
+    "minecraft:toolsmith"
+  ],
+  "min_tier": "fealty:trusted",
+  "min_level": 2,
+  "offers": [
+    {
+      "buy": {
+        "id": "minecraft:emerald",
+        "count": 8
+      },
+      "sell": {
+        "id": "minecraft:shield",
+        "count": 1
+      },
+      "max_uses": 3,
+      "xp": 8
+    },
+    {
+      "buy": {
+        "id": "minecraft:emerald",
+        "count": 14
+      },
+      "buy_b": {
+        "id": "minecraft:iron_ingot",
+        "count": 2
+      },
+      "sell": {
+        "id": "minecraft:chainmail_chestplate",
+        "count": 1
+      },
+      "max_uses": 2,
+      "xp": 10
+    }
+  ]
+}

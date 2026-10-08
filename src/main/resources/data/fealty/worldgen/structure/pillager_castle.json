@@ -1,0 +1,8 @@
+{
+  "type": "fealty:pillager_stronghold",
+  "biomes": "#fealty:has_structure/pillager_castle",
+  "step": "surface_structures",
+  "spawn_overrides": {},
+  "terrain_adaptation": "beard_thin",
+  "layout": "castle"
+}

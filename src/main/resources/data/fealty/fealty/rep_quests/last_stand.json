@@ -1,0 +1,19 @@
+{
+  "title": {
+    "translate": "quest.fealty.last_stand"
+  },
+  "description": {
+    "translate": "quest.fealty.last_stand.desc"
+  },
+  "tiers": {
+    "fealty:hated": 10
+  },
+  "difficulty": 5,
+  "reward": {
+    "rep": 15
+  },
+  "objective": {
+    "type": "fealty:defend_raid",
+    "omen_level": 2
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": {
+    "translate": "fealty.tier.hated"
+  },
+  "min": -100,
+  "max": -61,
+  "price_multiplier": 2.0,
+  "color": "#C0392B",
+  "guard_stance": "attack_on_sight",
+  "trade_policy": "refuse_unless_threatened",
+  "locked_trade_level": 0,
+  "villagers_hide": true,
+  "villager_gifts": false
+}

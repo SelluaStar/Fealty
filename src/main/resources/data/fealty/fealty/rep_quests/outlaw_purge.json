@@ -1,0 +1,19 @@
+{
+  "title": {
+    "translate": "quest.fealty.outlaw_purge"
+  },
+  "description": {
+    "translate": "quest.fealty.outlaw_purge.desc"
+  },
+  "tiers": {
+    "fealty:hated": 10
+  },
+  "difficulty": 5,
+  "reward": {
+    "rep": 15
+  },
+  "objective": {
+    "type": "fealty:clear_camp",
+    "give_map": true
+  }
+}

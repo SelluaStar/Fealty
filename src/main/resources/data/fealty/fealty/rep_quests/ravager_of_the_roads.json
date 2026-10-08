@@ -1,0 +1,46 @@
+{
+  "title": {
+    "translate": "quest.fealty.ravager_of_the_roads"
+  },
+  "description": {
+    "translate": "quest.fealty.ravager_of_the_roads.desc"
+  },
+  "tiers": {
+    "fealty:hated": 6,
+    "fealty:trusted": 6,
+    "fealty:honored": 8
+  },
+  "difficulty": 4,
+  "reward": {
+    "rep": 14,
+    "loot_table": "fealty:quest_rewards/rare"
+  },
+  "objective": {
+    "type": "fealty:hunt",
+    "targets": [
+      {
+        "entity": "minecraft:vindicator",
+        "health_multiplier": 4.0,
+        "damage_bonus": 4.0,
+        "equipment": {
+          "mainhand": {
+            "id": "minecraft:iron_axe",
+            "count": 1
+          }
+        }
+      },
+      {
+        "entity": "minecraft:pillager",
+        "health_multiplier": 4.0,
+        "equipment": {
+          "mainhand": {
+            "id": "minecraft:crossbow",
+            "count": 1
+          }
+        }
+      }
+    ],
+    "min_distance": 120,
+    "max_distance": 260
+  }
+}

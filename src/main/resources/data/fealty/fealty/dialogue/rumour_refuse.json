@@ -1,0 +1,35 @@
+{
+  "context": "rumour_refuse",
+  "lines": [
+    {
+      "text": {
+        "translate": "fealty.rumour.refuse.0"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.refuse.1"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.refuse.2"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.refuse.3"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.refuse.4"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.rumour.refuse.5"
+      }
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "context": "captive_freed",
+  "lines": [
+    {
+      "text": {
+        "translate": "fealty.line.captive_freed.0"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.captive_freed.1"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.captive_freed.2"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.captive_freed.3"
+      }
+    }
+  ]
+}

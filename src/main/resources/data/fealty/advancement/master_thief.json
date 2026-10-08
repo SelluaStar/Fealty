@@ -1,0 +1,26 @@
+{
+  "display": {
+    "icon": {
+      "id": "fealty:rogue_hood"
+    },
+    "title": {
+      "translate": "advancement.fealty.master_thief"
+    },
+    "description": {
+      "translate": "advancement.fealty.master_thief.desc"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "fealty:event",
+      "conditions": {
+        "event": "fealty:guild_completed"
+      }
+    }
+  },
+  "parent": "fealty:guild_member"
+}

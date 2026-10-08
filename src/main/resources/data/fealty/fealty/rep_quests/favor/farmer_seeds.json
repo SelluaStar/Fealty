@@ -1,0 +1,35 @@
+{
+  "title": {
+    "translate": "quest.fealty.favor.farmer_seeds"
+  },
+  "description": {
+    "translate": "quest.fealty.favor.farmer_seeds.desc"
+  },
+  "pool": "fealty:favor",
+  "tiers": {
+    "fealty:distrusted": 6,
+    "fealty:neutral": 10,
+    "fealty:trusted": 10,
+    "fealty:honored": 8
+  },
+  "difficulty": 1,
+  "reward": {
+    "rep": 2,
+    "experience": 10
+  },
+  "time_limit": 48000,
+  "professions": [
+    "minecraft:farmer"
+  ],
+  "objective": {
+    "type": "fealty:fetch",
+    "items": [
+      {
+        "ingredient": {
+          "item": "minecraft:wheat_seeds"
+        },
+        "count": 32
+      }
+    ]
+  }
+}

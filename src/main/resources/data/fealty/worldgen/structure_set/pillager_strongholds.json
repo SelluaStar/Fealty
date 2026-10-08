@@ -1,0 +1,26 @@
+{
+  "structures": [
+    {
+      "structure": "fealty:pillager_scout_camp",
+      "weight": 10
+    },
+    {
+      "structure": "fealty:pillager_fort",
+      "weight": 3
+    },
+    {
+      "structure": "fealty:pillager_castle",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 34,
+    "separation": 14,
+    "salt": 1650271389,
+    "exclusion_zone": {
+      "other_set": "minecraft:villages",
+      "chunk_count": 7
+    }
+  }
+}

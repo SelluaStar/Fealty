@@ -1,0 +1,12 @@
+{
+  "buy": {
+    "id": "minecraft:emerald",
+    "count": 10
+  },
+  "sell": {
+    "id": "minecraft:saddle",
+    "count": 1
+  },
+  "max_uses": 2,
+  "weight": 6
+}

@@ -1,0 +1,6 @@
+{
+  "amount": -25,
+  "severity": "severe",
+  "heat": 3,
+  "requires_witness": false
+}

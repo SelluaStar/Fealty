@@ -1,0 +1,22 @@
+{
+  "title": {
+    "translate": "quest.fealty.mend_the_walls"
+  },
+  "description": {
+    "translate": "quest.fealty.mend_the_walls.desc"
+  },
+  "tiers": {
+    "fealty:distrusted": 8,
+    "fealty:neutral": 8,
+    "fealty:trusted": 8
+  },
+  "difficulty": 2,
+  "reward": {
+    "rep": 10,
+    "loot_table": "fealty:quest_rewards/common"
+  },
+  "objective": {
+    "type": "fealty:rebuild",
+    "count": 10
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "title": {
+    "translate": "quest.fealty.return_what_was_taken"
+  },
+  "description": {
+    "translate": "quest.fealty.return_what_was_taken.desc"
+  },
+  "pool": "fealty:redemption",
+  "tiers": {
+    "fealty:hated": 8
+  },
+  "difficulty": 5,
+  "reward": {
+    "rep": 15
+  },
+  "objective": {
+    "type": "fealty:retrieve",
+    "item_name": {
+      "translate": "fealty.item.stolen_goods"
+    },
+    "item": "minecraft:barrel",
+    "site": "stash",
+    "min_distance": 80,
+    "max_distance": 200
+  }
+}

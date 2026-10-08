@@ -1,0 +1,15 @@
+{
+  "context": "gift_cooldown",
+  "lines": [
+    {
+      "text": {
+        "translate": "fealty.line.gift_cooldown.any.0"
+      }
+    },
+    {
+      "text": {
+        "translate": "fealty.line.gift_cooldown.any.1"
+      }
+    }
+  ]
+}

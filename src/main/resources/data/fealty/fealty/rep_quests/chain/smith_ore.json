@@ -1,0 +1,34 @@
+{
+  "title": {
+    "translate": "quest.fealty.chain.smith_ore"
+  },
+  "description": {
+    "translate": "quest.fealty.chain.smith_ore.desc"
+  },
+  "tiers": {},
+  "difficulty": 2,
+  "reward": {
+    "rep": 6,
+    "renown": 2,
+    "experience": 40,
+    "loot_table": "fealty:quest_rewards/common"
+  },
+  "objective": {
+    "type": "fealty:fetch",
+    "items": [
+      {
+        "ingredient": {
+          "item": "minecraft:iron_ingot"
+        },
+        "count": 12
+      },
+      {
+        "ingredient": {
+          "item": "minecraft:gold_ingot"
+        },
+        "count": 6
+      }
+    ]
+  },
+  "pool": "fealty:none"
+}

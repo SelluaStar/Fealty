@@ -1,0 +1,18 @@
+{
+  "title": {
+    "translate": "quest.fealty.guild.the_strongbox"
+  },
+  "description": {
+    "translate": "quest.fealty.guild.the_strongbox.desc"
+  },
+  "tiers": {},
+  "difficulty": 4,
+  "reward": {
+    "rep": 15
+  },
+  "objective": {
+    "type": "fealty:vault_raid",
+    "count": 1
+  },
+  "pool": "fealty:none"
+}

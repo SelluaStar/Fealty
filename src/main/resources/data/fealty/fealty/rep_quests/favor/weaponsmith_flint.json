@@ -1,0 +1,35 @@
+{
+  "title": {
+    "translate": "quest.fealty.favor.weaponsmith_flint"
+  },
+  "description": {
+    "translate": "quest.fealty.favor.weaponsmith_flint.desc"
+  },
+  "pool": "fealty:favor",
+  "tiers": {
+    "fealty:distrusted": 6,
+    "fealty:neutral": 10,
+    "fealty:trusted": 10,
+    "fealty:honored": 8
+  },
+  "difficulty": 1,
+  "reward": {
+    "rep": 2,
+    "experience": 10
+  },
+  "time_limit": 48000,
+  "professions": [
+    "minecraft:weaponsmith"
+  ],
+  "objective": {
+    "type": "fealty:fetch",
+    "items": [
+      {
+        "ingredient": {
+          "item": "minecraft:flint"
+        },
+        "count": 8
+      }
+    ]
+  }
+}
