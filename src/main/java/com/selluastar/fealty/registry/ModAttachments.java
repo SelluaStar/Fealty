@@ -7,6 +7,7 @@ import com.selluastar.fealty.chain.ChainRole;
 import com.selluastar.fealty.crime.PlacedBlocks;
 import com.selluastar.fealty.guard.GuardOrders;
 import com.selluastar.fealty.quest.QuestTarget;
+import com.selluastar.fealty.story.PlayerFlags;
 import com.selluastar.fealty.trade.VillagerMemory;
 
 import net.minecraft.resources.ResourceLocation;
@@ -44,6 +45,10 @@ public final class ModAttachments {
     /** A bandit's camp (its standard's position) and hired master, if any. */
     public static final Supplier<AttachmentType<Long>> CAMP = ATTACHMENTS.register("camp",
             () -> AttachmentType.builder(() -> 0L).serialize(com.mojang.serialization.Codec.LONG).build());
+
+    /** A player's story flags and rumour bookkeeping. Kept through death; saved with the player. */
+    public static final Supplier<AttachmentType<PlayerFlags>> PLAYER_FLAGS = ATTACHMENTS.register("player_flags",
+            () -> AttachmentType.builder(PlayerFlags::new).serialize(PlayerFlags.CODEC).copyOnDeath().build());
 
     private ModAttachments() {
     }

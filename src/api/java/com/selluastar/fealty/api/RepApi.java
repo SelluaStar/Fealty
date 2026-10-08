@@ -3,8 +3,12 @@ package com.selluastar.fealty.api;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Predicate;
+
+import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.GlobalPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -116,4 +120,66 @@ public interface RepApi {
 
     /** Whether an entity defends a pillager stronghold (a camp's garrison, or an outpost's illagers once a raid begins). */
     boolean isStrongholdDefender(Entity entity);
+
+    // ---- Stories: flags, roles, villages and chains (since API 1.3.0) ----
+
+    /**
+     * A player's flag: 0 when unset. Flags are kept on the player (through death and relogging), are tested by the
+     * {@code flag} dialogue condition and set by the {@code set_flag} / {@code clear_flag} effects.
+     */
+    int getFlag(ServerPlayer player, ResourceLocation flag);
+
+    default boolean hasFlag(ServerPlayer player, ResourceLocation flag) {
+        return getFlag(player, flag) != 0;
+    }
+
+    /** Set a flag to 1. */
+    default void setFlag(ServerPlayer player, ResourceLocation flag) {
+        setFlag(player, flag, 1);
+    }
+
+    /** Set a flag to a value (0 clears it). */
+    void setFlag(ServerPlayer player, ResourceLocation flag, int value);
+
+    void clearFlag(ServerPlayer player, ResourceLocation flag);
+
+    /**
+     * Make a villager one of a chain's special villagers, the way Fealty's chains name theirs: it keeps its own name,
+     * shown with the title ("Ann the Stranger"), keeps its trade, and holds the role until {@link #clearRole}. A
+     * single-giver chain ({@code "giver": "single"}) whose {@code giver_role} this is uses it as its giver.
+     *
+     * @param title the title shown with its name; null for {@code fealty.chain.role.<role>}
+     * @return false if the villager already holds a role in another chain
+     */
+    boolean assignRole(Villager villager, ResourceLocation chain, String role, @Nullable Component title);
+
+    /** Take a villager's role (and title) away. */
+    void clearRole(Villager villager);
+
+    /** Whether a villager holds this role in this chain. */
+    boolean hasRole(Villager villager, ResourceLocation chain, String role);
+
+    /** A loaded villager of a village that matches, nearest the village centre first. */
+    Optional<Villager> findVillager(MinecraftServer server, ResourceLocation village, Predicate<Villager> predicate);
+
+    /** A village Fealty knows of. */
+    Optional<VillageInfo> getVillage(MinecraftServer server, ResourceLocation village);
+
+    /**
+     * The nearest village between {@code minDistance} and {@code maxDistance} blocks from {@code origin} (centre to
+     * centre, same dimension) that matches. Villages Fealty has not seen yet are looked for too, with the vanilla
+     * village structures, when no known one fits.
+     */
+    Optional<VillageInfo> findVillage(MinecraftServer server, GlobalPos origin, int minDistance, int maxDistance, Predicate<VillageInfo> predicate);
+
+    /**
+     * Start a quest chain for a player in a village, as a rumour would (its kind's handler and
+     * {@code ChainStageEvent.Start} may refuse it).
+     *
+     * @return whether it started
+     */
+    boolean startChain(ServerPlayer player, ResourceLocation chain, ResourceLocation village);
+
+    /** The player's stage in a chain (0 before it starts; see {@code ChainHandler}). */
+    int getChainStage(ServerPlayer player, ResourceLocation chain);
 }

@@ -34,6 +34,8 @@ public class DialogueScreen extends Screen {
     private static final int PORTRAIT = 58;
     private static final int PAD = 8;
     private static final int MAX_LINES = 6;
+    /** Replies shown without scrolling, screen height allowing. */
+    private static final int MIN_ROWS = 6;
     private static final int MAX_PANEL_WIDTH = 400;
 
     private final int entityId;
@@ -100,8 +102,10 @@ public class DialogueScreen extends Screen {
 
         rowHeight = Math.max(11, Mth.ceil(9 * scale) + 6);
         int textHeight = Math.max(2, lines.size()) * lineHeight();
-        int maxHeight = Math.max(90, (int) (height * 0.45F));
         int fixed = PAD + textHeight + 6 + PAD;
+        // Room for at least six replies (a conversation node's most) when the screen has it; more scroll.
+        int wanted = fixed + Math.min(MIN_ROWS, options().size()) * rowHeight;
+        int maxHeight = Math.max(Math.max(90, (int) (height * 0.45F)), Math.min(height - 16, wanted));
         visibleRows = Mth.clamp((maxHeight - fixed) / rowHeight, 1, Math.max(1, options().size()));
         panelHeight = Math.max(PORTRAIT + 16, fixed + visibleRows * rowHeight);
         top = height - panelHeight - 8;

@@ -96,6 +96,8 @@ public final class RepSources {
     public static final ResourceLocation ABANDON_QUEST = FealtyApi.id("abandon_quest");
     public static final ResourceLocation COMMAND = FealtyApi.id("command");
     public static final ResourceLocation API = FealtyApi.id("api");
+    /** The {@code add_rep} effect of a conversation or rumour (since API 1.3.0). */
+    public static final ResourceLocation DIALOGUE = FealtyApi.id("dialogue");
 
     private RepSources() {
     }

@@ -1,7 +1,7 @@
 package com.selluastar.fealty.registry;
 
 import com.selluastar.fealty.Fealty;
-import com.selluastar.fealty.quest.QuestType;
+import com.selluastar.fealty.api.quest.QuestType;
 import com.selluastar.fealty.quest.type.ClearCampObjective;
 import com.selluastar.fealty.quest.type.CourierObjective;
 import com.selluastar.fealty.quest.type.DefendRaidObjective;

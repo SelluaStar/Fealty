@@ -8,17 +8,18 @@ import java.util.Optional;
 import com.selluastar.fealty.api.RepTier;
 import com.selluastar.fealty.chain.ChainManager;
 import com.selluastar.fealty.config.FealtyConfig;
+import com.selluastar.fealty.crime.Fines;
 import com.selluastar.fealty.data.FealtyDataManager;
 import com.selluastar.fealty.entity.VillageElderEntity;
 import com.selluastar.fealty.lordship.LordshipManager;
-import com.selluastar.fealty.network.OpenQuestScreenPayload;
-import com.selluastar.fealty.crime.Fines;
 import com.selluastar.fealty.network.OpenQuestScreenPayload.ActionEntry;
+import com.selluastar.fealty.network.OpenQuestScreenPayload;
 import com.selluastar.fealty.network.QuestActionPayload;
 import com.selluastar.fealty.quest.type.RestoreElderObjective;
 import com.selluastar.fealty.registry.ModItems;
 import com.selluastar.fealty.rep.FealtyWorldData;
 import com.selluastar.fealty.rep.RepManager;
+import com.selluastar.fealty.story.RumourService;
 import com.selluastar.fealty.village.VillageRecord;
 
 import net.minecraft.nbt.CompoundTag;
@@ -27,7 +28,10 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 
-/** The trusting elder's screen: redemption quests, restoring broken neighbours, rumours and lordship. */
+/**
+ * The trusting elder's screen: redemption quests, restoring broken neighbours, rumours (the rare villager chain's, and
+ * any from {@code fealty/rumours/} told by elders) and lordship.
+ */
 public final class ElderGiver implements QuestGiver {
     public static final ElderGiver INSTANCE = new ElderGiver();
 
@@ -70,7 +74,7 @@ public final class ElderGiver implements QuestGiver {
         }
 
         List<ActionEntry> actions = new ArrayList<>();
-        ChainManager.rumoursAction(player, record).ifPresent(actions::add);
+        RumourService.elderAction(player, entity, record).ifPresent(actions::add);
         LordshipManager.elderActions(player, record, actions);
         Fines.elderAction(player, record).ifPresent(actions::add);
 
@@ -110,7 +114,7 @@ public final class ElderGiver implements QuestGiver {
             }
             case QuestActionPayload.TURN_IN -> QuestManager.turnIn(player, record.id(), ResourceLocation.tryParse(argument));
             case QuestActionPayload.ABANDON -> QuestManager.abandon(player, record.id(), ResourceLocation.tryParse(argument), true);
-            case ChainManager.ACTION_RUMOURS -> ChainManager.startFromElder(player, record);
+            case ChainManager.ACTION_RUMOURS -> RumourService.askElder(player, entity, record);
             case Fines.ELDER_ACTION -> Fines.payElder(player, record, entity);
             default -> LordshipManager.handleElderAction(player, record, action);
         }

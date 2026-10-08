@@ -14,19 +14,27 @@ import java.util.UUID;
 import org.jetbrains.annotations.Nullable;
 
 import com.selluastar.fealty.Fealty;
+import com.selluastar.fealty.api.RepTier;
+import com.selluastar.fealty.api.dialogue.DialogueOption;
+import com.selluastar.fealty.api.dialogue.DialogueReply;
+import com.selluastar.fealty.api.event.DialogueBuildEvent;
+import com.selluastar.fealty.api.event.DialogueEvent;
 import com.selluastar.fealty.chatter.Chatter;
 import com.selluastar.fealty.guard.GuardManager;
 import com.selluastar.fealty.network.FealtyNetwork;
 import com.selluastar.fealty.network.OpenDialoguePayload;
 import com.selluastar.fealty.network.OpenScreenPayload;
 import com.selluastar.fealty.quest.QuestContext;
-import com.selluastar.fealty.quest.QuestGiver;
 import com.selluastar.fealty.quest.QuestGivers;
 import com.selluastar.fealty.quest.QuestManager;
 import com.selluastar.fealty.quest.QuestSync;
+import com.selluastar.fealty.rep.FactionResolver;
+import com.selluastar.fealty.rep.Factions;
+import com.selluastar.fealty.rep.RepManager;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -38,6 +46,7 @@ import net.minecraft.world.inventory.MerchantMenu;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
@@ -70,6 +79,17 @@ public final class DialogueService {
         long lastActive;
         /** Whether the NPC's quest board is open rather than the dialogue box. */
         boolean board;
+        /** The conversation ({@code fealty/conversations/}) going on, and its node. */
+        @Nullable
+        ResourceLocation conversation;
+        String node = "";
+        /** Conversations offered as replies ({@code t:<n>}). */
+        List<ResourceLocation> offered = List.of();
+        /** Replies other mods added, with what to call when picked. */
+        Map<String, DialogueBuildEvent.Handler> contributed = Map.of();
+        /** What the NPC answered while handling an action, to show instead of the greeting. */
+        @Nullable
+        Component answer;
 
         Session(int entityId, ResourceKey<Level> dimension) {
             this.entityId = entityId;
@@ -80,29 +100,100 @@ public final class DialogueService {
     private DialogueService() {
     }
 
-    /** Start talking to an NPC. @return whether this NPC has anything to say */
+    /**
+     * Start talking to an NPC: a conversation from {@code fealty/conversations/} that takes over, else their usual
+     * dialogue. {@code DialogueEvent.Open} may keep the box shut. @return whether this NPC has anything to say
+     */
     public static boolean open(ServerPlayer player, Entity npc) {
-        Optional<DialogueNode> node = build(player, npc, null);
+        if (NeoForge.EVENT_BUS.post(new DialogueEvent.Open(player, npc)).isCanceled()) {
+            return false;
+        }
+        Optional<Map.Entry<ResourceLocation, Conversation>> conversation = Conversations.takeover(player, npc);
+        if (conversation.isPresent()) {
+            Conversations.begin(player, npc, conversation.get().getKey());
+            return true;
+        }
+        Optional<Built> node = build(player, npc, null);
         node.ifPresent(n -> {
-            show(player, npc, n);
-            Speech.say(npc, n.text());
+            show(player, npc, n, null, "");
+            Speech.say(npc, n.node().text());
         });
         return node.isPresent();
     }
 
-    private static Optional<DialogueNode> build(ServerPlayer player, Entity npc, @Nullable Component reply) {
+    /** A node, with the replies other mods added and the conversations offered in it. */
+    private record Built(DialogueNode node, Map<String, DialogueBuildEvent.Handler> contributed, List<ResourceLocation> offered) {
+    }
+
+    private static Optional<Built> build(ServerPlayer player, Entity npc, @Nullable Component reply) {
+        Optional<DialogueNode> node;
         if (npc instanceof Villager villager) {
-            return Optional.of(VillagerDialogue.node(player, villager, reply));
+            node = Optional.of(VillagerDialogue.node(player, villager, reply));
+        } else if (npc instanceof Mob guard && GuardManager.talksLikeGuard(npc)) {
+            node = Optional.of(GuardDialogue.node(player, guard, reply));
+        } else {
+            node = QuestGivers.forEntity(npc).map(g -> GiverDialogue.node(player, npc, g, reply));
         }
-        if (npc instanceof Mob guard && GuardManager.talksLikeGuard(npc)) {
-            return Optional.of(GuardDialogue.node(player, guard, reply));
+        if (node.isEmpty() && !Conversations.offers(player, npc).isEmpty()) {
+            // Someone with nothing to say but the conversations offered.
+            node = Optional.of(new DialogueNode(npc.getDisplayName(), subtitle(player, npc),
+                    reply != null ? reply : Component.translatable("fealty.dialogue.fallback"),
+                    List.of(DialogueNode.Option.of(BYE, Component.translatable("fealty.dialogue.option.bye"), "door"))));
         }
-        Optional<QuestGiver> giver = QuestGivers.forEntity(npc);
-        return giver.map(g -> GiverDialogue.node(player, npc, g, reply));
+        return node.map(n -> contribute(player, npc, n, reply != null));
+    }
+
+    /**
+     * Add the conversations this NPC offers and what other mods add ({@link DialogueBuildEvent}) to a villager's, quest
+     * giver's or guard's usual dialogue.
+     */
+    private static Built contribute(ServerPlayer player, Entity npc, DialogueNode node, boolean answer) {
+        List<DialogueNode.Option> options = new ArrayList<>(node.options());
+        List<ResourceLocation> offered = new ArrayList<>();
+        for (Map.Entry<ResourceLocation, Conversation> entry : Conversations.offers(player, npc)) {
+            options.add(Conversations.offerOption(player, npc, entry.getValue(), Conversations.OFFER_PREFIX + offered.size()));
+            offered.add(entry.getKey());
+        }
+        DialogueBuildEvent event = NeoForge.EVENT_BUS.post(new DialogueBuildEvent(player, npc, answer));
+        Map<String, DialogueBuildEvent.Handler> contributed = new HashMap<>();
+        for (DialogueBuildEvent.Contribution contribution : event.getOptions()) {
+            DialogueOption option = contribution.option();
+            if (options.stream().noneMatch(o -> o.id().equals(option.id()))) {
+                options.add(new DialogueNode.Option(option.id(), option.label(), option.icon(), option.enabled(), option.hint()));
+                contributed.put(option.id(), contribution.handler());
+            }
+        }
+        Component text = node.text();
+        for (Component line : event.getLines()) {
+            text = Component.empty().append(text).append("\n").append(line);
+        }
+        return new Built(new DialogueNode(node.name(), node.subtitle(), text, options), contributed, offered);
+    }
+
+    /** What the box shows under an NPC's name: their faction and the player's standing with it, if they have one. */
+    static Component subtitle(ServerPlayer player, Entity npc) {
+        if (npc instanceof Villager villager) {
+            return VillagerDialogue.subtitle(player, villager);
+        }
+        return FactionResolver.factionOf(npc).map(faction -> {
+            int rep = RepManager.getRep(player, faction);
+            RepTier tier = RepManager.tierOf(rep);
+            return (Component) Component.translatable("fealty.dialogue.subtitle", Factions.displayName(player.server, faction),
+                    tier.displayName().copy().withColor(tier.color()), rep);
+        }).orElse(Component.empty());
     }
 
     static void show(ServerPlayer player, Entity npc, DialogueNode node) {
-        DialogueNode ordered = ordered(node);
+        show(player, npc, new Built(node, Map.of(), List.of()), null, "");
+    }
+
+    /** Show one node of a conversation; its replies keep the order they were written in. */
+    static void showConversation(ServerPlayer player, Entity npc, DialogueNode node, ResourceLocation conversation, String name) {
+        show(player, npc, new Built(node, Map.of(), List.of()), conversation, name);
+    }
+
+    private static void show(ServerPlayer player, Entity npc, Built built, @Nullable ResourceLocation conversation, String name) {
+        DialogueNode ordered = conversation == null ? ordered(built.node()) : built.node();
         Set<String> options = new HashSet<>();
         ordered.options().forEach(option -> {
             if (option.enabled()) {
@@ -112,7 +203,60 @@ public final class DialogueService {
         Session session = begin(player, npc);
         session.options = options;
         session.board = false;
+        session.conversation = conversation;
+        session.node = name;
+        session.offered = built.offered();
+        session.contributed = built.contributed();
         FealtyNetwork.send(player, new OpenDialoguePayload(npc.getId(), ordered));
+    }
+
+    /** A conversation ended: back to the NPC's usual dialogue, or the box closes if they have none. */
+    static void endConversation(ServerPlayer player, Entity npc) {
+        Session session = SESSIONS.get(player.getUUID());
+        if (session != null) {
+            session.conversation = null;
+        }
+        Optional<Built> node = build(player, npc, null);
+        if (node.isPresent()) {
+            show(player, npc, node.get(), null, "");
+        } else {
+            close(player);
+        }
+    }
+
+    /**
+     * Have the NPC answer something in the dialogue box once the action being handled is done (a quest giver's
+     * action, where the box would otherwise go back to the greeting).
+     */
+    public static void answer(ServerPlayer player, Component text) {
+        Session session = SESSIONS.get(player.getUUID());
+        if (session != null) {
+            session.answer = text;
+        }
+    }
+
+    /** The answer left by {@link #answer}, if any (cleared). */
+    @Nullable
+    static Component takeAnswer(ServerPlayer player) {
+        Session session = SESSIONS.get(player.getUUID());
+        if (session == null) {
+            return null;
+        }
+        Component answer = session.answer;
+        session.answer = null;
+        return answer;
+    }
+
+    /** The replies the player can pick right now (for tests and debugging). */
+    public static Set<String> options(ServerPlayer player) {
+        Session session = SESSIONS.get(player.getUUID());
+        return session == null ? Set.of() : Set.copyOf(session.options);
+    }
+
+    /** The conversation and node the player is in, as {@code <id>#<node>} (for tests and debugging). */
+    public static Optional<String> conversation(ServerPlayer player) {
+        Session session = SESSIONS.get(player.getUUID());
+        return session == null || session.conversation == null ? Optional.empty() : Optional.of(session.conversation + "#" + session.node);
     }
 
     /**
@@ -123,6 +267,7 @@ public final class DialogueService {
         Session session = begin(player, npc);
         session.options = Set.of();
         session.board = true;
+        session.conversation = null;
     }
 
     /** Open (or carry on) a session with the NPC, letting go of any other NPC the player was talking to. */
@@ -198,12 +343,12 @@ public final class DialogueService {
 
     /** Show the NPC's answer in the dialogue box (and above their head), keeping the conversation open. */
     public static void reply(ServerPlayer player, Entity npc, Component text) {
-        build(player, npc, text).ifPresent(node -> show(player, npc, node));
+        build(player, npc, text).ifPresent(node -> show(player, npc, node, null, ""));
     }
 
     /** Refresh the dialogue box after something changed, with the NPC's usual greeting. */
     public static void refresh(ServerPlayer player, Entity npc) {
-        build(player, npc, null).ifPresent(node -> show(player, npc, node));
+        build(player, npc, null).ifPresent(node -> show(player, npc, node, null, ""));
     }
 
     /** Close the dialogue box. */
@@ -242,6 +387,18 @@ public final class DialogueService {
             return;
         }
         session.lastActive = player.level().getGameTime();
+        if (NeoForge.EVENT_BUS.post(new DialogueEvent.Choose(player, npc, option)).isCanceled()) {
+            if (session.conversation != null) {
+                Conversations.redraw(player, npc, session.conversation, session.node);
+            } else {
+                refresh(player, npc);
+            }
+            return;
+        }
+        if (session.conversation != null) {
+            Conversations.choose(player, npc, session.conversation, session.node, option);
+            return;
+        }
         if (BYE.equals(option)) {
             Speech.bark(npc, "farewell", player, 0);
             close(player);
@@ -251,12 +408,55 @@ public final class DialogueService {
             questOption(player, npc, option.substring(QUEST_PREFIX.length()));
             return;
         }
+        DialogueBuildEvent.Handler handler = session.contributed.get(option);
+        if (handler != null) {
+            contributed(player, npc, option, handler);
+            return;
+        }
+        if (option.startsWith(Conversations.OFFER_PREFIX)) {
+            int index = parseIndex(option.substring(Conversations.OFFER_PREFIX.length()));
+            if (index >= 0 && index < session.offered.size()) {
+                Conversations.begin(player, npc, session.offered.get(index));
+            }
+            return;
+        }
         if (npc instanceof Villager villager) {
             VillagerDialogue.handle(player, villager, option);
         } else if (npc instanceof Mob guard && GuardManager.talksLikeGuard(npc)) {
             GuardDialogue.handle(player, guard, option);
         } else {
             QuestGivers.forEntity(npc).ifPresent(giver -> GiverDialogue.handle(player, npc, giver, option));
+        }
+    }
+
+    private static int parseIndex(String text) {
+        try {
+            return Integer.parseInt(text);
+        } catch (NumberFormatException e) {
+            return -1;
+        }
+    }
+
+    /** A reply another mod added was picked: call its handler and do what it says. */
+    private static void contributed(ServerPlayer player, Entity npc, String option, DialogueBuildEvent.Handler handler) {
+        DialogueReply result;
+        try {
+            result = handler.choose(player, npc, option);
+        } catch (RuntimeException e) {
+            Fealty.LOGGER.error("Fealty: the handler for dialogue reply {} failed", option, e);
+            result = DialogueReply.refresh();
+        }
+        if (result == null) {
+            result = DialogueReply.refresh();
+        }
+        switch (result.kind()) {
+            case SAY -> {
+                Speech.say(npc, result.text());
+                reply(player, npc, result.text());
+            }
+            case REFRESH -> refresh(player, npc);
+            case CLOSE -> close(player);
+            case END -> end(player);
         }
     }
 

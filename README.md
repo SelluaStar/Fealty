@@ -82,6 +82,10 @@ standing and its raiders come for the villages nearby.
   gate on reputation.
 - **Integrations (all optional):** Jade tooltips, FTB Quests task and reward types, KubeJS events, JEI village
   trades.
+- **Stories:** rumours (`rumours/`) that villagers let slip or elders tell, branching conversations
+  (`conversations/`) and quest chains given by one villager in order (`"giver": "single"`), all from data, with
+  conditions, effects and player flags. Other mods add chain kinds, quest types, quest givers, conditions, effects
+  and dialogue replies through the API. See the example in [docs/examples/single_giver_chain](docs/examples/single_giver_chain/).
 - **Public API** in a separate jar for other mods (guards, bosses, quests), with events for raids, strongholds,
   captives, guards, fines, lockpicks, mail and villages (also forwarded to KubeJS): see [docs/API.md](docs/API.md).
 

@@ -5,18 +5,26 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.google.gson.JsonParser;
 import com.mojang.authlib.GameProfile;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.JsonOps;
 import com.selluastar.fealty.Fealty;
+import com.selluastar.fealty.api.FealtyApi;
 import com.selluastar.fealty.api.RepSources;
 import com.selluastar.fealty.api.RepTiers;
 import com.selluastar.fealty.api.Severity;
 import com.selluastar.fealty.api.Stronghold;
+import com.selluastar.fealty.api.dialogue.DialogueReply;
 import com.selluastar.fealty.api.event.BanditRaidEvent;
 import com.selluastar.fealty.api.event.CampaignEvent;
+import com.selluastar.fealty.api.event.ChainStageEvent;
+import com.selluastar.fealty.api.event.DialogueBuildEvent;
 import com.selluastar.fealty.api.event.RumourEvent;
 import com.selluastar.fealty.api.event.StrongholdEvent;
 import com.selluastar.fealty.api.event.VillagerChatEvent;
 import com.selluastar.fealty.chain.ChainManager;
+import com.selluastar.fealty.chain.QuestChainDefinition;
 import com.selluastar.fealty.chatter.Chatter;
 import com.selluastar.fealty.chatter.ChatterTopic;
 import com.selluastar.fealty.chatter.ChatterTopics;
@@ -31,6 +39,8 @@ import com.selluastar.fealty.crime.Gossip;
 import com.selluastar.fealty.crime.Locks;
 import com.selluastar.fealty.data.FealtyDataManager;
 import com.selluastar.fealty.data.TierManager;
+import com.selluastar.fealty.dialogue.Conversation;
+import com.selluastar.fealty.dialogue.Conversations;
 import com.selluastar.fealty.dialogue.DialogueLines;
 import com.selluastar.fealty.dialogue.DialogueNode;
 import com.selluastar.fealty.dialogue.DialogueService;
@@ -39,6 +49,7 @@ import com.selluastar.fealty.guard.Garrison;
 import com.selluastar.fealty.guard.GuardManager;
 import com.selluastar.fealty.lordship.LordshipManager;
 import com.selluastar.fealty.mail.MailService;
+import com.selluastar.fealty.network.QuestActionPayload;
 import com.selluastar.fealty.outlaw.BanditCamps;
 import com.selluastar.fealty.outlaw.BanditRaids;
 import com.selluastar.fealty.outlaw.ThievesGuild;
@@ -53,6 +64,9 @@ import com.selluastar.fealty.rep.Factions;
 import com.selluastar.fealty.rep.FealtyCalendar;
 import com.selluastar.fealty.rep.FealtyWorldData;
 import com.selluastar.fealty.rep.RepManager;
+import com.selluastar.fealty.story.PlayerFlags;
+import com.selluastar.fealty.story.RumourDefinition;
+import com.selluastar.fealty.story.RumourService;
 import com.selluastar.fealty.trade.TradeHooks;
 import com.selluastar.fealty.trade.VillagerInteractions;
 import com.selluastar.fealty.trade.VillagerMemory;
@@ -76,15 +90,19 @@ import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.resources.RegistryOps;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ClientInformation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
@@ -107,6 +125,7 @@ import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.pools.StructurePoolElement;
 import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -1057,6 +1076,264 @@ public final class FealtyGameTests {
             banditVeto = false;
             forget(helper, village);
         }
+        helper.succeed();
+    }
+
+    // ---- Stories: rumours, single-giver chains, conversations, contributors and flags (API 1.3.0) ----
+
+    private static int chainStarts;
+    private static int chainAdvances;
+    private static int chainCompletes;
+    private static int rumoursHeard;
+    private static boolean contributing;
+    private static int waves;
+    private static boolean storyListening;
+
+    /** Test-only listeners for the story events, switched by flags (the event bus has no easy way to remove a lambda). */
+    private static void listenForStories() {
+        if (!storyListening) {
+            storyListening = true;
+            NeoForge.EVENT_BUS.addListener((ChainStageEvent.Start e) -> chainStarts++);
+            NeoForge.EVENT_BUS.addListener((ChainStageEvent.Advance e) -> chainAdvances++);
+            NeoForge.EVENT_BUS.addListener((ChainStageEvent.Complete e) -> chainCompletes++);
+            NeoForge.EVENT_BUS.addListener((RumourEvent.Heard e) -> rumoursHeard++);
+            NeoForge.EVENT_BUS.addListener((DialogueBuildEvent e) -> {
+                if (contributing) {
+                    e.addLine(Component.literal("The weather turns."));
+                    e.addOption("example:wave", Component.literal("Wave"), (player, npc, option) -> {
+                        waves++;
+                        return DialogueReply.say(Component.literal("They wave back."));
+                    });
+                }
+            });
+        }
+    }
+
+    /** Read a data file the way a data pack would. */
+    private static <T> T parse(GameTestHelper helper, Codec<T> codec, String json) {
+        return codec.parse(RegistryOps.create(JsonOps.INSTANCE, helper.getLevel().registryAccess()), JsonParser.parseString(json))
+                .getOrThrow(IllegalStateException::new);
+    }
+
+    /** Stand the player next to someone, so the dialogue box accepts their replies. */
+    private static void standBy(ServerPlayer player, Villager villager) {
+        player.moveTo(villager.getX() + 1, villager.getY(), villager.getZ());
+    }
+
+    @GameTest(template = "empty")
+    public static void rumoursRollWithPity(GameTestHelper helper) {
+        listenForStories();
+        ServerPlayer player = player(helper);
+        VillageRecord village = testVillage(helper, BlockPos.ZERO, "Whisperwell");
+        Villager villager = villager(helper, village.id(), new BlockPos(1, 1, 1));
+        ResourceLocation id = ResourceLocation.fromNamespaceAndPath("example", "test/gossip");
+        ResourceLocation heardFlag = ResourceLocation.fromNamespaceAndPath("example", "test/heard_gossip");
+        RumourService.define(id, parse(helper, RumourDefinition.CODEC, """
+                {"told_by": "villagers", "weight": 5, "lines": ["example.rumour.gossip"], "grants": [{"set_flag": "example:test/heard_gossip"}]}
+                """));
+        try {
+            double base = FealtyConfig.RUMOUR_CHANCE.get();
+            double step = FealtyConfig.RUMOUR_PITY_STEP.get();
+            double cap = FealtyConfig.RUMOUR_PITY_CAP.get();
+            int guarantee = FealtyConfig.RUMOUR_GUARANTEE_AFTER.get();
+            check(helper, RumourService.chance(0) == base, "the first roll is the plain chance");
+            check(helper, Math.abs(RumourService.chance(3) - Math.min(cap, base + 3 * step)) < 1e-9, "each miss adds the pity step");
+            check(helper, RumourService.chance(guarantee - 1) <= Math.max(base, cap), "pity stops at its cap");
+            check(helper, RumourService.chance(guarantee) == 1.0, "after enough misses a rumour is sure");
+
+            RepManager.meet(player, village.id());
+            RepManager.set(player, village.id(), TierManager.neutral().min(), RepSources.COMMAND);
+            VillagerMemory.Entry memory = villager.getData(ModAttachments.VILLAGER_MEMORY).of(player.getUUID());
+            PlayerFlags flags = PlayerFlags.of(player);
+            check(helper, RumourService.converse(player, villager, 0.9999).isEmpty() && flags.rumourMisses() == 1, "a roll that misses counts");
+            check(helper, RumourService.converse(player, villager, 0.0).isEmpty() && flags.rumourMisses() == 1,
+                    "a villager rolls once a day for each player");
+            for (int i = 1; i < guarantee; i++) {
+                memory.lastRumourRoll = -1;
+                RumourService.converse(player, villager, 0.9999);
+            }
+            check(helper, flags.rumourMisses() == guarantee, "every missed day adds up; got " + flags.rumourMisses());
+            memory.lastRumourRoll = -1;
+            int heard = rumoursHeard;
+            List<Component> lines = RumourService.converse(player, villager, 0.9999);
+            check(helper, lines.size() == 1 && lines.getFirst().getContents() instanceof TranslatableContents key
+                    && key.getKey().equals("example.rumour.gossip"), "after " + guarantee + " misses the rumour is told; got " + lines);
+            check(helper, rumoursHeard == heard + 1, "RumourEvent.Heard fires");
+            check(helper, flags.rumourMisses() == 0 && flags.hasHeard(id), "the pity resets and the rumour is remembered");
+            check(helper, PlayerFlags.get(player, heardFlag) == 1, "its grants apply");
+            memory.lastRumourRoll = -1;
+            check(helper, RumourService.converse(player, villager, 0.0).isEmpty() && flags.rumourMisses() == 0,
+                    "a rumour is told once; with nothing left to tell, a quiet day is no miss");
+        } finally {
+            RumourService.define(id, null);
+            villager.discard();
+            forget(helper, village);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void singleGiverChainEndToEnd(GameTestHelper helper) {
+        listenForStories();
+        ServerPlayer player = player(helper);
+        VillageRecord village = testVillage(helper, BlockPos.ZERO, "Talesend");
+        Villager teller = villager(helper, village.id(), new BlockPos(1, 1, 1));
+        Villager other = villager(helper, village.id(), new BlockPos(2, 1, 2));
+        ResourceLocation chain = ResourceLocation.fromNamespaceAndPath("example", "test/tale");
+        ResourceLocation rumour = ResourceLocation.fromNamespaceAndPath("example", "test/tale");
+        ResourceLocation meeting = ResourceLocation.fromNamespaceAndPath("example", "test/stranger_meeting");
+        ResourceLocation met = ResourceLocation.fromNamespaceAndPath("example", "test/met");
+        List<ResourceLocation> quests = List.of(ResourceLocation.fromNamespaceAndPath("example", "test/fetch_dirt"),
+                ResourceLocation.fromNamespaceAndPath("example", "test/fetch_sand"), ResourceLocation.fromNamespaceAndPath("example", "test/fetch_clay"));
+        List<ItemStack> wanted = List.of(new ItemStack(Items.DIRT), new ItemStack(Items.SAND), new ItemStack(Items.CLAY_BALL));
+        for (int i = 0; i < quests.size(); i++) {
+            FealtyDataManager.defineQuest(quests.get(i), parse(helper, RepQuestDefinition.CODEC, """
+                    {"title": {"text": "Errand %d"}, "pool": "fealty:none",
+                     "objective": {"type": "fealty:fetch", "items": [{"ingredient": {"item": "%s"}, "count": 1}]}}
+                    """.formatted(i, BuiltInRegistries.ITEM.getKey(wanted.get(i).getItem()))));
+        }
+        FealtyDataManager.defineChain(chain, parse(helper, QuestChainDefinition.CODEC, """
+                {"kind": "story", "start_tier": "fealty:neutral", "repeatable": false,
+                 "giver": "single", "giver_role": "stranger", "giver_title": "example.role.stranger",
+                 "steps": [
+                   {"role": "first", "quest": "example:test/fetch_dirt", "unlock": {"flag": "example:test/met"}, "unlock_hint": "example.hint.letter"},
+                   {"role": "second", "quest": "example:test/fetch_sand"},
+                   {"role": "third", "quest": "example:test/fetch_clay", "rewards": [{"id": "minecraft:emerald", "count": 2}]}
+                 ],
+                 "final_reward": {"id": "minecraft:diamond", "count": 3}}
+                """));
+        RumourService.define(rumour, parse(helper, RumourDefinition.CODEC, """
+                {"chain": "example:test/tale", "stage": 1, "min_tier": "fealty:neutral", "weight": 5, "told_by": "villagers",
+                 "lines": ["example.rumour.stranger"], "grants": [{"give_item": "minecraft:paper"}]}
+                """));
+        Conversations.define(meeting, parse(helper, Conversation.CODEC, """
+                {"id": "example:test/stranger_meeting", "speaker": "example:stranger", "if": {"not": {"flag": "example:test/met"}},
+                 "start": "greet",
+                 "nodes": {
+                   "greet": {"text": "example.dialogue.greet", "replies": [
+                     {"label": "example.reply.show_letter", "if": {"has_item": "minecraft:paper"}, "hint": "example.hint.need_letter", "goto": "letter"},
+                     {"label": "example.reply.bye", "end": true}]},
+                   "letter": {"text": "example.dialogue.letter", "effects": [{"take_item": "minecraft:paper"}, {"set_flag": "example:test/met"}],
+                     "replies": [{"label": "example.reply.ready", "end": true}]}
+                 }}
+                """));
+        int starts = chainStarts;
+        int advances = chainAdvances;
+        int completes = chainCompletes;
+        try {
+            RepManager.meet(player, village.id());
+            RepManager.set(player, village.id(), TierManager.neutral().min(), RepSources.COMMAND);
+
+            // A rumour starts the tale, gives the letter and names the stranger.
+            List<Component> told = RumourService.converse(player, teller, 0.0);
+            check(helper, !told.isEmpty(), "the villager tells the tale's rumour");
+            check(helper, ChainManager.stage(player, chain) == ChainManager.STAGE_STEPS && chainStarts == starts + 1, "the rumour starts the chain");
+            check(helper, player.getInventory().countItem(Items.PAPER) == 1, "the rumour's grant hands over the letter");
+            Villager giver = ChainManager.holdsRole(teller, chain, "stranger") ? teller : other;
+            check(helper, ChainManager.holdsRole(giver, chain, "stranger"), "one villager becomes the stranger");
+            check(helper, FealtyApi.get().hasRole(giver, chain, "stranger"), "the API sees the role too");
+            ResourceLocation first = ChainManager.stepKey(chain, 0);
+            ChainManager.NAMED_VILLAGER.handleAction(player, giver, QuestActionPayload.ACCEPT, "");
+            check(helper, QuestManager.contexts(player, first).isEmpty(), "the first step waits for its unlock");
+
+            // The conversation: show the letter.
+            standBy(player, giver);
+            check(helper, DialogueService.open(player, giver), "the stranger has something to say");
+            check(helper, DialogueService.conversation(player).equals(Optional.of(meeting + "#greet")),
+                    "the first meeting takes over; got " + DialogueService.conversation(player));
+            check(helper, DialogueService.options(player).contains("c:0"), "with the letter, it can be shown");
+            DialogueService.choose(player, giver.getId(), "c:0");
+            check(helper, DialogueService.conversation(player).equals(Optional.of(meeting + "#letter")), "showing it goes to the next node");
+            check(helper, player.getInventory().countItem(Items.PAPER) == 0 && FealtyApi.get().hasFlag(player, met),
+                    "the node's effects take the letter and set the flag");
+            DialogueService.choose(player, giver.getId(), "c:0");
+            check(helper, DialogueService.conversation(player).isEmpty() && DialogueService.options(player).contains(DialogueService.BYE),
+                    "the conversation ends in the stranger's usual dialogue");
+            DialogueService.end(player);
+
+            // Three steps, in order, from the one giver.
+            for (int i = 0; i < quests.size(); i++) {
+                ResourceLocation key = ChainManager.stepKey(chain, i);
+                ChainManager.NAMED_VILLAGER.handleAction(player, giver, QuestActionPayload.ACCEPT, "");
+                check(helper, QuestManager.contexts(player, key).size() == 1, "the stranger gives step " + i);
+                player.getInventory().add(wanted.get(i).copy());
+                ChainManager.NAMED_VILLAGER.handleAction(player, giver, QuestActionPayload.TURN_IN, "");
+                check(helper, QuestManager.contexts(player, key).isEmpty() && ChainManager.stepsDone(player, chain) == i + 1,
+                        "step " + i + " is handed in");
+            }
+            check(helper, chainAdvances >= advances + 3, "every step fires ChainStageEvent.Advance");
+            check(helper, ChainManager.stage(player, chain) == ChainManager.STAGE_DONE && chainCompletes == completes + 1, "the tale is complete");
+            check(helper, player.getInventory().countItem(Items.DIAMOND) == 3 && player.getInventory().countItem(Items.EMERALD) == 2,
+                    "the last step's rewards and the final reward are given");
+            check(helper, !ChainManager.hasRole(giver), "the stranger goes back to being a villager");
+            check(helper, !RumourService.eligible(player, teller).stream().anyMatch(e -> e.getKey().equals(rumour)),
+                    "a finished tale that does not repeat has no more rumours");
+        } finally {
+            DialogueService.end(player);
+            Conversations.define(meeting, null);
+            RumourService.define(rumour, null);
+            FealtyDataManager.defineChain(chain, null);
+            quests.forEach(id -> FealtyDataManager.defineQuest(id, null));
+            RepManager.data(player).chains().remove(chain);
+            teller.discard();
+            other.discard();
+            forget(helper, village);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void contributorReplies(GameTestHelper helper) {
+        listenForStories();
+        ServerPlayer player = player(helper);
+        VillageRecord village = testVillage(helper, BlockPos.ZERO, "Wavebury");
+        Villager villager = villager(helper, village.id(), new BlockPos(1, 1, 1));
+        contributing = true;
+        try {
+            boolean refused = false;
+            try {
+                new DialogueBuildEvent(player, villager, false).addOption("q:sneaky", Component.literal("Sneaky"), (p, n, o) -> DialogueReply.close());
+            } catch (IllegalArgumentException e) {
+                refused = true;
+            }
+            check(helper, refused, "reply ids must be <modid>:<name> and stay clear of Fealty's own");
+            standBy(player, villager);
+            check(helper, DialogueService.open(player, villager), "the villager talks");
+            check(helper, DialogueService.options(player).contains("example:wave"), "another mod's reply is offered");
+            int before = waves;
+            DialogueService.choose(player, villager.getId(), "example:wave");
+            check(helper, waves == before + 1, "picking it calls the listener that added it");
+            check(helper, DialogueService.options(player).contains("example:wave"), "the box stays open with the answer");
+        } finally {
+            contributing = false;
+            DialogueService.end(player);
+            villager.discard();
+            forget(helper, village);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void flagsSurviveRelogAndDeath(GameTestHelper helper) {
+        ServerPlayer player = player(helper);
+        ResourceLocation flag = ResourceLocation.fromNamespaceAndPath("example", "test/remembered");
+        FealtyApi.get().setFlag(player, flag, 7);
+        check(helper, FealtyApi.get().getFlag(player, flag) == 7 && FealtyApi.get().hasFlag(player, flag), "the flag is set");
+
+        // Logging out saves the player; logging back in loads them into a new player object.
+        CompoundTag saved = player.saveWithoutId(new CompoundTag());
+        ServerPlayer relogged = new ServerPlayer(player.server, helper.getLevel(), player.getGameProfile(), ClientInformation.createDefault());
+        relogged.load(saved);
+        check(helper, FealtyApi.get().getFlag(relogged, flag) == 7, "the flag survives relogging");
+
+        // Dying makes a new player too, copying what is kept on death.
+        ServerPlayer respawned = new ServerPlayer(player.server, helper.getLevel(), player.getGameProfile(), ClientInformation.createDefault());
+        respawned.restoreFrom(relogged, false);
+        NeoForge.EVENT_BUS.post(new PlayerEvent.Clone(respawned, relogged, true));
+        check(helper, FealtyApi.get().getFlag(respawned, flag) == 7, "the flag survives death");
+
+        FealtyApi.get().clearFlag(respawned, flag);
+        check(helper, !FealtyApi.get().hasFlag(respawned, flag), "the flag clears");
         helper.succeed();
     }
 }

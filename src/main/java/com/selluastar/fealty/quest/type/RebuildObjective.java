@@ -1,6 +1,5 @@
 package com.selluastar.fealty.quest.type;
 
-import com.selluastar.fealty.network.QuestView;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -13,22 +12,23 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.selluastar.fealty.Fealty;
+import com.selluastar.fealty.api.quest.QuestType;
+import com.selluastar.fealty.network.QuestView;
 import com.selluastar.fealty.quest.QuestContext;
 import com.selluastar.fealty.quest.QuestObjective;
-import com.selluastar.fealty.quest.QuestType;
 import com.selluastar.fealty.registry.ModBlocks;
 import com.selluastar.fealty.registry.ModQuestTypes;
 import com.selluastar.fealty.village.VillageRecord;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.RandomSource;

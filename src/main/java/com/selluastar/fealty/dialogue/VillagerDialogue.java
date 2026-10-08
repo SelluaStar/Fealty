@@ -13,11 +13,13 @@ import com.selluastar.fealty.chatter.Rumours;
 import com.selluastar.fealty.data.FealtyDataManager;
 import com.selluastar.fealty.quest.FavorManager;
 import com.selluastar.fealty.quest.QuestContext;
+import com.selluastar.fealty.quest.QuestGivers;
 import com.selluastar.fealty.quest.QuestManager;
 import com.selluastar.fealty.quest.RepQuestDefinition;
 import com.selluastar.fealty.rep.FactionResolver;
 import com.selluastar.fealty.rep.Factions;
 import com.selluastar.fealty.rep.RepManager;
+import com.selluastar.fealty.story.RumourService;
 import com.selluastar.fealty.trade.VillagerInteractions;
 
 import net.minecraft.network.chat.Component;
@@ -44,7 +46,7 @@ final class VillagerDialogue {
     private VillagerDialogue() {
     }
 
-    private static Component subtitle(ServerPlayer player, Villager villager) {
+    static Component subtitle(ServerPlayer player, Villager villager) {
         ResourceLocation faction = FactionResolver.factionOf(villager).orElse(Factions.WANDERERS);
         RepManager.meet(player, faction);
         int rep = RepManager.getRep(player, faction);
@@ -58,6 +60,12 @@ final class VillagerDialogue {
         Component text = reply != null ? reply
                 : DialogueLines.pick("greet", SpeakerContext.of(villager, player), villager.getRandom(), player.getDisplayName())
                 .orElse(Component.translatable("fealty.dialogue.fallback"));
+        if (reply == null) {
+            // Once a day per villager, a rumour from fealty/rumours/ may come up.
+            for (Component line : RumourService.converse(player, villager)) {
+                text = Component.empty().append(text).append("\n").append(line);
+            }
+        }
 
         List<DialogueNode.Option> options = new ArrayList<>();
         boolean canTrade = !villager.getOffers().isEmpty() && villager.getVillagerData().getProfession() != VillagerProfession.NITWIT;
@@ -157,6 +165,10 @@ final class VillagerDialogue {
     private static void work(ServerPlayer player, Villager villager) {
         if (ChainManager.onTalk(player, villager)) {
             return; // their quest board is open now, and keeps them by the player
+        }
+        if (QuestGivers.forEntity(villager).isPresent()) {
+            QuestGivers.open(player, villager); // another mod's quest giver
+            return;
         }
         Component name = villager.getDisplayName();
         Component subtitle = subtitle(player, villager);

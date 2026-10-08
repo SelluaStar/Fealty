@@ -2,9 +2,12 @@ package com.selluastar.fealty.data;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import org.jetbrains.annotations.Nullable;
 
 import com.selluastar.fealty.Fealty;
 import com.selluastar.fealty.chain.QuestChainDefinition;
@@ -52,6 +55,10 @@ public final class FealtyDataManager {
                 com.selluastar.fealty.chatter.ChatterTopics::apply));
         event.addListener(new CodecDataLoader<>("fealty/dialogue", com.selluastar.fealty.dialogue.DialogueLine.File.CODEC, registries,
                 com.selluastar.fealty.dialogue.DialogueLines::apply));
+        event.addListener(new CodecDataLoader<>("fealty/rumours", com.selluastar.fealty.story.RumourDefinition.CODEC, registries,
+                com.selluastar.fealty.story.RumourService::apply));
+        event.addListener(new CodecDataLoader<>("fealty/conversations", com.selluastar.fealty.dialogue.Conversation.CODEC, registries,
+                com.selluastar.fealty.dialogue.Conversations::apply));
     }
 
     private static void setFactions(Map<ResourceLocation, FactionDefinition> loaded) {
@@ -106,6 +113,26 @@ public final class FealtyDataManager {
 
     public static Optional<QuestChainDefinition> chain(ResourceLocation id) {
         return Optional.ofNullable(chains.get(id));
+    }
+
+    /** Add (or with null, remove) a quest without a data pack, until the next reload (tests). */
+    public static void defineQuest(ResourceLocation id, @Nullable RepQuestDefinition quest) {
+        quests = with(quests, id, quest);
+    }
+
+    /** Add (or with null, remove) a quest chain without a data pack, until the next reload (tests). */
+    public static void defineChain(ResourceLocation id, @Nullable QuestChainDefinition chain) {
+        chains = with(chains, id, chain);
+    }
+
+    private static <T> Map<ResourceLocation, T> with(Map<ResourceLocation, T> map, ResourceLocation id, @Nullable T value) {
+        Map<ResourceLocation, T> copy = new HashMap<>(map);
+        if (value == null) {
+            copy.remove(id);
+        } else {
+            copy.put(id, value);
+        }
+        return Map.copyOf(copy);
     }
 
     public static Map<ResourceLocation, VillageTradeDefinition> villageTrades() {

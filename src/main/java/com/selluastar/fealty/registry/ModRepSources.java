@@ -70,6 +70,7 @@ public final class ModRepSources {
         register(RepSources.ABANDON_QUEST, RepSource.action(-2));
         register(RepSources.COMMAND, RepSource.redemption(0));
         register(RepSources.API, RepSource.action(0));
+        register(RepSources.DIALOGUE, RepSource.action(0));
     }
 
     private ModRepSources() {

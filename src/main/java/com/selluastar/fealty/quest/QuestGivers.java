@@ -1,12 +1,16 @@
 package com.selluastar.fealty.quest;
 
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
+import com.selluastar.fealty.Fealty;
 import com.selluastar.fealty.chain.ChainManager;
 import com.selluastar.fealty.entity.QuestGiverEntity;
 import com.selluastar.fealty.network.OpenQuestScreenPayload;
+import com.selluastar.fealty.registry.FealtyRegistries;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -16,15 +20,30 @@ import net.minecraft.world.entity.npc.Villager;
 
 /** Finds the quest giver behind an entity and helps build their screens. */
 public final class QuestGivers {
+    private static final Map<com.selluastar.fealty.api.quest.QuestGiver, QuestGiver> API_GIVERS = new IdentityHashMap<>();
+
     private QuestGivers() {
     }
 
+    /** Fealty's givers first (its NPCs, named chain villagers), then those other mods register in {@code fealty:quest_giver}. */
     public static Optional<QuestGiver> forEntity(Entity entity) {
         if (entity instanceof QuestGiverEntity giver) {
             return Optional.of(giver.giver());
         }
         if (entity instanceof Villager villager && ChainManager.hasRole(villager)) {
             return Optional.of(ChainManager.NAMED_VILLAGER);
+        }
+        for (com.selluastar.fealty.api.quest.QuestGiver giver : FealtyRegistries.QUEST_GIVERS) {
+            boolean applies;
+            try {
+                applies = giver.appliesTo(entity);
+            } catch (RuntimeException e) {
+                Fealty.LOGGER.error("Fealty: quest giver {} failed", FealtyRegistries.QUEST_GIVERS.getKey(giver), e);
+                applies = false;
+            }
+            if (applies) {
+                return Optional.of(API_GIVERS.computeIfAbsent(giver, ApiGiver::new));
+            }
         }
         return Optional.empty();
     }

@@ -6,6 +6,7 @@ import java.util.Map;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.selluastar.fealty.Fealty;
+import com.selluastar.fealty.api.quest.QuestType;
 import com.selluastar.fealty.registry.FealtyRegistries;
 
 import net.minecraft.network.chat.Component;
@@ -39,8 +40,10 @@ public record RepQuestDefinition(Component title, Component description, Resourc
     public static final ResourceLocation RESTORE = Fealty.id("restore");
     public static final ResourceLocation NONE = Fealty.id("none");
 
+    /** Any registered objective type; ones other mods register through the API are wrapped in an {@link ApiObjective}. */
     public static final Codec<QuestObjective> OBJECTIVE_CODEC = FealtyRegistries.QUEST_TYPES.byNameCodec()
-            .dispatch(QuestObjective::type, QuestType::codec);
+            .<com.selluastar.fealty.api.quest.QuestObjective>dispatch(com.selluastar.fealty.api.quest.QuestObjective::type, QuestType::codec)
+            .xmap(ApiObjective::wrap, ApiObjective::unwrap);
 
     public static final Codec<RepQuestDefinition> CODEC = RecordCodecBuilder.create(i -> i.group(
             ComponentSerialization.CODEC.fieldOf("title").forGetter(RepQuestDefinition::title),

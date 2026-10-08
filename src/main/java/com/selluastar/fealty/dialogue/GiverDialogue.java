@@ -96,7 +96,12 @@ final class GiverDialogue {
             }
             giver.handleAction(player, npc, action, "");
             if (npc.isAlive()) {
-                DialogueService.refresh(player, npc);
+                Component answer = DialogueService.takeAnswer(player);
+                if (answer != null) {
+                    DialogueService.reply(player, npc, answer);
+                } else {
+                    DialogueService.refresh(player, npc);
+                }
             }
         }
     }

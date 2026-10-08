@@ -12,7 +12,9 @@ shipping a file with the same id, or add new ones under your own namespace. All 
 | `rep_actions/` | Amounts for ways to gain rep (gifts, trades, raids, ...) |
 | `crimes/` | Offences: amount, severity, heat |
 | `rep_quests/` | Quests: elder pools by tier, and villagers' favors |
-| `quest_chains/` | The rare villager chain and the thieves guild |
+| `quest_chains/` | The rare villager chain, the thieves guild, and stories of your own |
+| `rumours/` | Rumours villagers and elders tell, which can start or move on a chain |
+| `conversations/` | Branching conversations in the dialogue box |
 | `dialogue/` | What NPCs say, in the dialogue box and in speech bubbles |
 | `village_trades/` | Trades villages keep for Trusted/Honored players |
 | `black_market/` | What black marketeers may stock |
@@ -334,6 +336,156 @@ can be asked to take their place.
 
 The `fealty:thieves_guild` chain (`kind: guild`) is handed out one step at a time by the guild fence. Each step
 can carry its own `rewards`.
+
+### Stories, kinds and single givers
+
+`kind` names a chain kind (`fealty:chain_kind`); a name without a namespace is Fealty's. Fealty has
+`rare_villager`, `guild` and `story`; other mods can register more. A `story` chain starts from a rumour (see
+`rumours/`), a conversation's `start_chain` effect, or another mod through the API, and is complete when its last
+step is handed in: `steps_reward` (if any) and then `final_reward` are given, and its villagers lose their titles.
+
+```json
+{
+  "kind": "story",
+  "start_tier": "fealty:neutral",
+  "repeatable": false,
+  "giver": "single",
+  "giver_role": "stranger",
+  "giver_title": "example.role.stranger",
+  "steps": [
+    {"quest": "example:stranger/firewood", "unlock": {"flag": "example:met_stranger"}, "unlock_hint": "example.hint.show_letter",
+     "text": "example.step.firewood"},
+    {"quest": "example:stranger/lantern"},
+    {"quest": "example:stranger/night_watch", "unlock": {"time_of_day": "night"}, "rewards": [{"id": "minecraft:emerald", "count": 4}]}
+  ],
+  "final_reward": {"id": "minecraft:compass"}
+}
+```
+
+| Field | Default | Meaning |
+|---|---|---|
+| `giver` | `per_step` | `per_step`: a named villager for each step's role (as the rare villager chain). `single`: one villager gives every step, in order. |
+| `giver_role` | `giver` | The single giver's role. A villager given this role by another mod (API `assignRole`) in the starting village is used; else the villager nearest the village centre takes it. |
+| `giver_title` | `fealty.chain.role.<giver_role>` | The title shown with the giver's name ("Ann the Stranger"). A string is a translation key. |
+| step `unlock` | none | A condition (see below) the step waits for; the giver says `unlock_hint` until it passes. |
+| step `text` | the role's greeting | What the giver says when offering the step (a translation key or a text component). |
+
+A `steps` list keeps its order; a `step_pool` with a single giver picks `steps_count` steps at random. Fixed steps of a
+single-giver chain may share a role. `steps_reward` is given when the last step of a run is handed in, for every kind.
+
+## rumours/
+
+Rumours villagers and elders tell. `data/<ns>/fealty/rumours/<id>.json`:
+
+```json
+{
+  "chain": "example:stranger_tale",
+  "stage": 1,
+  "min_tier": "fealty:neutral",
+  "weight": 5,
+  "told_by": "villagers",
+  "professions": [],
+  "lines": ["example.rumour.stranger.0", "example.rumour.stranger.1"],
+  "requires": {"dimension": "minecraft:overworld"},
+  "grants": [{"give_item": "minecraft:paper"}]
+}
+```
+
+| Field | Default | Meaning |
+|---|---|---|
+| `chain`, `stage` | none, 1 | The chain stage the rumour tells of. Stage 1 is told while the chain can start for the player in the teller's village (its kind is registered, it is not running, it is repeatable if done, the player meets its `start_tier`), and hearing it starts the chain there. A later stage (2 to 4) is told while a running chain is one stage short of it, and moves it on, if its kind allows that (`story` does; the rare villager chain and the guild do not). |
+| `min_tier` | `fealty:neutral` | The player's least standing with the teller's village (or faction). |
+| `weight` | 1 | How likely against the other rumours the teller could tell. |
+| `told_by` | `any` | `villagers`, `elders` or `any`. |
+| `professions` | any | Villager professions that tell it (elders ignore this). |
+| `lines` | none | What the teller says: one of them, picked at random. Translation keys (with the player's name as `%1$s`, the teller's as `%2$s`) or text components. |
+| `requires` | none | A condition (see below). |
+| `grants` | none | Effects (see below) applied when it is heard. |
+
+A rumour with no `chain` is told to each player once.
+
+**Villagers.** The first time each day a player talks to a villager, the villager rolls to tell a rumour it could
+tell; a success adds the line to its greeting. The chance is `rumour_chance` (0.03), plus `pity_step` (0.01) for each
+conversation in a row that had a rumour to tell but missed, up to `pity_cap` (0.12); after `guarantee_after` (30) such
+misses the next one is certain. A conversation with nothing to tell does not count. All four are in the server
+config's `rumours` section; `rumour_chance = 0` turns villagers' rumours off.
+
+**Elders.** The elder's "Ask about rumours" draws from the same pool (`told_by` `elders` or `any`). Fealty's own
+`fealty:rare_villager` rumour (elders only, no lines) is how the rare villager chain starts, exactly as before; with
+nothing in the pool, the button shows the rare chain's progress or lock as it always did.
+
+## conversations/
+
+Branching conversations. `data/<ns>/fealty/conversations/<id>.json`:
+
+```json
+{
+  "id": "example:stranger/first_meeting",
+  "speaker": "example:stranger",
+  "if": {"not": {"flag": "example:met_stranger"}},
+  "start": "greet",
+  "nodes": {
+    "greet": {
+      "text": "example.dialogue.greet",
+      "replies": [
+        {"label": "example.reply.show_letter", "if": {"has_item": "minecraft:paper"}, "hint": "example.hint.need_letter", "goto": "letter"},
+        {"label": "example.reply.bye", "end": true}
+      ]
+    },
+    "letter": {
+      "text": "example.dialogue.letter",
+      "effects": [{"take_item": "minecraft:paper"}, {"set_flag": "example:met_stranger"}],
+      "replies": [{"label": "example.reply.ready", "goto": "greet"}]
+    }
+  }
+}
+```
+
+- `speaker`: who has the conversation. A chain role (`<chain namespace>:<role>`, so a chain `example:stranger_tale`
+  with `giver_role` `stranger` is `example:stranger`, or the role's own full name if it has one), an entity type
+  (`fealty:village_elder`, another mod's NPC) or a villager profession (`minecraft:librarian`).
+- Without a `label`, the conversation takes over when the player starts talking to the speaker and `if` passes (the
+  one with the highest `priority`, then by id). With a `label`, it is offered as a reply among the speaker's usual
+  ones while `if` passes. Use a flag in `if` to play something once.
+- `nodes`: what the speaker says (`text`) and the player's `replies` (at most 6). A node's `effects` happen when it is
+  reached; a reply can have its own `effects` too, applied when it is picked.
+- A reply whose `if` fails is shown greyed out with its `hint`. `goto` moves to another node; `end` (or no `goto`)
+  ends the conversation and returns to the speaker's usual dialogue. `icon` picks the reply's icon (`talk`).
+- `id` is optional; the file's path is the conversation's id. Texts are translation keys (the player's name is
+  `%1$s`, the speaker's `%2$s`) or text components.
+
+## Conditions and effects
+
+Rumours (`requires`, `grants`), conversations (`if`, `effects`) and chain steps (`unlock`) share these. Each is an
+object whose one key is its type; types without a namespace are Fealty's. Other mods register more in
+`fealty:dialogue_condition` and `fealty:dialogue_effect`.
+
+| Condition | Value | Passes when |
+|---|---|---|
+| `has_item` | item id, or `{"item", "count"}` | the player carries that many |
+| `tier_at_least` | tier id, or `{"tier", "faction"}` | the player's standing with the NPC's faction (or the village they stand in, or `faction`) is at least the tier |
+| `flag` | flag id, or `{"id", "min", "max"}` | the player's flag is set (not 0), or within the range |
+| `advancement` | advancement id | the player has it |
+| `dimension` | dimension id | the player is there |
+| `quest_stage` | `{"chain", "stage"}` or `"min"`/`"max"`, `"steps_done"` | the player's stage in the chain matches (0 before it starts, 5 once complete) |
+| `time_of_day` | `"day"`, `"night"` or `{"min", "max"}` (ticks, may wrap) | the time of day is in range |
+| `all`, `any` | list of conditions | every one / at least one passes |
+| `not` | a condition | it fails |
+
+| Effect | Value | Does |
+|---|---|---|
+| `take_item` | item id, or `{"item", "count"}` | takes up to that many |
+| `give_item` | item id, or an item stack `{"id", "count", "components"}` | gives it (dropped if the inventory is full) |
+| `set_flag` | flag id, or `{"id", "value"}` | sets the player's flag (to 1) |
+| `clear_flag` | flag id | clears it |
+| `add_rep` | amount, or `{"amount", "faction", "reason"}` | changes standing with the NPC's faction (`reason` defaults to `fealty:dialogue`, which cannot raise standing below zero) |
+| `start_quest` | quest id, or `{"quest", "giver"}` | the player takes up a quest; a villager's is handed back to them as a favor, others to their faction |
+| `grant_advancement` | advancement id | awards it |
+| `run_function` | function id | runs it as the player (permission level 2) |
+| `start_chain` | chain id | starts a chain in the NPC's village, as a stage 1 rumour would |
+
+Player flags are kept on the player through death and relogging. `/fealty flag <player> get|set|clear <flag> [value]`
+and `/fealty flag <player> list` read and change them (operators only).
 
 ## dialogue/
 

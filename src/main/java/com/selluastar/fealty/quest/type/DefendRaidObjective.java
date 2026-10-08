@@ -1,6 +1,5 @@
 package com.selluastar.fealty.quest.type;
 
-import com.selluastar.fealty.network.QuestView;
 import java.util.List;
 import java.util.Optional;
 
@@ -8,10 +7,11 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.selluastar.fealty.api.event.RepQuestEvent;
+import com.selluastar.fealty.api.quest.QuestType;
+import com.selluastar.fealty.network.QuestView;
 import com.selluastar.fealty.quest.QuestContext;
 import com.selluastar.fealty.quest.QuestManager;
 import com.selluastar.fealty.quest.QuestObjective;
-import com.selluastar.fealty.quest.QuestType;
 import com.selluastar.fealty.registry.ModQuestTypes;
 import com.selluastar.fealty.village.VillageRecord;
 

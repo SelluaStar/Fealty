@@ -1,0 +1,31 @@
+{
+  "kind": "story",
+  "start_tier": "fealty:neutral",
+  "repeatable": false,
+  "giver": "single",
+  "giver_role": "stranger",
+  "giver_title": "example.role.stranger",
+  "steps": [
+    {
+      "role": "firewood",
+      "quest": "example:stranger/firewood",
+      "unlock": {"flag": "example:met_stranger"},
+      "unlock_hint": "example.hint.show_letter",
+      "text": "example.step.firewood"
+    },
+    {
+      "role": "lantern",
+      "quest": "example:stranger/lantern",
+      "text": "example.step.lantern"
+    },
+    {
+      "role": "night_watch",
+      "quest": "example:stranger/night_watch",
+      "unlock": {"time_of_day": "night"},
+      "unlock_hint": "example.hint.wait_for_night",
+      "text": "example.step.night_watch",
+      "rewards": [{"id": "minecraft:emerald", "count": 4}]
+    }
+  ],
+  "final_reward": {"id": "minecraft:compass", "count": 1}
+}

@@ -82,6 +82,12 @@ public final class FealtyConfig {
     public static final ModConfigSpec.BooleanValue RUMOURS;
     public static final ModConfigSpec.IntValue RUMOUR_RANGE;
 
+    // Story rumours (fealty/rumours/)
+    public static final ModConfigSpec.DoubleValue RUMOUR_CHANCE;
+    public static final ModConfigSpec.DoubleValue RUMOUR_PITY_STEP;
+    public static final ModConfigSpec.DoubleValue RUMOUR_PITY_CAP;
+    public static final ModConfigSpec.IntValue RUMOUR_GUARANTEE_AFTER;
+
     // Villages
     public static final ModConfigSpec.IntValue VILLAGE_MARGIN;
     public static final ModConfigSpec.IntValue BELL_VILLAGE_RADIUS;
@@ -231,6 +237,17 @@ public final class FealtyConfig {
                 .define("rumours", true);
         RUMOUR_RANGE = b.comment("How far (blocks) from the village a rumour of a stronghold or bandit camp can reach")
                 .defineInRange("rumour_range", 500, 50, 5000);
+        b.pop();
+
+        b.comment("Story rumours from data packs (fealty/rumours/): once a day, talking to a villager may turn one up").push("rumours");
+        RUMOUR_CHANCE = b.comment("Chance a villager tells a rumour the first time each day the player talks to them (0 turns villagers' rumours off)")
+                .defineInRange("rumour_chance", 0.03, 0.0, 1.0);
+        RUMOUR_PITY_STEP = b.comment("Added to the chance for each conversation in a row that could have turned up a rumour but did not")
+                .defineInRange("pity_step", 0.01, 0.0, 1.0);
+        RUMOUR_PITY_CAP = b.comment("The most the chance grows to with pity")
+                .defineInRange("pity_cap", 0.12, 0.0, 1.0);
+        RUMOUR_GUARANTEE_AFTER = b.comment("After this many such conversations in a row without one, the next one tells a rumour for sure")
+                .defineInRange("guarantee_after", 30, 1, 10000);
         b.pop();
 
         b.comment("Village detection and the trusting elder").push("villages");

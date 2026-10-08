@@ -57,8 +57,9 @@ public final class VillagerMemory {
                 Codec.LONG.optionalFieldOf("last_gift", Long.MIN_VALUE / 2).forGetter(e -> e.lastGift),
                 Codec.LONG.optionalFieldOf("last_gift_given", Long.MIN_VALUE / 2).forGetter(e -> e.lastGiftGiven),
                 Codec.LONG.optionalFieldOf("last_pickpocket", Long.MIN_VALUE / 2).forGetter(e -> e.lastPickpocket),
-                Codec.LONG.optionalFieldOf("last_rumour_day", -1L).forGetter(e -> e.lastRumourDay)
-        ).apply(i, (lastThreat, threats, refused, price, gift, given, pick, rumourDay) -> {
+                Codec.LONG.optionalFieldOf("last_rumour_day", -1L).forGetter(e -> e.lastRumourDay),
+                Codec.LONG.optionalFieldOf("last_rumour_roll", -1L).forGetter(e -> e.lastRumourRoll)
+        ).apply(i, (lastThreat, threats, refused, price, gift, given, pick, rumourDay, rumourRoll) -> {
             Entry e = new Entry();
             e.lastThreat = lastThreat;
             e.threats = threats;
@@ -68,6 +69,7 @@ public final class VillagerMemory {
             e.lastGiftGiven = given;
             e.lastPickpocket = pick;
             e.lastRumourDay = rumourDay;
+            e.lastRumourRoll = rumourRoll;
             return e;
         }));
 
@@ -81,5 +83,7 @@ public final class VillagerMemory {
         public long lastPickpocket = Long.MIN_VALUE / 2;
         /** The Fealty day this villager last told the player real news (once a day). */
         public long lastRumourDay = -1L;
+        /** The Fealty day this villager last rolled to tell the player a rumour from {@code fealty/rumours/}. */
+        public long lastRumourRoll = -1L;
     }
 }

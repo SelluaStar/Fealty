@@ -11,6 +11,9 @@ public final class ModRegistries {
         modBus.addListener(FealtyRegistries::onNewRegistry);
         ModRepSources.SOURCES.register(modBus);
         ModQuestTypes.TYPES.register(modBus);
+        ModChainKinds.KINDS.register(modBus);
+        ModDialogueScripts.CONDITIONS.register(modBus);
+        ModDialogueScripts.EFFECTS.register(modBus);
         ModAttachments.ATTACHMENTS.register(modBus);
         ModCriteria.TRIGGERS.register(modBus);
         ModLootConditions.CONDITIONS.register(modBus);

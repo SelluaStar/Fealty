@@ -1645,5 +1645,19 @@
   "fealty.rumour.private": "That's private. And not for the likes of you.",
   "fealty.rumour.enough": "I've told you all I know today. Ask me again tomorrow.",
   "fealty.rumour.refuse": "I've nothing to say to you.",
-  "fealty.rumour.trivia.fallback": "Hm? Oh, nothing much."
+  "fealty.rumour.trivia.fallback": "Hm? Oh, nothing much.",
+  "fealty.chain.story.started": "A new tale begins. Seek out %s.",
+  "fealty.chain.story.complete": "The tale is told, and you saw it through to the end.",
+  "fealty.toast.story_started": "A New Tale",
+  "fealty.toast.story_people": "%s to seek out",
+  "fealty.banner.story": "Tale's End",
+  "fealty.banner.story.detail": "You saw the story through",
+  "fealty.chain.giver.offer": "\"There is more to be done, %s. Will you hear it?\"",
+  "fealty.chain.villager.waiting": "\"Not yet. Come back when the time is right.\"",
+  "fealty.dialogue.option.continue": "Go on",
+  "fealty.command.flag.get": "%s: %s is %s",
+  "fealty.command.flag.set": "Set %2$s to %3$s for %1$s",
+  "fealty.command.flag.clear": "Cleared %2$s for %1$s",
+  "fealty.command.flag.list": "%s's flags: %s",
+  "fealty.command.flag.none": "%s has no flags"
 }

@@ -6,9 +6,16 @@ optional dependency. The API follows semantic versioning (`FealtyApi.API_VERSION
 
 ```groovy
 dependencies {
-    compileOnly files("libs/fealty-0.1.0+api.1.0.0-api.jar")
+    compileOnly files("libs/fealty-0.1.0+api.1.3.0-api.jar")
 }
 ```
+
+Fealty works on its own; nothing here needs another mod. A mod that uses these extension points should check
+`FealtyApi.isAvailable()` (or `ModList.get().isLoaded("fealty")`) before calling into the API, and register its
+`DeferredRegister`s on Fealty's registry keys only when Fealty is installed.
+
+A worked example data pack (a rumour, a conversation and a single-giver chain) is in
+[examples/single_giver_chain](examples/single_giver_chain/).
 
 ## Reading and changing reputation
 
@@ -44,6 +51,11 @@ if (FealtyApi.isAvailable()) {
 | `declareRaid(lord, village, stronghold)` | Start a raid as if from the Village Hall; returns the problem if it cannot |
 | `isAtPeace(server, village)` | Whether a victory's peace protects the village |
 | `isCaptive`, `isWarbandMember`, `isStrongholdDefender` | What part an entity plays in the war |
+| `getFlag`, `hasFlag`, `setFlag`, `clearFlag` (1.3.0) | A player's story flags |
+| `assignRole`, `clearRole`, `hasRole` (1.3.0) | Make a villager a chain's special villager, with a title in its name |
+| `findVillager(server, village, predicate)` (1.3.0) | A loaded villager of a village, nearest the centre first |
+| `getVillage`, `findVillage(server, origin, min, max, predicate)` (1.3.0) | Villages Fealty knows of (or finds) as `VillageInfo` |
+| `startChain(player, chain, village)`, `getChainStage` (1.3.0) | Start a quest chain as a rumour would; read a player's stage |
 
 Faction ids: villages are `village:<dim namespace>/<dim path>/<x>_<z>`. Static factions are `fealty:wanderers`,
 `fealty:bandits` and `fealty:thieves_guild`, plus any a data pack adds.
@@ -94,6 +106,20 @@ and `CampaignEvent.Won`'s spoils, peace and raze days already include the threat
 | `RumourEvent.Told` | A villager told a player something (`getTopic()`, `getText()`, `isUseful()`, `isFromChat()`) | React |
 
 `StrongholdEvent.Discovered.How` also has `RUMOURED` now: a villager's tip put a stronghold on a Trusted player's War tab.
+
+### Stories (API 1.3.0)
+
+| Event | Fires when | You can |
+|---|---|---|
+| `RumourEvent.Heard` | A rumour from `fealty/rumours/` is about to be told (`getTeller()`, `getRumour()`, `getChain()`) | Cancel it, or edit `getLines()` |
+| `DialogueEvent.Open` | A player starts talking to an NPC | Cancel it to keep Fealty's dialogue box shut |
+| `DialogueEvent.Choose` | The player picks a reply (`getOption()`) | Cancel it (the box is drawn again) |
+| `DialogueBuildEvent` | Fealty draws a villager's, quest giver's or guard's usual dialogue | `addLine`, `addOption` (see below) |
+| `ChainStageEvent.Start` | A quest chain is about to start for a player (`getOrigin()`) | Cancel it |
+| `ChainStageEvent.Advance` | A step is handed in (`getStep()`, `TRIAL`) or the stage moves (`NO_STEP`) | React |
+| `ChainStageEvent.Complete` | A player completes a chain (`getTimesCompleted()`) | React |
+
+`RumourEvent`'s base now carries the teller as an `Entity` (`getTeller()`); `Gather` and `Told` keep `getVillager()`.
 
 ### Other systems
 
@@ -146,9 +172,134 @@ FealtyApi.get().applySource(player, village, ResourceLocation.fromNamespaceAndPa
 
 ## New quest types
 
-Register a `QuestType` in the `fealty:quest_type` registry (`FealtyRegistries.QUEST_TYPE_KEY`) with a `MapCodec`
-of your `QuestObjective`. Data packs can then use `"objective": {"type": "yourmod:your_type", ...}`. This lives
-in the main jar (`com.selluastar.fealty.quest`), not the stable API.
+`com.selluastar.fealty.api.quest` (since 1.3.0; in the main jar before) has what a quest type needs:
+
+- `QuestType<T extends QuestObjective>(MapCodec<T> codec)`, registered on `QuestType.REGISTRY_KEY` (`fealty:quest_type`).
+- `QuestObjective`: write `type()`, `start(ctx)`, `describe(ctx)` and `preview()`; everything else (`canTurnIn`,
+  `onTurnIn` with `TurnIn.COMPLETE/PROGRESS/MISSING`, `completesOnReady`, `cleanup`, `tick`, `onKill`,
+  `onTargetLost`, `onBlockPlaced`, `onBlockBroken`, `markedEntities`, `trackedPosition`, `dialogueReplies` and
+  `onDialogue`, `onUseItemOnVillager`) has a default.
+- `QuestContext`: the accepted quest as the objective sees it (`player()`, `questId()`, `giver()`, `faction()`,
+  `state()` with `dirty()`, `isReady()` and `setReady()`, `villageId()`, `anchor()`, `dimension()`, ...).
+
+```java
+public static final DeferredRegister<QuestType<?>> TYPES = DeferredRegister.create(QuestType.REGISTRY_KEY, MODID);
+public static final DeferredHolder<QuestType<?>, QuestType<RingBell>> RING_BELL =
+        TYPES.register("ring_bell", () -> new QuestType<>(RingBell.CODEC));
+
+public record RingBell(int times) implements QuestObjective {
+    public static final MapCodec<RingBell> CODEC = Codec.INT.fieldOf("times").xmap(RingBell::new, RingBell::times);
+    public QuestType<?> type() { return RING_BELL.get(); }
+    public boolean start(QuestContext ctx) { return true; }
+    public List<Component> describe(QuestContext ctx) { return List.of(Component.literal(ctx.getInt("rung") + "/" + times)); }
+    public List<Component> preview() { return List.of(Component.literal("Ring the bell " + times + " times")); }
+}
+```
+
+Data packs then use `"objective": {"type": "yourmod:ring_bell", "times": 3}` in `fealty/rep_quests/`.
+
+## Quest givers
+
+Make your own NPCs quest givers with `QuestGiver` (`fealty:quest_giver`). Talking to an entity it `appliesTo` opens
+Fealty's dialogue box with the way to its quest board; Fealty accepts, hands in and abandons the board's quests itself.
+
+```java
+public static final DeferredRegister<QuestGiver> GIVERS = DeferredRegister.create(QuestGiver.REGISTRY_KEY, MODID);
+public static final DeferredHolder<QuestGiver, QuestGiver> HERMIT = GIVERS.register("hermit", () -> new QuestGiver() {
+    public boolean appliesTo(Entity entity) { return entity.getType() == MyEntities.HERMIT.get(); }
+    public Board board(ServerPlayer player, Entity npc) {
+        ResourceLocation key = ResourceLocation.fromNamespaceAndPath(MODID, "hermit/" + npc.getUUID());
+        return Board.of(Component.translatable("yourmod.hermit.greet"), key, FealtyApi.id("wanderers"),
+                List.of(ResourceLocation.fromNamespaceAndPath(MODID, "hermit_herbs")));
+    }
+});
+```
+
+## Chain kinds
+
+A `fealty/quest_chains/` file's `kind` names a `ChainHandler` in `fealty:chain_kind` (`ChainHandler.REGISTRY_KEY`).
+Fealty registers `fealty:rare_villager`, `fealty:guild` and `fealty:story`. Fealty does what every kind shares: it
+lays out the run when the chain starts, hands the steps to their named villagers or to the single giver, marks steps
+done and pays their `rewards`, and gives `final_reward` when the chain completes. A handler adds the rest:
+
+| Method | Called when | Default |
+|---|---|---|
+| `start(ctx)` | The chain starts (run laid out, stage 1); return false to refuse | true |
+| `onStepComplete(ctx, step)` | A step (or, as -1, the trial) was handed in; return true if the chain is now complete | complete when every step is done |
+| `onChainComplete(ctx)` | The chain completed (`final_reward` given, stage 5) | nothing |
+| `canAdvance(ctx, stage)` | A rumour would move the running chain to a later stage | any stage between the current one and 5 |
+
+`ChainContext` gives the player, chain, kind, origin village, stage (`setStage` fires `ChainStageEvent.Advance`), the
+run's steps and which are done, and `complete()`.
+
+```java
+public static final DeferredRegister<ChainHandler> KINDS = DeferredRegister.create(ChainHandler.REGISTRY_KEY, MODID);
+public static final DeferredHolder<ChainHandler, ChainHandler> HEIST = KINDS.register("heist", () -> new ChainHandler() {
+    public void onChainComplete(ChainContext ctx) {
+        ctx.player().sendSystemMessage(Component.translatable("yourmod.heist.done"));
+    }
+});
+```
+
+A chain naming a kind no installed mod registers simply never starts.
+
+## Dialogue conditions and effects
+
+Rumours, conversations and chain steps use `DialogueCondition`s and `DialogueEffect`s (`com.selluastar.fealty.api.dialogue`).
+In JSON each is an object whose one key is its type: `{"has_item": "minecraft:paper"}`, `{"yourmod:moon_phase": 4}`.
+Register types with a `Codec` for the value under the key:
+
+```java
+public static final DeferredRegister<DialogueConditionType<?>> CONDITIONS =
+        DeferredRegister.create(DialogueConditionType.REGISTRY_KEY, MODID);
+public static final DeferredHolder<DialogueConditionType<?>, DialogueConditionType<MoonPhase>> MOON_PHASE =
+        CONDITIONS.register("moon_phase", () -> new DialogueConditionType<>(MoonPhase.CODEC));
+
+public record MoonPhase(int phase) implements DialogueCondition {
+    public static final Codec<MoonPhase> CODEC = Codec.INT.xmap(MoonPhase::new, MoonPhase::phase);
+    public DialogueConditionType<?> type() { return MOON_PHASE.get(); }
+    public boolean test(DialogueContext ctx) { return ctx.player().level().getMoonPhase() == phase; }
+}
+```
+
+`DialogueContext` is the player and (if any) the NPC. Effects work the same way with `DialogueEffectType` and
+`apply(ctx)`. `DialogueCondition.CODEC` and `DialogueEffect.CODEC` read and write any registered type, so your own
+data can use them too. The built-ins are listed in [DATAPACKS.md](DATAPACKS.md#conditions-and-effects).
+
+## Adding to the dialogue box
+
+`DialogueBuildEvent` fires each time Fealty draws a villager's, quest giver's or guard's usual dialogue. Add lines to
+what the NPC says, and replies of your own. A reply id must be `<modid>:<name>` (64 characters at most); when the
+player picks it, Fealty calls the handler you gave with it and does what the returned `DialogueReply` says (`say` an
+answer and keep the box open, `refresh`, `close`, or `end` when you open a screen of your own).
+
+```java
+NeoForge.EVENT_BUS.addListener((DialogueBuildEvent e) -> {
+    if (e.getNpc() instanceof Villager villager && MyStory.knowsSecret(villager)) {
+        e.addLine(Component.translatable("yourmod.secret.hint"));
+        e.addOption("yourmod:ask_secret", Component.translatable("yourmod.secret.ask"),
+                (player, npc, option) -> DialogueReply.say(Component.translatable("yourmod.secret.answer")));
+    }
+});
+```
+
+The server decides what is shown and checks every pick against what it showed; the client only draws the box.
+
+## Special villagers and villages
+
+```java
+RepApi api = FealtyApi.get();
+// The nearest village 300 to 1500 blocks away that has an elder, and one of its villagers.
+api.findVillage(server, GlobalPos.of(level.dimension(), player.blockPosition()), 300, 1500, VillageInfo::hasElder)
+        .flatMap(village -> api.findVillager(server, village.id(), v -> !v.isBaby()))
+        .ifPresent(v -> api.assignRole(v, ResourceLocation.fromNamespaceAndPath(MODID, "tale"), "stranger",
+                Component.translatable("yourmod.role.stranger")));
+```
+
+`assignRole` names the villager with its title ("Ann the Stranger") and keeps its trade; the role stays until
+`clearRole`. If the chain is a single-giver chain with that `giver_role`, the villager is its giver in its village.
+Flags (`getFlag`, `setFlag`, `clearFlag`) are kept on the player through death and relogging; data uses them through
+the `flag`, `set_flag` and `clear_flag` conditions and effects.
 
 ## Tags
 

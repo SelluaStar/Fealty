@@ -1,14 +1,14 @@
 package com.selluastar.fealty.quest.type;
 
-import com.selluastar.fealty.network.QuestView;
 import java.util.List;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.selluastar.fealty.api.quest.QuestType;
+import com.selluastar.fealty.network.QuestView;
 import com.selluastar.fealty.quest.QuestContext;
 import com.selluastar.fealty.quest.QuestObjective;
-import com.selluastar.fealty.quest.QuestType;
 import com.selluastar.fealty.registry.ModQuestTypes;
 
 import net.minecraft.network.chat.Component;

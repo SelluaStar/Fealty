@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.selluastar.fealty.api.quest.QuestType;
 import com.selluastar.fealty.dialogue.DialogueNode;
 import com.selluastar.fealty.network.QuestView;
 import com.selluastar.fealty.village.VillageRecord;
@@ -23,8 +24,13 @@ import net.minecraft.world.level.block.state.BlockState;
 /**
  * What a quest asks of the player. Progress is kept in {@link ActiveQuest#state()}; mark the quest ready with
  * {@link QuestContext#setReady()} when the objective is met.
+ *
+ * <p>Fealty's own objectives implement this richer form of the API's
+ * {@link com.selluastar.fealty.api.quest.QuestObjective}; objectives other mods register through the API are wrapped
+ * in an {@link ApiObjective} when they load.
  */
-public interface QuestObjective {
+public interface QuestObjective extends com.selluastar.fealty.api.quest.QuestObjective {
+    @Override
     QuestType<?> type();
 
     /** Set the quest up when accepted. Return false (with a message to the player) if it cannot start. */
@@ -33,7 +39,18 @@ public interface QuestObjective {
     /** Lines describing the objective and progress for the quest screen. */
     List<Component> describe(QuestContext ctx);
 
+    @Override
+    default boolean start(com.selluastar.fealty.api.quest.QuestContext ctx) {
+        return start((QuestContext) ctx);
+    }
+
+    @Override
+    default List<Component> describe(com.selluastar.fealty.api.quest.QuestContext ctx) {
+        return describe((QuestContext) ctx);
+    }
+
     /** Short summary for an offer that has not been accepted yet. */
+    @Override
     List<Component> preview();
 
     /**
@@ -78,12 +95,6 @@ public interface QuestObjective {
      */
     default TurnIn onTurnIn(QuestContext ctx) {
         return ctx.quest().isReady() ? TurnIn.COMPLETE : TurnIn.MISSING;
-    }
-
-    enum TurnIn {
-        COMPLETE,
-        PROGRESS,
-        MISSING
     }
 
     /** Complete as soon as the objective is met, without returning to the giver (courier quests). */

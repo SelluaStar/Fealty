@@ -14,7 +14,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 
-/** A player's progress through one quest chain (the rare villager chain or the thieves guild). */
+/** A player's progress through one quest chain (the rare villager chain, the thieves guild, a story, ...). */
 public final class ChainProgress {
     public static final Codec<ChainProgress> CODEC = RecordCodecBuilder.create(i -> i.group(
             ResourceLocation.CODEC.fieldOf("chain").forGetter(ChainProgress::chainId),
@@ -125,6 +125,19 @@ public final class ChainProgress {
 
     public void setTrial(@Nullable ResourceLocation trial) {
         this.trial = trial;
+    }
+
+    /** A copy, to put back if a start is refused. */
+    public ChainProgress copy() {
+        ChainProgress p = new ChainProgress(chainId);
+        p.origin = origin;
+        p.stage = stage;
+        p.stepsDone.addAll(stepsDone);
+        p.target = target;
+        p.timesCompleted = timesCompleted;
+        p.run.addAll(run);
+        p.trial = trial;
+        return p;
     }
 
     public void reset() {

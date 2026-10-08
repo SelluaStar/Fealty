@@ -1,6 +1,5 @@
 package com.selluastar.fealty.quest.type;
 
-import com.selluastar.fealty.network.QuestView;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -12,16 +11,17 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.selluastar.fealty.advancement.FealtyEvents;
 import com.selluastar.fealty.api.FealtyTags;
 import com.selluastar.fealty.api.RepSources;
+import com.selluastar.fealty.api.quest.QuestType;
 import com.selluastar.fealty.chain.ChainManager;
 import com.selluastar.fealty.config.FealtyConfig;
 import com.selluastar.fealty.dialogue.DialogueNode;
 import com.selluastar.fealty.item.LetterInfo;
 import com.selluastar.fealty.mail.MailService;
 import com.selluastar.fealty.network.Feedback;
+import com.selluastar.fealty.network.QuestView;
 import com.selluastar.fealty.quest.QuestContext;
 import com.selluastar.fealty.quest.QuestManager;
 import com.selluastar.fealty.quest.QuestObjective;
-import com.selluastar.fealty.quest.QuestType;
 import com.selluastar.fealty.registry.ModDataComponents;
 import com.selluastar.fealty.registry.ModItems;
 import com.selluastar.fealty.registry.ModQuestTypes;
