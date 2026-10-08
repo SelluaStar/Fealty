@@ -1320,14 +1320,17 @@ public final class FealtyGameTests {
         FealtyApi.get().setFlag(player, flag, 7);
         check(helper, FealtyApi.get().getFlag(player, flag) == 7 && FealtyApi.get().hasFlag(player, flag), "the flag is set");
 
-        // Logging out saves the player; logging back in loads them into a new player object.
+        // Logging out saves the player; logging back in loads them into a new player object. (The copies get profiles of
+        // their own: a new player with the same profile takes over the live player's advancements, and those tick.)
         CompoundTag saved = player.saveWithoutId(new CompoundTag());
-        ServerPlayer relogged = new ServerPlayer(player.server, helper.getLevel(), player.getGameProfile(), ClientInformation.createDefault());
+        ServerPlayer relogged = new ServerPlayer(player.server, helper.getLevel(), new GameProfile(UUID.randomUUID(), "test-relogged"),
+                ClientInformation.createDefault());
         relogged.load(saved);
         check(helper, FealtyApi.get().getFlag(relogged, flag) == 7, "the flag survives relogging");
 
         // Dying makes a new player too, copying what is kept on death.
-        ServerPlayer respawned = new ServerPlayer(player.server, helper.getLevel(), player.getGameProfile(), ClientInformation.createDefault());
+        ServerPlayer respawned = new ServerPlayer(player.server, helper.getLevel(), new GameProfile(UUID.randomUUID(), "test-respawned"),
+                ClientInformation.createDefault());
         respawned.restoreFrom(relogged, false);
         NeoForge.EVENT_BUS.post(new PlayerEvent.Clone(respawned, relogged, true));
         check(helper, FealtyApi.get().getFlag(respawned, flag) == 7, "the flag survives death");
